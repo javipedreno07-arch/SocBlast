@@ -24,11 +24,15 @@ oauth.register(
 
 @router.get("/auth/google")
 async def google_login(request: Request):
-    redirect_uri = "http://127.0.0.1:8000/api/auth/google/callback"
+    redirect_uri = os.getenv(
+        'GOOGLE_REDIRECT_URI',
+        'http://127.0.0.1:8000/api/auth/google/callback'
+    )
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/auth/google/callback")
 async def google_callback(request: Request):
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get('userinfo')
@@ -56,18 +60,18 @@ async def google_callback(request: Request):
                 "training_progreso": {},
                 "fecha_registro": datetime.now().isoformat(),
                 "oauth_provider": "google",
-                "email_verificado": True  # Google ya verifica el email
+                "email_verificado": True
             })
             rol = "analista"
         else:
             rol = existing.get("rol", "analista")
         access_token = create_access_token({"sub": email, "rol": rol})
         return RedirectResponse(
-            url=f"http://localhost:3000/oauth/callback?token={access_token}&rol={rol}&nombre={nombre}"
+            url=f"{frontend_url}/oauth/callback?token={access_token}&rol={rol}&nombre={nombre}"
         )
     except Exception as e:
         print(f"Error Google OAuth: {e}")
-        return RedirectResponse(url="http://localhost:3000/login?error=google_failed")
+        return RedirectResponse(url=f"{frontend_url}/login?error=google_failed")
 
 # ── AUTH ──
 @router.post("/register")
@@ -117,11 +121,8 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     if not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
-
-    # Bloquear si no ha verificado el email
     if not db_user.get("email_verificado", False):
         raise HTTPException(status_code=403, detail="Debes verificar tu email antes de iniciar sesión")
-
     token = create_access_token({"sub": user.email, "rol": db_user["rol"]})
     return {"access_token": token, "token_type": "bearer", "rol": db_user["rol"], "nombre": db_user["nombre"]}
 
