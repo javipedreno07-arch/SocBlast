@@ -11,7 +11,7 @@ const BD  = '#1A3050';
 export default function VerificarEmail() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const [estado, setEstado] = useState('verificando'); // verificando | ok | error
+  const [estado, setEstado] = useState('verificando');
   const token = params.get('token');
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function VerificarEmail() {
     axios.get(`https://socblast-production.up.railway.app/api/verificar-email?token=${token}`)
       .then(() => setEstado('ok'))
       .catch(() => setEstado('error'));
-  }, []);
+  }, [token]);
 
   return (
     <div style={{ minHeight:'100vh', backgroundColor:BG, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Inter',-apple-system,sans-serif" }}>
