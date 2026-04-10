@@ -121,7 +121,8 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     if not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
-    if not db_user.get("email_verificado", False):
+    skip_verify = os.getenv("SKIP_EMAIL_VERIFICATION", "false").lower() == "true"
+    if not skip_verify and not db_user.get("email_verificado", False):
         raise HTTPException(status_code=403, detail="Debes verificar tu email antes de iniciar sesión")
     token = create_access_token({"sub": user.email, "rol": db_user["rol"]})
     return {"access_token": token, "token_type": "bearer", "rol": db_user["rol"], "nombre": db_user["nombre"]}
