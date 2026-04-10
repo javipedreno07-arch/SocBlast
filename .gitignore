@@ -4,3 +4,5 @@ backend/__pycache__/
 frontend/node_modules/
 frontend/build/
 node_modules/
+backend/__pycache__/
+backend/*.pyc
