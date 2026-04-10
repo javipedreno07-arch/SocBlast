@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
@@ -8,6 +8,7 @@ from auth import get_password_hash, verify_password, create_access_token, get_cu
 from datetime import datetime
 import time
 import os
+import secrets
 
 router = APIRouter()
 
@@ -54,7 +55,8 @@ async def google_callback(request: Request):
                 "sesiones_completadas": 0,
                 "training_progreso": {},
                 "fecha_registro": datetime.now().isoformat(),
-                "oauth_provider": "google"
+                "oauth_provider": "google",
+                "email_verificado": True  # Google ya verifica el email
             })
             rol = "analista"
         else:
@@ -68,12 +70,16 @@ async def google_callback(request: Request):
         return RedirectResponse(url="http://localhost:3000/login?error=google_failed")
 
 # ── AUTH ──
-@router.post("/register", response_model=Token)
-async def register(user: UserRegister):
+@router.post("/register")
+async def register(user: UserRegister, background_tasks: BackgroundTasks):
+    from email_utils import enviar_email_verificacion
     db = get_db()
     existing = await db.users.find_one({"email": user.email})
     if existing:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
+
+    token_verificacion = secrets.token_urlsafe(32)
+
     new_user = {
         "email": user.email,
         "password": get_password_hash(user.password),
@@ -91,11 +97,17 @@ async def register(user: UserRegister):
         },
         "sesiones_completadas": 0,
         "training_progreso": {},
-        "fecha_registro": datetime.now().isoformat()
+        "fecha_registro": datetime.now().isoformat(),
+        "email_verificado": False,
+        "token_verificacion": token_verificacion
     }
     await db.users.insert_one(new_user)
-    token = create_access_token({"sub": user.email, "rol": user.rol})
-    return {"access_token": token, "token_type": "bearer", "rol": user.rol, "nombre": user.nombre}
+
+    background_tasks.add_task(
+        enviar_email_verificacion, user.email, user.nombre, token_verificacion
+    )
+
+    return {"mensaje": "Registro exitoso. Revisa tu email para verificar tu cuenta."}
 
 @router.post("/login", response_model=Token)
 async def login(user: UserLogin):
@@ -105,8 +117,25 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     if not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
+
+    # Bloquear si no ha verificado el email
+    if not db_user.get("email_verificado", False):
+        raise HTTPException(status_code=403, detail="Debes verificar tu email antes de iniciar sesión")
+
     token = create_access_token({"sub": user.email, "rol": db_user["rol"]})
     return {"access_token": token, "token_type": "bearer", "rol": db_user["rol"], "nombre": db_user["nombre"]}
+
+@router.get("/verificar-email")
+async def verificar_email(token: str):
+    db = get_db()
+    usuario = await db.users.find_one({"token_verificacion": token})
+    if not usuario:
+        raise HTTPException(400, "Token inválido o expirado")
+    await db.users.update_one(
+        {"token_verificacion": token},
+        {"$set": {"email_verificado": True, "token_verificacion": None}}
+    )
+    return {"mensaje": "Email verificado correctamente. Ya puedes iniciar sesión."}
 
 @router.get("/me")
 async def get_me(email: str = Depends(get_current_user)):

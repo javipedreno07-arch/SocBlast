@@ -38,6 +38,12 @@ const LoginPage = () => {
     } catch (err) {
       setError(err.response?.data?.detail || 'Error al iniciar sesión');
       setLoading(false);
+      // En el catch del handleSubmit:
+if (err.response?.status === 403) {
+  setError('Debes verificar tu email antes de entrar. Revisa tu bandeja de entrada.');
+} else {
+  setError('Credenciales incorrectas');
+}
     }
   };
 

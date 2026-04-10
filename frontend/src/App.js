@@ -16,6 +16,9 @@ import SimulacionPage from './pages/SimulacionPage';
 import OfertasPage from './pages/OfertasPage';
 import SplashScreen from './components/SplashScreen';
 import OAuthCallback from './pages/OAuthCallback';
+import RegistroExitoso from './pages/RegistroExitoso';
+import VerificarEmail from './pages/VerificarEmail';
+
 
 const PrivateRoute = ({ children, rol }) => {
   const { user, loading } = useAuth();
@@ -43,6 +46,8 @@ const AppRoutes = () => {
       <Route path="/simulacion-empresa" element={<PrivateRoute rol="company"><SimulacionPage /></PrivateRoute>} />
       <Route path="/ofertas" element={<PrivateRoute rol="company"><OfertasPage /></PrivateRoute>} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
+      <Route path="/registro-exitoso" element={<RegistroExitoso />} />
+<Route path="/verificar-email" element={<VerificarEmail />} />
     </Routes>
   );
 };
