@@ -25,8 +25,7 @@ oauth.register(
  
 @router.get("/auth/google")
 async def google_login(request: Request):
-    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/google/callback')
-    print(f"REDIRECT URI: {redirect_uri}")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/api/auth/google/callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
  
 @router.get("/auth/google/callback")
