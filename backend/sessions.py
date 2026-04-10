@@ -81,13 +81,25 @@ Devuelve SOLO un JSON válido con esta estructura exacta:
         }}
       ],
       "solucion_correcta": {{
-        "tipo_ataque": "nombre del ataque",
+        "tipo_ataque": "Brute Force / Password Spray|Phishing con payload|Ransomware activo|Movimiento lateral interno|Exfiltración de datos|Insider Threat|Falso positivo — actividad legítima|DNS Tunneling / C2|Escalada de privilegios|Supply Chain Attack",
         "acciones_correctas": ["acción 1", "acción 2", "acción 3"],
         "explicacion": "explicación detallada de qué pasó y cómo responder"
       }}
     }}
   ]
 }}
+
+IMPORTANTE: El campo tipo_ataque DEBE ser exactamente uno de estos valores:
+- Brute Force / Password Spray
+- Phishing con payload
+- Ransomware activo
+- Movimiento lateral interno
+- Exfiltración de datos
+- Insider Threat
+- Falso positivo — actividad legítima
+- DNS Tunneling / C2
+- Escalada de privilegios
+- Supply Chain Attack
 
 Asegúrate de que los escenarios sean realistas y técnicamente precisos."""
 
@@ -123,7 +135,7 @@ Evalúa la respuesta del analista y devuelve SOLO un JSON válido:
   "puntuacion_velocidad": <0-5>,
   "puntuacion_pistas": <0-3>,
   "total": <0-20>,
-  "copas_delta": <-5 a 20>,
+  "copas_delta": <-15 a 40>,
   "identifico_ataque": <true|false>,
   "acciones_correctas": <0-3>,
   "feedback": "feedback detallado de qué hizo bien y mal",
@@ -138,6 +150,12 @@ Evalúa la respuesta del analista y devuelve SOLO un JSON válido:
     "inteligencia_amenazas": <0-5>
   }}
 }}
+
+Para copas_delta usa esta escala:
+- Respuesta excelente (total 16-20): entre +30 y +40 copas
+- Buena (total 10-15): entre +15 y +29 copas
+- Regular (total 6-9): entre 0 y +14 copas
+- Mala (total 0-5): entre -5 y -15 copas
 
 Sé justo pero exigente. Si no respondió o respondió mal da puntuación baja."""
 

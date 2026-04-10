@@ -60,9 +60,7 @@ export default function SesionPage() {
   const [evaluacion,     setEvaluacion]     = useState(null);
   const [resultado,      setResultado]      = useState(null);
 
-  // Fix bug opciones — se fijan al montar el incidente
   const opcionesDiagRef = useRef([]);
-
   const timerRef  = useRef(null);
   const inicioRef = useRef(null);
   const TIEMPOS   = { Bronce:1200, Plata:900, Oro:600, Elite:420 };
@@ -91,11 +89,16 @@ export default function SesionPage() {
 
   const incidente = sesion?.incidentes?.[incIdx];
 
-  // Fijar opciones diagnóstico al cambiar incidente — evita bug de re-render
   useEffect(() => {
     if (!incidente) return;
     const correcto = incidente.solucion_correcta?.tipo_ataque || 'Ataque desconocido';
-    const falsos = DIAG_POOL.filter(d => d !== correcto).sort(() => Math.random() - 0.5).slice(0, 3);
+    const falsosPool = DIAG_POOL.filter(d => d !== correcto);
+    const falsos = falsosPool.sort(() => Math.random() - 0.5).slice(0, 3);
+    const fallback = ['Falso positivo — actividad legítima', 'Insider Threat', 'DNS Tunneling / C2', 'Supply Chain Attack'];
+    while (falsos.length < 3) {
+      const f = fallback.find(x => !falsos.includes(x) && x !== correcto);
+      if (f) falsos.push(f); else break;
+    }
     const opts = [...falsos, correcto].sort(() => Math.random() - 0.5);
     opcionesDiagRef.current = opts;
   }, [incIdx, sesion]);
@@ -153,7 +156,6 @@ export default function SesionPage() {
 
   const ETAPAS = ['triaje','logs','diagnostico','acciones','justificacion'];
   const etapaIdx = ETAPAS.indexOf(etapa);
-  const triajeOk = incidente && Object.keys(triaje).length >= (incidente.alertas?.length||0);
 
   const css = `
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
@@ -178,15 +180,12 @@ export default function SesionPage() {
     <>
       <style>{css}</style>
       <div style={{minHeight:'100vh',backgroundColor:BG,fontFamily:"'Inter',-apple-system,sans-serif",color:T1}}>
-        {/* Navbar */}
         <nav style={{height:'58px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 36px',backgroundColor:'rgba(14,26,46,.85)',backdropFilter:'blur(20px)',borderBottom:`1px solid ${BD}`}}>
           <img src="/logosoc.png" style={{height:'30px',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}/>
           <button className="nav-back" onClick={()=>navigate('/dashboard')} style={{background:'none',border:`1px solid ${BD}`,color:T3,padding:'7px 16px',borderRadius:'8px',fontSize:'13px',cursor:'pointer'}}>← Dashboard</button>
         </nav>
-
         <div style={{maxWidth:'680px',margin:'0 auto',padding:'52px 28px'}}>
           <div className="fade-up">
-            {/* Badge arena */}
             <div style={{textAlign:'center',marginBottom:'36px'}}>
               <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'6px 16px',borderRadius:'100px',border:`1px solid ${ac}40`,backgroundColor:`${ac}10`,marginBottom:'22px'}}>
                 <div style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:ac,animation:'pulse 2s infinite'}}/>
@@ -195,8 +194,6 @@ export default function SesionPage() {
               <h1 style={{fontSize:'46px',fontWeight:900,letterSpacing:'-2px',color:T1,marginBottom:'12px',lineHeight:1}}>Sesión SOC</h1>
               <p style={{fontSize:'16px',color:T3,lineHeight:1.7}}>La IA generará un escenario real de seguridad.<br/>Investiga, decide y actúa como analista profesional.</p>
             </div>
-
-            {/* Stats */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'28px'}}>
               {[
                 {label:'Arena',    value:arena,                                                             color:ac},
@@ -210,8 +207,6 @@ export default function SesionPage() {
                 </div>
               ))}
             </div>
-
-            {/* Pasos */}
             <div style={{padding:'22px 24px',borderRadius:'14px',backgroundColor:CARD,border:`1px solid ${BD}`,marginBottom:'28px',backdropFilter:'blur(10px)'}}>
               <p style={{fontSize:'10px',color:T3,fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>MECÁNICA — CADA INCIDENTE</p>
               <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -234,7 +229,6 @@ export default function SesionPage() {
                 ))}
               </div>
             </div>
-
             <button className="glow-btn" onClick={generar}
               style={{width:'100%',padding:'20px',borderRadius:'14px',backgroundColor:ACC,border:'none',color:T1,fontSize:'17px',fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'12px'}}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -245,7 +239,6 @@ export default function SesionPage() {
       </div>
     </>
   );
-
   // ─── CARGANDO ────────────────────────────────────────────────────────────
   if (fase === 'cargando') return (
     <>
@@ -336,8 +329,6 @@ export default function SesionPage() {
             <div className="fade-up">
               <div style={{padding:'32px',borderRadius:'16px',backgroundColor:CARD,border:`1px solid ${scoreColor}35`,backdropFilter:'blur(10px)',marginBottom:'16px',position:'relative',overflow:'hidden'}}>
                 <div style={{position:'absolute',top:0,left:0,right:0,height:'2px',background:`linear-gradient(90deg,transparent,${scoreColor},transparent)`}}/>
-
-                {/* Score header */}
                 <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'24px'}}>
                   <div>
                     <h2 style={{fontSize:'20px',fontWeight:800,color:T1,marginBottom:'5px'}}>Resultado — Incidente {incIdx+1}</h2>
@@ -350,8 +341,6 @@ export default function SesionPage() {
                     <div style={{fontSize:'13px',color:T3,fontFamily:'monospace'}}>/ 20 pts</div>
                   </div>
                 </div>
-
-                {/* Sub-scores */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'24px'}}>
                   {[
                     {label:'Calidad análisis', value:`${evaluacion.puntuacion_calidad}/12`, color:'#4ADE80'},
@@ -364,20 +353,15 @@ export default function SesionPage() {
                     </div>
                   ))}
                 </div>
-
-                {/* Feedback */}
                 <div style={{padding:'16px 18px',borderRadius:'10px',backgroundColor:`${ACC}08`,border:`1px solid ${ACC}20`,marginBottom:'12px'}}>
                   <p style={{fontSize:'10px',color:T3,fontWeight:700,letterSpacing:'1.5px',marginBottom:'10px',fontFamily:'monospace'}}>FEEDBACK IA</p>
                   <p style={{fontSize:'15px',color:T2,lineHeight:1.75}}>{evaluacion.feedback}</p>
                 </div>
-
-                {/* Solución */}
                 <div style={{padding:'16px 18px',borderRadius:'10px',backgroundColor:'rgba(74,222,128,.05)',border:'1px solid rgba(74,222,128,.2)'}}>
                   <p style={{fontSize:'10px',color:T3,fontWeight:700,letterSpacing:'1.5px',marginBottom:'10px',fontFamily:'monospace'}}>SOLUCIÓN CORRECTA</p>
                   <p style={{fontSize:'15px',color:'#4ADE80',lineHeight:1.75}}>{evaluacion.solucion_explicada}</p>
                 </div>
               </div>
-
               <button onClick={siguiente}
                 style={{width:'100%',padding:'16px',borderRadius:'11px',backgroundColor:ACC,border:'none',color:T1,fontSize:'16px',fontWeight:700,cursor:'pointer',boxShadow:`0 4px 24px rgba(37,100,241,.45)`}}>
                 {incIdx+1 < sesion.incidentes.length ? '→ Siguiente incidente' : '🏁 Finalizar sesión'}
@@ -431,12 +415,15 @@ export default function SesionPage() {
     <>
       <style>{css}</style>
       <div style={{minHeight:'100vh',backgroundColor:BG,fontFamily:"'Inter',-apple-system,sans-serif",color:T1,display:'flex',flexDirection:'column'}}>
-
-        {/* ── HEADER ── */}
         <div style={{height:'56px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 28px',backgroundColor:'rgba(8,21,37,.95)',backdropFilter:'blur(20px)',borderBottom:`1px solid ${BD}`,flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
-            <img src="/logosoc.png" style={{height:'26px',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}/>
-            {/* Progress bar etapas */}
+            <img src="/logosoc.png" style={{height:'26px',cursor:'pointer'}} onClick={()=>{
+              if (window.confirm('⚠️ Si abandonas la sesión perderás 20 copas. ¿Seguro que quieres salir?')) {
+                axios.put('https://socblast-production.up.railway.app/api/me/copas', null,
+                  { params: { copas_delta: -20 }, headers: { Authorization: `Bearer ${token}` } }
+                ).finally(() => navigate('/dashboard'));
+              }
+            }}/>
             <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
               {ETAPAS.map((e,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'center',gap:'4px'}}>
@@ -453,7 +440,6 @@ export default function SesionPage() {
               {{triaje:'TRIAJE',logs:'LOGS',diagnostico:'DIAGNÓSTICO',acciones:'RESPUESTA',justificacion:'JUSTIFICACIÓN'}[etapa]}
             </span>
           </div>
-
           <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
             <span style={{fontSize:'12px',color:T3,fontFamily:'monospace'}}>INC {incIdx+1}/{sesion?.incidentes?.length}</span>
             <div style={{
@@ -469,23 +455,18 @@ export default function SesionPage() {
           </div>
         </div>
 
-        {/* ── CONTENIDO ── */}
         <div style={{flex:1,maxWidth:'900px',margin:'0 auto',width:'100%',padding:'32px 28px 48px'}}>
-
-          {/* Contexto incidente */}
           <div style={{padding:'14px 18px',borderRadius:'10px',backgroundColor:`${ACC}08`,border:`1px solid ${ACC}25`,marginBottom:'28px'}}>
             <p style={{fontSize:'11px',color:ACC,fontFamily:'monospace',marginBottom:'5px',letterSpacing:'1px'}}>INCIDENTE ACTIVO · {incidente?.titulo}</p>
             <p style={{fontSize:'15px',color:T2,lineHeight:1.7}}>{incidente?.descripcion}</p>
           </div>
 
-          {/* ── ETAPA 1: TRIAJE ── */}
           {etapa==='triaje' && (
             <div className="fade-up">
               <div style={{marginBottom:'22px'}}>
                 <h2 style={{fontSize:'22px',fontWeight:800,color:T1,marginBottom:'6px'}}>🚨 Etapa 1 — Triaje de Alertas</h2>
                 <p style={{fontSize:'14px',color:T3}}>Clasifica la severidad de cada alerta. Tu criterio será evaluado por la IA.</p>
               </div>
-
               <div style={{display:'flex',flexDirection:'column',gap:'12px',marginBottom:'28px'}}>
                 {incidente.alertas?.map((alerta,i)=>(
                   <div key={i} style={{padding:'20px 22px',borderRadius:'12px',backgroundColor:CARD,border:`1px solid ${triaje[alerta.id]?SEV[triaje[alerta.id]]+'45':BD}`,backdropFilter:'blur(10px)',position:'relative',overflow:'hidden'}}>
@@ -499,7 +480,6 @@ export default function SesionPage() {
                         <p style={{fontSize:'14px',color:T2,lineHeight:1.6,marginBottom:'6px'}}>{alerta.descripcion}</p>
                         <p style={{fontSize:'12px',color:T3,fontFamily:'monospace'}}>{alerta.timestamp}</p>
                       </div>
-                      {/* Botones severidad */}
                       <div style={{display:'flex',flexDirection:'column',gap:'6px',flexShrink:0}}>
                         {['CRITICA','ALTA','MEDIA','BAJA'].map(sev=>(
                           <button key={sev} onClick={()=>setTriaje(p=>({...p,[alerta.id]:sev}))}
@@ -512,7 +492,6 @@ export default function SesionPage() {
                   </div>
                 ))}
               </div>
-
               <button onClick={()=>setEtapa('logs')} disabled={!triajeCompleto}
                 style={{width:'100%',padding:'16px',borderRadius:'11px',backgroundColor:triajeCompleto?ACC:BD,border:'none',color:T1,fontWeight:700,fontSize:'16px',cursor:triajeCompleto?'pointer':'not-allowed',opacity:triajeCompleto?1:.5,boxShadow:triajeCompleto?`0 4px 20px rgba(37,100,241,.4)`:'none'}}>
                 Confirmar triaje → Investigar logs ({Object.keys(triaje).length}/{incidente.alertas?.length})
@@ -520,14 +499,12 @@ export default function SesionPage() {
             </div>
           )}
 
-          {/* ── ETAPA 2: LOGS ── */}
           {etapa==='logs' && (
             <div className="fade-up">
               <div style={{marginBottom:'22px'}}>
                 <h2 style={{fontSize:'22px',fontWeight:800,color:T1,marginBottom:'6px'}}>🔍 Etapa 2 — Investigación de Logs</h2>
                 <p style={{fontSize:'14px',color:T3}}>Selecciona hasta <strong style={{color:T1}}>4 logs</strong> que consideres relevantes para la investigación.</p>
               </div>
-
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'20px'}}>
                 {incidente.logs?.map((log,i)=>{
                   const sel = logsEleg.includes(i);
@@ -546,12 +523,10 @@ export default function SesionPage() {
                   );
                 })}
               </div>
-
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
                 <span style={{fontSize:'13px',color:T3,fontFamily:'monospace'}}>{logsEleg.length}/4 logs seleccionados</span>
                 {logsEleg.length>0 && <button onClick={()=>setLogsEleg([])} style={{background:'none',border:'none',color:T3,fontSize:'12px',cursor:'pointer',fontFamily:'monospace'}}>Limpiar selección</button>}
               </div>
-
               <button onClick={()=>setEtapa('diagnostico')} disabled={logsEleg.length===0}
                 style={{width:'100%',padding:'16px',borderRadius:'11px',backgroundColor:logsEleg.length>0?ACC:BD,border:'none',color:T1,fontWeight:700,fontSize:'16px',cursor:logsEleg.length>0?'pointer':'not-allowed',opacity:logsEleg.length>0?1:.5,boxShadow:logsEleg.length>0?`0 4px 20px rgba(37,100,241,.4)`:'none'}}>
                 Confirmar selección → Diagnóstico
@@ -559,15 +534,12 @@ export default function SesionPage() {
             </div>
           )}
 
-          {/* ── ETAPA 3: DIAGNÓSTICO ── */}
           {etapa==='diagnostico' && (
             <div className="fade-up">
               <div style={{marginBottom:'22px'}}>
                 <h2 style={{fontSize:'22px',fontWeight:800,color:T1,marginBottom:'6px'}}>🎯 Etapa 3 — Diagnóstico</h2>
                 <p style={{fontSize:'14px',color:T3}}>Basándote en alertas y logs, ¿qué tipo de amenaza estás viendo?</p>
               </div>
-
-              {/* Resumen triaje */}
               <div style={{padding:'14px 16px',borderRadius:'10px',backgroundColor:'rgba(8,21,37,.8)',border:`1px solid ${BD}`,marginBottom:'22px'}}>
                 <p style={{fontSize:'11px',color:T3,fontFamily:'monospace',marginBottom:'10px',letterSpacing:'1px'}}>ALERTAS CRÍTICAS Y ALTAS EN TU TRIAJE:</p>
                 <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
@@ -579,8 +551,6 @@ export default function SesionPage() {
                   }
                 </div>
               </div>
-
-              {/* 4 opciones SIEMPRE fijas */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'22px'}}>
                 {diagOpts.map((op,i)=>(
                   <button key={i} onClick={()=>setDiagEleg(op)}
@@ -592,13 +562,11 @@ export default function SesionPage() {
                   </button>
                 ))}
               </div>
-
               {pista && (
                 <div style={{padding:'14px 16px',borderRadius:'10px',backgroundColor:'rgba(245,158,11,.07)',border:'1px solid rgba(245,158,11,.2)',marginBottom:'16px'}}>
                   <p style={{fontSize:'14px',color:'#F59E0B',lineHeight:1.6}}>💡 <strong>Pista:</strong> Busca patrones de {incidente?.solucion_correcta?.tipo_ataque?.split(' ')[0]} en las alertas de mayor severidad.</p>
                 </div>
               )}
-
               <div style={{display:'flex',gap:'10px'}}>
                 {!pista && (
                   <button onClick={()=>{setPistas(p=>p+1);setPista(true);}}
@@ -614,14 +582,12 @@ export default function SesionPage() {
             </div>
           )}
 
-          {/* ── ETAPA 4: ACCIONES ── */}
           {etapa==='acciones' && (
             <div className="fade-up">
               <div style={{marginBottom:'22px'}}>
                 <h2 style={{fontSize:'22px',fontWeight:800,color:T1,marginBottom:'6px'}}>⚡ Etapa 4 — Plan de Respuesta</h2>
-                <p style={{fontSize:'14px',color:T3}}>Selecciona todas las acciones que tomarías. El <strong style={{color:T1}}>orden importa</strong> — numera tus prioridades.</p>
+                <p style={{fontSize:'14px',color:T3}}>Selecciona todas las acciones que tomarías. El <strong style={{color:T1}}>orden importa</strong>.</p>
               </div>
-
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'24px'}}>
                 {ACCIONES.map(({id,label,icon})=>{
                   const sel = accionesEl.includes(id);
@@ -637,12 +603,10 @@ export default function SesionPage() {
                   );
                 })}
               </div>
-
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
                 <span style={{fontSize:'13px',color:T3,fontFamily:'monospace'}}>{accionesEl.length} acciones seleccionadas</span>
                 {accionesEl.length>0 && <button onClick={()=>setAccionesEl([])} style={{background:'none',border:'none',color:T3,fontSize:'12px',cursor:'pointer',fontFamily:'monospace'}}>Limpiar</button>}
               </div>
-
               <button onClick={()=>setEtapa('justificacion')} disabled={accionesEl.length===0}
                 style={{width:'100%',padding:'16px',borderRadius:'11px',backgroundColor:accionesEl.length>0?ACC:BD,border:'none',color:T1,fontWeight:700,fontSize:'16px',cursor:accionesEl.length>0?'pointer':'not-allowed',opacity:accionesEl.length>0?1:.5,boxShadow:accionesEl.length>0?`0 4px 20px rgba(37,100,241,.4)`:'none'}}>
                 Confirmar acciones → Justificación final
@@ -650,15 +614,12 @@ export default function SesionPage() {
             </div>
           )}
 
-          {/* ── ETAPA 5: JUSTIFICACIÓN ── */}
           {etapa==='justificacion' && (
             <div className="fade-up">
               <div style={{marginBottom:'22px'}}>
                 <h2 style={{fontSize:'22px',fontWeight:800,color:T1,marginBottom:'6px'}}>📝 Etapa 5 — Justificación Final</h2>
                 <p style={{fontSize:'14px',color:T3}}>Explica tu razonamiento en 2-4 frases. <strong style={{color:T1}}>Este campo tiene el mayor peso en la puntuación.</strong></p>
               </div>
-
-              {/* Resumen de decisiones */}
               <div style={{padding:'18px 20px',borderRadius:'12px',backgroundColor:CARD,border:`1px solid ${BD}`,backdropFilter:'blur(10px)',marginBottom:'18px'}}>
                 <p style={{fontSize:'10px',color:T3,fontFamily:'monospace',marginBottom:'14px',letterSpacing:'1px'}}>RESUMEN DE TUS DECISIONES</p>
                 <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -677,11 +638,9 @@ export default function SesionPage() {
                   </div>
                 </div>
               </div>
-
               <textarea value={justif} onChange={e=>setJustif(e.target.value)}
                 placeholder={`Escribe aquí tu análisis:\n• ¿Por qué ese diagnóstico?\n• ¿Por qué esas acciones en ese orden?\n• ¿Escalarías? ¿A quién?`}
                 style={{width:'100%',height:'160px',padding:'16px',borderRadius:'12px',fontFamily:'monospace',fontSize:'14px',color:T2,backgroundColor:'rgba(8,21,37,.8)',border:`1px solid ${justif.trim()?ACC+'50':BD}`,resize:'none',outline:'none',lineHeight:1.75,marginBottom:'16px'}}/>
-
               <button onClick={()=>enviar()} disabled={!justif.trim()}
                 style={{width:'100%',padding:'18px',borderRadius:'12px',backgroundColor:justif.trim()?ACC:BD,border:'none',color:T1,fontWeight:800,fontSize:'17px',cursor:justif.trim()?'pointer':'not-allowed',opacity:justif.trim()?1:.5,boxShadow:justif.trim()?`0 4px 24px rgba(37,100,241,.45)`:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px'}}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
