@@ -10,7 +10,7 @@ load_dotenv()
 
 app = FastAPI(title="SoCBlast API", version="1.0.0")
 
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "socblast_secret"))
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"), max_age=300)
 
 origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
 
