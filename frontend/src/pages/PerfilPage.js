@@ -65,7 +65,7 @@ const PerfilPage = () => {
 
   const fetchPerfil = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/me', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get('https://socblast-production.up.railway.app/api/me', { headers: { Authorization: `Bearer ${token}` } });
       setUserData(res.data);
     } catch (err) { console.error(err); }
     setLoading(false);

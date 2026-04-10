@@ -16,7 +16,7 @@ export default function VerificarEmail() {
 
   useEffect(() => {
     if (!token) { setEstado('error'); return; }
-    axios.get(`http://127.0.0.1:8000/api/verificar-email?token=${token}`)
+    axios.get(`https://socblast-production.up.railway.app/api/verificar-email?token=${token}`)
       .then(() => setEstado('ok'))
       .catch(() => setEstado('error'));
   }, []);

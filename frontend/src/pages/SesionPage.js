@@ -71,7 +71,7 @@ export default function SesionPage() {
   const ac        = ARENA_COLOR[arena] || ACC;
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/me', { headers:{ Authorization:`Bearer ${token}` } })
+    axios.get('https://socblast-production.up.railway.app/api/me', { headers:{ Authorization:`Bearer ${token}` } })
       .then(r => setUserData(r.data)).catch(()=>{});
   }, []);
 
@@ -110,7 +110,7 @@ export default function SesionPage() {
   const generar = async () => {
     setFase('cargando');
     try {
-      const r = await axios.post('http://127.0.0.1:8000/api/sesiones/generar', {}, { headers:{ Authorization:`Bearer ${token}` } });
+      const r = await axios.post('https://socblast-production.up.railway.app/api/sesiones/generar', {}, { headers:{ Authorization:`Bearer ${token}` } });
       setSesion(r.data);
       setTiempoRestante(TIEMPOS[r.data.arena || 'Bronce']);
       setFase('briefing');
@@ -123,7 +123,7 @@ export default function SesionPage() {
     const txt = `TRIAJE:${JSON.stringify(triaje)}|LOGS:${logsEleg.join(',')}|DIAG:${diagEleg}|ACCIONES:${accionesEl.join(',')}|JUST:${justif||'Sin justificación'}`;
     try {
       const r = await axios.post(
-        `http://127.0.0.1:8000/api/sesiones/${sesion._id}/responder`, null,
+        `https://socblast-production.up.railway.app/api/sesiones/${sesion._id}/responder`, null,
         { params:{ incidente_id: incIdx+1, respuesta: txt, tiempo_usado: tiempoUsado, pistas_usadas: pistas }, headers:{ Authorization:`Bearer ${token}` } }
       );
       setEvaluacion(r.data);
@@ -143,7 +143,7 @@ export default function SesionPage() {
 
   const finalizar = async () => {
     try {
-      const r = await axios.post(`http://127.0.0.1:8000/api/sesiones/${sesion._id}/finalizar`, {}, { headers:{ Authorization:`Bearer ${token}` } });
+      const r = await axios.post(`https://socblast-production.up.railway.app/api/sesiones/${sesion._id}/finalizar`, {}, { headers:{ Authorization:`Bearer ${token}` } });
       setResultado(r.data); setFase('finalizada');
     } catch { alert('Error finalizando'); }
   };

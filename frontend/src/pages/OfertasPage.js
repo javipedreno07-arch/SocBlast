@@ -25,7 +25,7 @@ const OfertasPage = () => {
     }
     setLoading(true);
     try {
-      await axios.post('http://127.0.0.1:8000/api/ofertas', form, {
+      await axios.post('https://socblast-production.up.railway.app/api/ofertas', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setEnviado(true);

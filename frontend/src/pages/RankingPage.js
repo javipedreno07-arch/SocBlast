@@ -32,7 +32,7 @@ const RankingPage = () => {
 
   const fetchRanking = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/ranking', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get('https://socblast-production.up.railway.app/api/ranking', { headers: { Authorization: `Bearer ${token}` } });
       setJugadores(res.data.jugadores);
       setMiPosicion(res.data.mi_posicion);
     } catch (err) { console.error(err); }

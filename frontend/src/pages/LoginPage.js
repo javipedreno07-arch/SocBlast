@@ -31,7 +31,7 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/login', form);
+      const res = await axios.post('https://socblast-production.up.railway.app/api/login', form);
       login({ nombre: res.data.nombre, rol: res.data.rol, email: form.email }, res.data.access_token);
       setLoading(false);
       navigate(res.data.rol === 'analista' ? '/dashboard' : '/company');
@@ -48,7 +48,7 @@ if (err.response?.status === 403) {
   };
 
   const handleGoogle = () => {
-    window.location.href = 'http://127.0.0.1:8000/api/auth/google';
+    window.location.href = 'https://socblast-production.up.railway.app/api/auth/google';
   };
 
   const handleApple = () => {

@@ -35,7 +35,7 @@ const SimulacionPage = () => {
 
   const fetchAnalistas = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/talent-pool', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get('https://socblast-production.up.railway.app/api/talent-pool', { headers: { Authorization: `Bearer ${token}` } });
       setAnalistas(res.data);
     } catch {}
   };
@@ -44,7 +44,7 @@ const SimulacionPage = () => {
     if (!form.nombre || !form.tipo_ataque || !form.objetivos) return;
     setLoading(true);
     try {
-      await axios.post('http://127.0.0.1:8000/api/simulaciones-empresa', { ...form, candidato_id: candidatoSeleccionado?._id, candidato_nombre: candidatoSeleccionado?.nombre }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post('https://socblast-production.up.railway.app/api/simulaciones-empresa', { ...form, candidato_id: candidatoSeleccionado?._id, candidato_nombre: candidatoSeleccionado?.nombre }, { headers: { Authorization: `Bearer ${token}` } });
       setEnviado(true);
     } catch {}
     setLoading(false);

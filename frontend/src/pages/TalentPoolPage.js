@@ -44,7 +44,7 @@ const TalentPoolPage = () => {
 
   const fetchAnalistas = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/talent-pool', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get('https://socblast-production.up.railway.app/api/talent-pool', { headers: { Authorization: `Bearer ${token}` } });
       setAnalistas(res.data);
     } catch (err) { console.error(err); }
     setLoading(false);
