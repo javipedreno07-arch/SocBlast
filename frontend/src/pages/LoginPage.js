@@ -3,64 +3,61 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-const BG   = '#08082A';
-const CARD = '#101346';
-const BD   = '#1A1D50';
+const BG   = '#03030A';
+const CARD = 'rgba(14,26,46,0.9)';
+const BD   = '#1A3050';
 const T1   = '#FFFFFF';
-const T2   = '#8B9BB4';
-const T3   = '#3A3D6A';
+const T2   = '#C8D8F0';
+const T3   = '#5A7898';
 const ACC  = '#2564F1';
+const API  = 'https://socblast-production.up.railway.app';
 
 const LoadingSpinner = () => (
-  <div style={{ position: 'fixed', inset: 0, backgroundColor: BG, zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+  <div style={{ position:'fixed', inset:0, backgroundColor:BG, zIndex:9999, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px' }}>
     <style>{`@keyframes spinLogo{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}`}</style>
-    <img src="/logosoc.png" alt="Cargando" style={{ width: '56px', height: '56px', animation: 'spinLogo 1s linear infinite' }} />
-    <p style={{ fontSize: '12px', color: T3, fontFamily: 'monospace', letterSpacing: '2px' }}>CARGANDO...</p>
+    <img src="/logosoc.png" alt="Cargando" style={{ width:'56px', height:'56px', animation:'spinLogo 1s linear infinite' }} />
+    <p style={{ fontSize:'12px', color:T3, fontFamily:'monospace', letterSpacing:'2px' }}>CARGANDO...</p>
   </div>
 );
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email:'', password:'' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!form.email.trim()) { setError('El email es obligatorio'); return; }
+    if (!form.password.trim()) { setError('La contraseña es obligatoria'); return; }
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('https://socblast-production.up.railway.app/api/login', form);
-      login({ nombre: res.data.nombre, rol: res.data.rol, email: form.email }, res.data.access_token);
+      const res = await axios.post(`${API}/api/login`, form);
+      login({ nombre:res.data.nombre, rol:res.data.rol, email:form.email }, res.data.access_token);
       setLoading(false);
       navigate(res.data.rol === 'analista' ? '/dashboard' : '/company');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al iniciar sesión');
       setLoading(false);
-      // En el catch del handleSubmit:
-if (err.response?.status === 403) {
-  setError('Debes verificar tu email antes de entrar. Revisa tu bandeja de entrada.');
-} else {
-  setError('Credenciales incorrectas');
-}
+      if (err.response?.status === 403) {
+        setError('Debes verificar tu email antes de entrar.');
+      } else {
+        setError('Email o contraseña incorrectos');
+      }
     }
   };
 
-  const handleGoogle = () => {
-    window.location.href = 'https://socblast-production.up.railway.app/api/auth/google';
-  };
-
-  const handleApple = () => {
-    setError('Apple OAuth próximamente disponible');
-  };
+  const handleGoogle = () => { window.location.href = `${API}/api/auth/google`; };
 
   const css = `
     @keyframes spinLogo{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-    .input-field:focus{border-color:${ACC} !important;outline:none;}
-    .social-btn:hover{border-color:rgba(37,100,241,0.4) !important;background:rgba(37,100,241,0.08) !important;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    .fade-up{animation:fadeUp 0.4s ease forwards;}
+    .input-field:focus{border-color:${ACC}!important;outline:none!important;box-shadow:0 0 0 3px rgba(37,100,241,0.1)!important;}
+    .social-btn:hover{border-color:rgba(37,100,241,0.5)!important;background:rgba(37,100,241,0.08)!important;}
     .submit-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
-    *{transition:filter 0.2s,transform 0.2s,border-color 0.2s,background 0.2s;}
+    .back-btn:hover{color:${T2}!important;}
+    *{transition:filter 0.2s,transform 0.2s,border-color 0.2s,background 0.2s,color 0.2s;}
   `;
 
   if (loading) return <LoadingSpinner />;
@@ -68,29 +65,42 @@ if (err.response?.status === 403) {
   return (
     <>
       <style>{css}</style>
-      <div style={{ minHeight: '100vh', backgroundColor: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter',-apple-system,sans-serif" }}>
-        <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"'Inter',-apple-system,sans-serif", position:'relative', overflow:'hidden' }}>
 
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <img src="/logosoc.png" alt="SocBlast" style={{ width: '52px', height: '52px', marginBottom: '12px' }} />
-            <h1 style={{ fontSize: '24px', fontWeight: 900, color: T1, letterSpacing: '-0.5px', marginBottom: '6px' }}>
-              Soc<span style={{ color: ACC }}>Blast</span>
-            </h1>
-            <p style={{ fontSize: '13px', color: T2 }}>Inicia sesión en tu cuenta</p>
+        {/* NAVBAR */}
+        <nav style={{ height:'60px', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 48px', backgroundColor:'rgba(14,26,46,0.9)', backdropFilter:'blur(20px)', borderBottom:`1px solid ${BD}` }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }} onClick={()=>navigate('/')}>
+            <img src="/logosoc.png" alt="SocBlast" style={{ height:'28px' }} />
+            <span style={{ fontSize:'15px', fontWeight:800, color:T1 }}>Soc<span style={{ color:ACC }}>Blast</span></span>
           </div>
+          <button className="back-btn" onClick={()=>navigate('/')} style={{ background:'none', border:`1px solid ${BD}`, color:T3, padding:'6px 14px', borderRadius:'7px', fontSize:'12px', cursor:'pointer', fontWeight:500 }}>
+            ← Volver
+          </button>
+        </nav>
 
-          <div style={{ backgroundColor: CARD, border: `1px solid ${BD}`, borderRadius: '14px', padding: '28px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,transparent,${ACC}80,transparent)` }} />
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'calc(100vh - 60px)', padding:'40px 20px' }}>
+          <div style={{ position:'absolute', top:'30%', left:'50%', transform:'translateX(-50%)', width:'600px', height:'300px', background:'radial-gradient(ellipse, rgba(37,100,241,0.05) 0%, transparent 70%)', pointerEvents:'none' }} />
 
-            {error && (
-              <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#EF4444', fontSize: '12px' }}>
-                {error}
+          <div className="fade-up" style={{ width:'100%', maxWidth:'420px', position:'relative' }}>
+            <div style={{ textAlign:'center', marginBottom:'36px' }}>
+              <div style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'56px', height:'56px', borderRadius:'14px', backgroundColor:`${ACC}15`, border:`1px solid ${ACC}30`, marginBottom:'16px' }}>
+                <img src="/logosoc.png" alt="SocBlast" style={{ width:'32px', height:'32px' }} />
               </div>
-            )}
+              <h1 style={{ fontSize:'26px', fontWeight:900, color:T1, letterSpacing:'-0.5px', marginBottom:'6px' }}>Soc<span style={{ color:ACC }}>Blast</span></h1>
+              <p style={{ fontSize:'13px', color:T3 }}>Inicia sesión en tu cuenta</p>
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ backgroundColor:CARD, border:`1px solid ${BD}`, borderRadius:'16px', padding:'32px', backdropFilter:'blur(20px)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)', position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:`linear-gradient(90deg,transparent,${ACC}60,transparent)` }} />
+
+              {error && (
+                <div style={{ marginBottom:'20px', padding:'12px 16px', borderRadius:'10px', backgroundColor:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.2)', color:'#F87171', fontSize:'13px', lineHeight:1.5 }}>
+                  {error}
+                </div>
+              )}
+
               <button className="social-btn" onClick={handleGoogle}
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', backgroundColor: BG, border: `1px solid ${BD}`, color: T1, fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                style={{ width:'100%', padding:'12px', borderRadius:'10px', backgroundColor:'rgba(255,255,255,0.03)', border:`1px solid ${BD}`, color:T2, fontSize:'13px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', marginBottom:'24px' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -100,51 +110,37 @@ if (err.response?.status === 403) {
                 Continuar con Google
               </button>
 
-              <button className="social-btn" onClick={handleApple}
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', backgroundColor: BG, border: `1px solid ${BD}`, color: T1, fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={T1}>
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-                Continuar con Apple
+              <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px' }}>
+                <div style={{ flex:1, height:'1px', backgroundColor:BD }} />
+                <span style={{ fontSize:'11px', color:T3, fontFamily:'monospace', letterSpacing:'1px' }}>O CON EMAIL</span>
+                <div style={{ flex:1, height:'1px', backgroundColor:BD }} />
+              </div>
+
+              <div style={{ display:'flex', flexDirection:'column', gap:'14px', marginBottom:'24px' }}>
+                {[{ key:'email', label:'EMAIL', type:'email', placeholder:'tu@email.com' }, { key:'password', label:'CONTRASEÑA', type:'password', placeholder:'••••••••' }].map(f => (
+                  <div key={f.key}>
+                    <label style={{ fontSize:'11px', color:T3, fontWeight:700, letterSpacing:'1.5px', fontFamily:'monospace', display:'block', marginBottom:'8px' }}>{f.label}</label>
+                    <input className="input-field" type={f.type} value={form[f.key]}
+                      onChange={e => setForm({ ...form, [f.key]:e.target.value })}
+                      onKeyDown={e => f.key === 'password' && e.key === 'Enter' && handleSubmit()}
+                      placeholder={f.placeholder}
+                      style={{ width:'100%', padding:'11px 14px', borderRadius:'10px', backgroundColor:'rgba(255,255,255,0.03)', border:`1px solid ${BD}`, color:T1, fontSize:'13px', fontFamily:"'Inter',sans-serif", boxSizing:'border-box' }} />
+                  </div>
+                ))}
+              </div>
+
+              <button className="submit-btn" onClick={handleSubmit}
+                style={{ width:'100%', padding:'13px', borderRadius:'10px', background:`linear-gradient(135deg, ${ACC}, #1a4fd6)`, border:'none', color:T1, fontWeight:700, fontSize:'14px', cursor:'pointer' }}>
+                Iniciar sesión
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ flex: 1, height: '1px', backgroundColor: BD }} />
-              <span style={{ fontSize: '11px', color: T3, fontFamily: 'monospace' }}>o con email</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: BD }} />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ fontSize: '10px', color: T3, fontWeight: 700, letterSpacing: '1.5px', fontFamily: 'monospace', display: 'block', marginBottom: '6px' }}>EMAIL</label>
-                <input className="input-field" type="email" value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
-                  placeholder="tu@email.com"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', backgroundColor: BG, border: `1px solid ${BD}`, color: T1, fontSize: '13px', fontFamily: "'Inter',sans-serif" }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '10px', color: T3, fontWeight: 700, letterSpacing: '1.5px', fontFamily: 'monospace', display: 'block', marginBottom: '6px' }}>CONTRASEÑA</label>
-                <input className="input-field" type="password" value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
-                  placeholder="••••••••"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', backgroundColor: BG, border: `1px solid ${BD}`, color: T1, fontSize: '13px', fontFamily: "'Inter',sans-serif" }} />
-              </div>
-            </div>
-
-            <button className="submit-btn" onClick={handleSubmit}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', backgroundColor: ACC, border: 'none', color: T1, fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
-              Iniciar sesión
-            </button>
+            <p style={{ textAlign:'center', fontSize:'13px', color:T3, marginTop:'24px' }}>
+              ¿No tienes cuenta?{' '}
+              <span onClick={()=>navigate('/register')} style={{ color:ACC, cursor:'pointer', fontWeight:600 }}>Regístrate gratis</span>
+            </p>
+            <p style={{ textAlign:'center', fontSize:'11px', color:'#1A3050', marginTop:'16px', fontFamily:'monospace' }}>Powered by Zorion</p>
           </div>
-
-          <p style={{ textAlign: 'center', fontSize: '13px', color: T3, marginTop: '20px' }}>
-            ¿No tienes cuenta?{' '}
-            <span onClick={() => navigate('/register')} style={{ color: ACC, cursor: 'pointer', fontWeight: 600 }}>Regístrate gratis</span>
-          </p>
-          <p style={{ textAlign: 'center', fontSize: '11px', color: T3, marginTop: '24px', fontFamily: 'monospace' }}>Powered by Zorion</p>
         </div>
       </div>
     </>
