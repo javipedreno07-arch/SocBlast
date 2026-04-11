@@ -1,47 +1,210 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const BG    = '#03030A';
-const CARD  = 'rgba(14,26,46,0.9)';
-const CARD2 = 'rgba(8,21,37,0.9)';
-const BD    = '#1A3050';
-const T1    = '#FFFFFF';
-const T2    = '#C8D8F0';
-const T3    = '#5A7898';
-const ACC   = '#2564F1';
-const GREEN = '#4ADE80';
-const RED   = '#EF4444';
+const BG    = '#060810';
+const CARD  = 'rgba(10,18,35,0.95)';
+const CARD2 = 'rgba(6,12,24,0.9)';
+const BD    = '#0F2040';
+const BD2   = '#1A3060';
+const T1    = '#F0F4FF';
+const T2    = '#8BA4CC';
+const T3    = '#3A5478';
+const ACC   = '#3B7BF5';
+const GREEN = '#22D3A0';
+const RED   = '#F05070';
+const GOLD  = '#F0B429';
 
-// ─── IMÁGENES POR LECCIÓN ────────────────────────────────────────────────────
 const LESSON_IMAGES = {
-  '1-1': 'SOC security operations center monitors screens',
-  '1-2': 'OSI model network layers diagram',
-  '1-3': 'Windows event log viewer security',
-  '1-4': 'cybersecurity analyst workstation SIEM dashboard',
-  '1-5': 'brute force attack login attempt server',
-  '2-1': 'Splunk SIEM dashboard security events',
-  '2-2': 'MITRE ATT&CK framework matrix',
-  '2-3': 'threat intelligence IOC indicators compromise',
-  '2-4': 'phishing email malware attachment analysis',
-  '3-1': 'incident response NIST cybersecurity framework',
-  '3-2': 'cybersecurity incident severity triage',
-  '3-3': 'ransomware attack network response',
-  '4-1': 'threat hunting analyst logs dark screen',
-  '4-2': 'network anomaly detection suspicious activity',
-  '5-1': 'digital forensics computer evidence analysis',
-  '5-2': 'malware analysis reverse engineering',
-  '6-1': 'network IDS IPS firewall traffic analysis',
-  '6-2': 'DNS tunneling network traffic wireshark',
-  '7-1': 'AWS cloud security dashboard IAM',
-  '7-2': 'cloud security breach AWS compromised account',
-  '8-1': 'Python scripting automation cybersecurity terminal',
-  '9-1': 'malware static dynamic analysis sandbox',
-  '10-1': 'penetration testing nmap reconnaissance hacking',
-  '11-1': 'SOC analyst alert fatigue multiple screens',
-  '12-1': 'SOC certification exam professional analyst',
+  '1-1':'SOC security operations center monitors screens',
+  '1-2':'OSI model network layers diagram',
+  '1-3':'Windows event log viewer security',
+  '1-4':'cybersecurity analyst workstation SIEM dashboard',
+  '1-5':'brute force attack login attempt server',
+  '2-1':'Splunk SIEM dashboard security events',
+  '2-2':'MITRE ATT&CK framework matrix',
+  '2-3':'threat intelligence IOC indicators compromise',
+  '2-4':'phishing email malware attachment analysis',
+  '3-1':'incident response NIST cybersecurity framework',
+  '3-2':'cybersecurity incident severity triage',
+  '3-3':'ransomware attack network response',
+  '4-1':'threat hunting analyst logs dark screen',
+  '4-2':'network anomaly detection suspicious activity',
+  '5-1':'digital forensics computer evidence analysis',
+  '5-2':'malware analysis reverse engineering',
+  '6-1':'network IDS IPS firewall traffic analysis',
+  '6-2':'DNS tunneling network traffic wireshark',
+  '7-1':'AWS cloud security dashboard IAM',
+  '7-2':'cloud security breach AWS compromised account',
+  '8-1':'Python scripting automation cybersecurity terminal',
+  '9-1':'malware static dynamic analysis sandbox',
+  '10-1':'penetration testing nmap reconnaissance hacking',
+  '11-1':'SOC analyst alert fatigue multiple screens',
+  '12-1':'SOC certification exam professional analyst',
 };
 
-// ─── MÓDULOS ─────────────────────────────────────────────────────────────────
+const COLORES_SECCION = [
+  { bg:'rgba(59,123,245,0.07)',  border:'rgba(59,123,245,0.22)',  accent:'#3B7BF5' },
+  { bg:'rgba(34,211,160,0.06)',  border:'rgba(34,211,160,0.18)',  accent:'#22D3A0' },
+  { bg:'rgba(240,180,41,0.06)',  border:'rgba(240,180,41,0.18)',  accent:'#F0B429' },
+  { bg:'rgba(167,100,245,0.06)', border:'rgba(167,100,245,0.18)', accent:'#A764F5' },
+  { bg:'rgba(240,80,112,0.06)',  border:'rgba(240,80,112,0.18)',  accent:'#F05070' },
+];
+
+const parsearTeoria = (texto) => {
+  const lineas = texto.split('\n');
+  const bloques = [];
+  let actual = null;
+  let colorIdx = 0;
+
+  const push = () => { if (actual) { bloques.push(actual); actual = null; } };
+
+  for (const raw of lineas) {
+    const l = raw.trim();
+    if (!l) { push(); continue; }
+
+    if (/^[A-ZÁÉÍÓÚÑ\s\d]+[—:]/.test(l) && l === l.toUpperCase().replace(/[—:.\-]/g,'').trim() + l.slice(l.replace(/[—:.\-]/g,'').trim().length)) {
+      push();
+      const titulo = l.split(/[—:]/)[0].trim();
+      const sub    = l.includes('—') ? l.split('—')[1].trim() : '';
+      actual = { tipo:'seccion', titulo, sub, items:[], color:COLORES_SECCION[colorIdx++ % COLORES_SECCION.length] };
+      continue;
+    }
+
+    const esTituloMayus = l.length < 80 && l === l.toUpperCase() && /[A-Z]/.test(l) && !l.startsWith('━');
+    if (esTituloMayus) {
+      push();
+      actual = { tipo:'seccion', titulo:l.replace(/[—:]+$/, '').trim(), sub:'', items:[], color:COLORES_SECCION[colorIdx++ % COLORES_SECCION.length] };
+      continue;
+    }
+
+    if (/^[━─=]{3,}/.test(l)) {
+      push();
+      actual = { tipo:'separador' };
+      push();
+      continue;
+    }
+
+    if (l.startsWith('index=') || l.startsWith('nmap') || l.startsWith('import ') || l.startsWith('def ') || l.startsWith('with ') || l.startsWith('for ') || /^\w+ = /.test(l)) {
+      if (actual?.tipo !== 'codigo') { push(); actual = { tipo:'codigo', lineas:[] }; }
+      actual.lineas.push(l);
+      continue;
+    }
+
+    if (/^[-•·]\s/.test(l) || /^\d+\.\s/.test(l) || /^[🔴🟠🟡🟢✓✗⚠T]/.test(l)) {
+      const texto = l.replace(/^[-•·]\s*/, '').replace(/^\d+\.\s*/, '');
+      if (actual?.tipo === 'seccion') { actual.items.push(texto); continue; }
+      if (actual?.tipo !== 'lista') { push(); actual = { tipo:'lista', items:[], color:COLORES_SECCION[colorIdx % COLORES_SECCION.length] }; }
+      actual.items.push(texto);
+      continue;
+    }
+
+    if (actual?.tipo === 'codigo') { actual.lineas.push(l); continue; }
+
+    if (!actual) { actual = { tipo:'parrafo', texto:l }; }
+    else if (actual.tipo === 'parrafo') { actual.texto += ' ' + l; }
+    else { push(); actual = { tipo:'parrafo', texto:l }; }
+  }
+  push();
+  return bloques;
+};
+
+const TeoriaVisual = ({ texto }) => {
+  const bloques = parsearTeoria(texto);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+      {bloques.map((b, i) => {
+        if (b.tipo === 'parrafo') return (
+          <p key={i} style={{ fontSize:'15px', color:T2, lineHeight:1.9, letterSpacing:'0.01em' }}>{b.texto}</p>
+        );
+
+        if (b.tipo === 'seccion') return (
+          <div key={i} style={{ borderRadius:'12px', backgroundColor:b.color.bg, border:`1px solid ${b.color.border}`, overflow:'hidden' }}>
+            <div style={{ padding:'11px 18px', borderBottom:b.items.length?`1px solid ${b.color.border}`:undefined, display:'flex', alignItems:'center', gap:'10px' }}>
+              <div style={{ width:'3px', height:'16px', borderRadius:'2px', backgroundColor:b.color.accent, flexShrink:0 }}/>
+              <span style={{ fontSize:'11px', fontWeight:700, color:b.color.accent, letterSpacing:'1.8px', fontFamily:"'Courier New',monospace" }}>{b.titulo}</span>
+              {b.sub && <span style={{ fontSize:'12px', color:T3 }}>— {b.sub}</span>}
+            </div>
+            {b.items.length > 0 && (
+              <div style={{ padding:'12px 18px', display:'flex', flexDirection:'column', gap:'7px' }}>
+                {b.items.map((item, j) => {
+                  const esAlerta = /^[🔴🟠🟡🟢]/.test(item);
+                  const colorItem = item.startsWith('🔴')?RED:item.startsWith('🟢')?GREEN:item.startsWith('🟠')?'#F97316':item.startsWith('🟡')?GOLD:T2;
+                  return (
+                    <div key={j} style={{ display:'flex', alignItems:'flex-start', gap:'10px', padding:esAlerta?'7px 12px':'0', borderRadius:esAlerta?'7px':undefined, backgroundColor:esAlerta?`${colorItem}08`:undefined, border:esAlerta?`1px solid ${colorItem}20`:undefined }}>
+                      {!esAlerta && <div style={{ width:'4px', height:'4px', borderRadius:'50%', backgroundColor:b.color.accent, marginTop:'9px', flexShrink:0 }}/>}
+                      <span style={{ fontSize:'14px', color:colorItem, lineHeight:1.75 }}>{item}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+
+        if (b.tipo === 'lista') return (
+          <div key={i} style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+            {b.items.map((item, j) => {
+              const esAlerta = /^[🔴🟠🟡🟢]/.test(item);
+              const colorItem = item.startsWith('🔴')?RED:item.startsWith('🟢')?GREEN:item.startsWith('🟠')?'#F97316':item.startsWith('🟡')?GOLD:T2;
+              return (
+                <div key={j} style={{ display:'flex', alignItems:'flex-start', gap:'10px', padding:'8px 14px', borderRadius:'8px', backgroundColor:esAlerta?`${colorItem}07`:'rgba(10,18,35,0.5)', border:`1px solid ${esAlerta?colorItem+'18':BD}` }}>
+                  {!esAlerta && <div style={{ width:'4px', height:'4px', borderRadius:'50%', backgroundColor:ACC, marginTop:'9px', flexShrink:0 }}/>}
+                  <span style={{ fontSize:'14px', color:colorItem, lineHeight:1.75 }}>{item}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+
+        if (b.tipo === 'codigo') return (
+          <div key={i} style={{ borderRadius:'10px', backgroundColor:'rgba(0,4,12,0.95)', border:`1px solid ${BD2}`, overflow:'hidden' }}>
+            <div style={{ padding:'6px 14px', backgroundColor:'rgba(59,123,245,0.06)', borderBottom:`1px solid ${BD}`, display:'flex', alignItems:'center', gap:'7px' }}>
+              {['#F05070','#F0B429','#22D3A0'].map((c,k) => <div key={k} style={{ width:'8px', height:'8px', borderRadius:'50%', backgroundColor:c+'99' }}/>)}
+            </div>
+            <div style={{ padding:'14px 18px' }}>
+              {b.lineas.map((linea, j) => (
+                <div key={j} style={{ fontSize:'13px', color:linea.startsWith('━')||linea.startsWith('─')?T3:linea.includes('==') || linea.includes('✓')?GREEN:linea.startsWith('#')?T3:ACC, fontFamily:"'Courier New',monospace", lineHeight:1.85 }}>
+                  {linea}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+        return null;
+      })}
+    </div>
+  );
+};
+
+const LeccionImagen = ({ query }) => {
+  const [src, setSrc] = useState(null);
+  useEffect(() => { if (query) setSrc(`https://source.unsplash.com/900x380/?${encodeURIComponent(query)}`); }, [query]);
+  if (!src) return null;
+  return (
+    <div style={{ borderRadius:'14px', overflow:'hidden', marginBottom:'28px', border:`1px solid ${BD2}`, position:'relative', height:'200px' }}>
+      <img src={src} alt={query} style={{ width:'100%', height:'100%', objectFit:'cover', filter:'brightness(0.65) saturate(0.75)' }}/>
+      <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(6,8,16,0.9) 0%, transparent 55%)' }}/>
+      <div style={{ position:'absolute', bottom:'12px', left:'16px' }}>
+        <span style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>{query}</span>
+      </div>
+    </div>
+  );
+};
+
+const Navbar = ({ titulo, back, right, onLogoClick }) => (
+  <nav style={{ position:'sticky', top:0, zIndex:50, height:'62px', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 44px', backgroundColor:'rgba(6,8,16,0.97)', backdropFilter:'blur(24px)', borderBottom:`1px solid ${BD}` }}>
+    <div style={{ display:'flex', alignItems:'center', gap:'12px', cursor:'pointer' }} onClick={onLogoClick}>
+      <img src="/logosoc.png" alt="SocBlast" style={{ height:'28px' }}/>
+      <span style={{ fontSize:'15px', fontWeight:800, color:T1, letterSpacing:'-0.3px' }}>Soc<span style={{ color:ACC }}>Blast</span></span>
+    </div>
+    {titulo && <span style={{ fontSize:'13px', fontWeight:500, color:T2, maxWidth:'360px', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{titulo}</span>}
+    <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+      {right && <span style={{ fontSize:'11px', color:GREEN, fontFamily:"'Courier New',monospace", fontWeight:700, padding:'4px 10px', borderRadius:'6px', backgroundColor:'rgba(34,211,160,0.07)', border:'1px solid rgba(34,211,160,0.18)' }}>{right}</span>}
+      {back && <button onClick={back} style={{ padding:'6px 16px', borderRadius:'8px', background:'none', border:`1px solid ${BD2}`, color:T2, fontSize:'12px', cursor:'pointer' }}>← Volver</button>}
+    </div>
+  </nav>
+);
 const MODULOS = [
   {
     id:1, num:'01', titulo:'Fundamentos de Ciberseguridad y SOC',
@@ -53,10 +216,9 @@ const MODULOS = [
         id:1, titulo:'Introducción a la Ciberseguridad', xp:35,
         teoria:`La ciberseguridad protege sistemas, redes y datos frente a ataques digitales.
 
-TRIADA CIA — El núcleo de toda la seguridad:
-
+TRIADA CIA — EL NÚCLEO DE TODA LA SEGURIDAD:
 - Confidencialidad — Solo los autorizados acceden a la información
-- Integridad — La información no se altera sin autorización  
+- Integridad — La información no se altera sin autorización
 - Disponibilidad — Los sistemas están accesibles cuando se necesitan
 
 TIPOS DE ATAQUES MÁS COMUNES:
@@ -84,14 +246,14 @@ ACTORES DE AMENAZA:
         id:2, titulo:'Redes para SOC — Fundamentos críticos', xp:40,
         teoria:`Las redes son el campo de batalla del analista SOC. Debes dominarlas.
 
-MODELO OSI — 7 capas que debes memorizar:
-1. Física — Cables y señales eléctricas
-2. Enlace — Direcciones MAC, switches
-3. Red — Direcciones IP, enrutamiento
-4. Transporte — TCP/UDP, puertos
-5. Sesión — Gestión de sesiones
-6. Presentación — Cifrado y formato
-7. Aplicación — HTTP, DNS, FTP, SMB
+MODELO OSI — 7 CAPAS QUE DEBES MEMORIZAR:
+- Física — Cables y señales eléctricas
+- Enlace — Direcciones MAC, switches
+- Red — Direcciones IP, enrutamiento
+- Transporte — TCP/UDP, puertos
+- Sesión — Gestión de sesiones
+- Presentación — Cifrado y formato
+- Aplicación — HTTP, DNS, FTP, SMB
 
 PROTOCOLOS CLAVE EN SOC:
 - HTTP/HTTPS (80/443) — Tráfico web
@@ -107,7 +269,7 @@ CONCEPTOS ESENCIALES:
 - UDP — Rápido, sin confirmación, usado en DNS y streaming`,
         preguntas:[
           {pregunta:'¿En qué capa OSI opera el protocolo IP?',opciones:['Capa 2 — Enlace','Capa 3 — Red','Capa 4 — Transporte','Capa 7 — Aplicación'],correcta:1},
-          {pregunta:'¿Qué puerto usa SMB? (objetivo frecuente de ataques)',opciones:['80','443','445','3389'],correcta:2},
+          {pregunta:'¿Qué puerto usa SMB?',opciones:['80','443','445','3389'],correcta:2},
           {pregunta:'¿Cuál es la diferencia entre TCP y UDP?',opciones:['TCP es más rápido','UDP es fiable, TCP no','TCP es fiable con confirmación, UDP es rápido sin ella','Son idénticos'],correcta:2},
           {pregunta:'¿Qué rango de IPs es privado?',opciones:['8.8.8.8','192.168.1.1','142.250.0.1','1.1.1.1'],correcta:1},
           {pregunta:'El protocolo DNS opera en el puerto...',opciones:['80','443','53','22'],correcta:2},
@@ -123,9 +285,9 @@ TIPOS DE LOGS:
 - Logs de aplicación — Errores de app, accesos web, API calls
 - Logs de seguridad — Autenticación, cambios de privilegios
 
-WINDOWS EVENT IDs CRÍTICOS — Memorízalos:
-- 4624 — Inicio de sesión EXITOSO ✓
-- 4625 — Inicio de sesión FALLIDO ✗ (muchos = brute force)
+WINDOWS EVENT IDS CRÍTICOS — MEMORÍZALOS:
+- 4624 — Inicio de sesión EXITOSO
+- 4625 — Inicio de sesión FALLIDO (muchos = brute force)
 - 4648 — Login con credenciales explícitas (sospechoso)
 - 4688 — Proceso creado (detectar malware)
 - 4698 — Tarea programada creada (persistencia)
@@ -133,8 +295,7 @@ WINDOWS EVENT IDs CRÍTICOS — Memorízalos:
 - 7045 — Servicio instalado (puede ser malware)
 
 ¿QUÉ ES UN SIEM?
-Security Information and Event Management — centraliza logs de toda la infraestructura, correlaciona eventos y genera alertas automáticas.
-Ejemplos reales: Splunk, IBM QRadar, Microsoft Sentinel`,
+Security Information and Event Management — centraliza logs de toda la infraestructura, correlaciona eventos y genera alertas automáticas. Ejemplos reales: Splunk, IBM QRadar, Microsoft Sentinel`,
         ejercicio:{
           tipo:'clasificar',
           instruccion:'Asocia cada Windows Event ID con su significado',
@@ -155,17 +316,17 @@ Ejemplos reales: Splunk, IBM QRadar, Microsoft Sentinel`,
 
 ROLES EN EL SOC:
 - L1 Triage — Monitoriza alertas, clasifica incidentes, escala si es necesario
-- L2 Investigación — Analiza incidentes en profundidad, correlaciona eventos  
+- L2 Investigación — Analiza incidentes en profundidad, correlaciona eventos
 - L3 Threat Hunting — Busca amenazas activamente, respuesta avanzada
 - SOC Manager — Coordina el equipo y reporta a dirección
 
 FLUJO DE TRABAJO TÍPICO:
-1. Alerta generada por SIEM o EDR
-2. L1 clasifica: ¿falso positivo o incidente real?
-3. Si real → escala a L2 con todo el contexto
-4. L2 investiga: logs, IOCs, impacto en el negocio
-5. L3 coordina la respuesta y contención
-6. Documentación y lecciones aprendidas
+- Alerta generada por SIEM o EDR
+- L1 clasifica: ¿falso positivo o incidente real?
+- Si real, escala a L2 con todo el contexto
+- L2 investiga: logs, IOCs, impacto en el negocio
+- L3 coordina la respuesta y contención
+- Documentación y lecciones aprendidas
 
 HERRAMIENTAS CORE DEL SOC:
 - SIEM (Splunk, Sentinel) — Correlación de eventos y alertas
@@ -187,31 +348,29 @@ HERRAMIENTAS CORE DEL SOC:
 
 Son las 3:17 AM. El SIEM genera una alerta crítica:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ALERTA: Multiple Failed Login Attempts
-Source IP: 185.234.219.56 (Geoloc: Rusia)
-Target: CORP-DC01 (Domain Controller)
-Events: 847 × EventID 4625 en 4 minutos
-Seguido: 1 × EventID 4624 (login EXITOSO)
-Usuario comprometido: administrator
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALERTA CRÍTICA ACTIVA:
+- Source IP: 185.234.219.56 (Geoloc: Rusia)
+- Target: CORP-DC01 (Domain Controller)
+- Events: 847 x EventID 4625 en 4 minutos
+- Seguido: 1 x EventID 4624 (login EXITOSO)
+- Usuario comprometido: administrator
 
 ANÁLISIS PASO A PASO:
-1. 847 intentos fallidos → Brute Force attack confirmado
-2. Login exitoso después → Credenciales comprometidas
-3. Target = Domain Controller → CRÍTICO (controla toda la red)
-4. IP origen externa de Rusia → No es usuario legítimo
-5. Hora = 3:17 AM → Fuera de horario laboral normal
+- 847 intentos fallidos — Brute Force attack confirmado
+- Login exitoso después — Credenciales comprometidas
+- Target = Domain Controller — CRÍTICO (controla toda la red)
+- IP origen externa de Rusia — No es usuario legítimo
+- Hora = 3:17 AM — Fuera de horario laboral normal
 
 RESPUESTA CORRECTA EN ORDEN:
-1. AISLAR inmediatamente CORP-DC01 de la red
-2. RESETEAR credenciales del usuario administrator
-3. REVISAR qué hizo el atacante tras el login exitoso
-4. ESCALAR a L2/L3 y notificar al CISO
-5. PRESERVAR todos los logs para análisis forense
-6. BUSCAR movimiento lateral (¿accedió a otros sistemas?)
+- AISLAR inmediatamente CORP-DC01 de la red
+- RESETEAR credenciales del usuario administrator
+- REVISAR qué hizo el atacante tras el login exitoso
+- ESCALAR a L2/L3 y notificar al CISO
+- PRESERVAR todos los logs para análisis forense
+- BUSCAR movimiento lateral (acceso a otros sistemas)
 
-LECCIÓN CLAVE: Un Domain Controller comprometido = toda la empresa comprometida.`,
+Un Domain Controller comprometido equivale a toda la empresa comprometida.`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Analiza el incidente y responde correctamente',
@@ -241,31 +400,25 @@ FUNCIONES PRINCIPALES:
 - Generar alertas basadas en reglas y umbrales
 - Dashboards, reportes y retención de evidencias
 
-QUERIES EN SPLUNK (el SIEM más usado):
-
-Contar logins fallidos por IP origen:
+QUERIES EN SPLUNK:
 index=windows EventID=4625 | stats count by src_ip
-
-Top IPs bloqueadas por firewall:
 index=firewall action=blocked | top src_ip
-
-Ver tráfico web por URI en el tiempo:
 index=web status=200 | timechart count by uri
 
-TIPOS DE ALERTAS — Debes conocerlos:
-- True Positive (TP) — Alerta real, incidente confirmado ✓
-- False Positive (FP) — Alerta falsa, actividad legítima ✗
-- True Negative (TN) — Sin alerta y sin incidente (correcto) ✓
-- False Negative (FN) — Sin alerta pero HAY incidente (peligroso) ⚠
+TIPOS DE ALERTAS — DEBES CONOCERLOS:
+- True Positive (TP) — Alerta real, incidente confirmado
+- False Positive (FP) — Alerta falsa, actividad legítima
+- True Negative (TN) — Sin alerta y sin incidente (correcto)
+- False Negative (FN) — Sin alerta pero HAY incidente (peligroso)
 
-CORRELACIÓN — El poder real del SIEM:
-Regla: >100 EventID 4625 en 5 min desde la misma IP → CRÍTICO: Brute Force`,
+CORRELACIÓN — EL PODER REAL DEL SIEM:
+Regla: más de 100 EventID 4625 en 5 min desde la misma IP es CRÍTICO: Brute Force`,
         preguntas:[
           {pregunta:'¿Qué es un False Negative en SIEM?',opciones:['Una alerta falsa','Incidente real sin alerta — el más peligroso','Una alerta correcta','Un log sin datos'],correcta:1},
           {pregunta:'La query Splunk "stats count by src_ip" sirve para...',opciones:['Ver tráfico web','Contar eventos agrupados por IP origen','Buscar malware','Listar usuarios'],correcta:1},
           {pregunta:'¿Qué hace el SIEM con logs de distintas fuentes?',opciones:['Los elimina','Los normaliza y correlaciona','Los cifra','Los ignora'],correcta:1},
           {pregunta:'True Positive significa...',opciones:['Falsa alarma','Alerta real con incidente confirmado','Sistema sin amenazas','Log sin anomalías'],correcta:1},
-          {pregunta:'Una buena regla SIEM para detectar brute force sería...',opciones:['1 login fallido = alerta','>100 logins fallidos en 5 min desde la misma IP = alerta CRÍTICA','Cualquier login = alerta','Logins de lunes a viernes = alerta'],correcta:1},
+          {pregunta:'Una buena regla SIEM para detectar brute force sería...',opciones:['1 login fallido = alerta','Más de 100 logins fallidos en 5 min desde la misma IP','Cualquier login = alerta','Logins de lunes a viernes = alerta'],correcta:1},
         ]
       },
       {
@@ -273,27 +426,29 @@ Regla: >100 EventID 4625 en 5 min desde la misma IP → CRÍTICO: Brute Force`,
         teoria:`MITRE ATT&CK es la biblia del analista SOC. Documenta tácticas y técnicas reales de atacantes.
 
 ESTRUCTURA DEL FRAMEWORK:
-- Tácticas — El "QUÉ" quiere el atacante:
-  Reconnaissance → Initial Access → Execution → Persistence → Privilege Escalation → Defense Evasion → Credential Access → Discovery → Lateral Movement → Collection → Exfiltration → C2 → Impact
-
-- Técnicas — El "CÓMO" lo consigue
+- Tácticas — El QUÉ quiere el atacante
+- Técnicas — El CÓMO lo consigue
 - Sub-técnicas — Variantes específicas de cada técnica
 
+TÁCTICAS PRINCIPALES:
+- Reconnaissance, Initial Access, Execution, Persistence
+- Privilege Escalation, Defense Evasion, Credential Access
+- Discovery, Lateral Movement, Collection, Exfiltration, C2, Impact
+
 TÉCNICAS MÁS VISTAS EN SOC:
-T1566 — Phishing (Initial Access)
-T1059 — Command and Scripting Interpreter (Execution)
-T1078 — Valid Accounts (Persistence + Privilege Escalation)
-T1027 — Obfuscated Files (Defense Evasion)
-T1110 — Brute Force (Credential Access)
-T1021 — Remote Services (Lateral Movement)
-T1486 — Data Encrypted for Impact (Ransomware)
+- T1566 — Phishing (Initial Access)
+- T1059 — Command and Scripting Interpreter (Execution)
+- T1078 — Valid Accounts (Persistence + Privilege Escalation)
+- T1027 — Obfuscated Files (Defense Evasion)
+- T1110 — Brute Force (Credential Access)
+- T1021 — Remote Services (Lateral Movement)
+- T1486 — Data Encrypted for Impact (Ransomware)
 
 CÓMO USARLO EN SOC:
-1. Ves PowerShell malicioso en una alerta → T1059.001
-2. Buscas en ATT&CK las técnicas relacionadas
-3. Identificas en qué fase del ataque estás
-4. Aplicas las mitigaciones recomendadas
-5. Buscas otras técnicas del mismo grupo APT`,
+- Ves PowerShell malicioso en una alerta — T1059.001
+- Buscas en ATT&CK las técnicas relacionadas
+- Identificas en qué fase del ataque estás
+- Aplicas las mitigaciones recomendadas`,
         ejercicio:{
           tipo:'clasificar',
           instruccion:'Asocia cada técnica MITRE con su táctica correcta',
@@ -312,7 +467,7 @@ CÓMO USARLO EN SOC:
         id:3, titulo:'Threat Intelligence — IOCs y OSINT', xp:40,
         teoria:`La Threat Intelligence te permite conocer al enemigo antes de que ataque.
 
-IOCs (Indicators of Compromise) — Evidencias de compromiso:
+IOCS (INDICATORS OF COMPROMISE):
 - IPs maliciosas — Servidores C2, Tor exit nodes
 - Dominios — phishing.evil.com, dominios de C2
 - Hashes de ficheros — MD5/SHA256 de malware conocido
@@ -327,13 +482,12 @@ HERRAMIENTAS OSINT ESENCIALES:
 - URLscan.io — Análisis visual de URLs sospechosas
 
 PROCESO DE ENRIQUECIMIENTO DE ALERTAS:
-Cuando ves una IP sospechosa en una alerta:
-1. Busca en AbuseIPDB → ¿reportada como maliciosa?
-2. Busca en VirusTotal → ¿asociada a malware conocido?
-3. Busca en Shodan → ¿qué servicios expone en internet?
-4. Con ese contexto tu alerta pasa de "puede ser" a "confirmado"
+- Busca la IP en AbuseIPDB — ¿reportada como maliciosa?
+- Busca en VirusTotal — ¿asociada a malware conocido?
+- Busca en Shodan — ¿qué servicios expone en internet?
+- Con ese contexto tu alerta pasa de "puede ser" a "confirmado"
 
-Este proceso se llama ENRIQUECIMIENTO y es lo que diferencia a un L1 de un L2.`,
+Este proceso se llama ENRIQUECIMIENTO y diferencia a un L1 de un L2.`,
         preguntas:[
           {pregunta:'¿Qué es un IOC?',opciones:['Un tipo de malware','Indicador de Compromiso — evidencia de actividad maliciosa','Una herramienta SIEM','Un protocolo de red'],correcta:1},
           {pregunta:'Para verificar si una IP es maliciosa usarías...',opciones:['Google','AbuseIPDB o VirusTotal','Shodan únicamente','El SIEM directamente'],correcta:1},
@@ -346,30 +500,29 @@ Este proceso se llama ENRIQUECIMIENTO y es lo que diferencia a un L1 de un L2.`,
         id:4, titulo:'CASO PRÁCTICO — Phishing con malware', xp:60,
         teoria:`CASO REAL: Campaña de phishing con RAT
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-09:23 — Usuario de RRHH reporta email sospechoso
-09:31 — EDR: outlook.exe lanza cmd.exe (anómalo)
-09:31 — EDR: conexión saliente a 45.33.32.156:4444
-09:45 — SIEM correlaciona: mismo patrón en 3 máquinas más
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRONOLOGÍA DEL ATAQUE:
+- 09:23 — Usuario de RRHH reporta email sospechoso
+- 09:31 — EDR: outlook.exe lanza cmd.exe (anómalo)
+- 09:31 — EDR: conexión saliente a 45.33.32.156:4444
+- 09:45 — SIEM correlaciona: mismo patrón en 3 máquinas más
 
 EMAIL RECIBIDO:
-De: rrhh-nominas@empresa-corp.com (DOMINIO FALSO)
-Asunto: Nómina revisada — firma urgente
-Adjunto: nomina_revision.pdf.exe ← MALWARE
+- De: rrhh-nominas@empresa-corp.com (DOMINIO FALSO)
+- Asunto: Nómina revisada — firma urgente
+- Adjunto: nomina_revision.pdf.exe — MALWARE
 
-ANÁLISIS TÉCNICO COMPLETO:
-- outlook.exe lanzando cmd.exe = macro/ejecutable en adjunto
-- Puerto 4444 = típico de Metasploit reverse shell (C2)
-- IP 45.33.32.156 → VirusTotal: C2 de RAT conocido ✓
-- 4 máquinas afectadas = movimiento lateral activo
-- Todas las víctimas en el mismo departamento (RRHH)
+ANÁLISIS TÉCNICO:
+- outlook.exe lanzando cmd.exe — macro o ejecutable en adjunto
+- Puerto 4444 — típico de Metasploit reverse shell (C2)
+- IP 45.33.32.156 — VirusTotal: C2 de RAT conocido
+- 4 máquinas afectadas — movimiento lateral activo
+- Todas las víctimas en RRHH — spearphishing dirigido
 
 TÉCNICAS MITRE IDENTIFICADAS:
-T1566.001 — Spearphishing Attachment (Initial Access)
-T1059.003 — Windows Command Shell (Execution)
-T1071 — Application Layer Protocol C2 (Command & Control)
-T1570 — Lateral Tool Transfer (Lateral Movement)`,
+- T1566.001 — Spearphishing Attachment (Initial Access)
+- T1059.003 — Windows Command Shell (Execution)
+- T1071 — Application Layer Protocol C2
+- T1570 — Lateral Tool Transfer (Lateral Movement)`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Analiza el caso de phishing y decide',
@@ -377,7 +530,7 @@ T1570 — Lateral Tool Transfer (Lateral Movement)`,
             {pregunta:'¿Qué indica que outlook.exe lance cmd.exe?',opciones:['Comportamiento normal de Outlook','Ejecución de macro o ejecutable malicioso desde el email','Actualización del sistema','Error de configuración'],correcta:1},
             {pregunta:'¿Qué es una conexión al puerto 4444?',opciones:['Tráfico web normal','DNS lookup','Probable reverse shell hacia servidor C2','Actualización de Windows'],correcta:2},
             {pregunta:'Con 4 máquinas afectadas, ¿qué táctica MITRE está ocurriendo?',opciones:['Initial Access','Exfiltration','Lateral Movement','Reconnaissance'],correcta:2},
-            {pregunta:'¿Cuál debe ser la primera acción de contención?',opciones:['Avisar al usuario por email','Aislar las 4 máquinas afectadas de la red inmediatamente','Reinstalar Windows en todos los equipos','Esperar a tener más datos'],correcta:1},
+            {pregunta:'¿Cuál debe ser la primera acción de contención?',opciones:['Avisar al usuario por email','Aislar las 4 máquinas afectadas de la red inmediatamente','Reinstalar Windows','Esperar a tener más datos'],correcta:1},
           ]
         }
       },
@@ -397,16 +550,16 @@ FASE 1 — PREPARACIÓN:
 - Políticas y procedimientos documentados
 - Herramientas instaladas y configuradas
 - Equipo entrenado y con roles asignados
-- Playbooks por tipo de incidente (ransomware, phishing, etc.)
+- Playbooks por tipo de incidente
 
 FASE 2 — DETECCIÓN Y ANÁLISIS:
 - Identificar el incidente (SIEM, EDR, reporte de usuario)
-- Clasificar severidad (Crítica / Alta / Media / Baja)
+- Clasificar severidad (Crítica, Alta, Media, Baja)
 - Documentar todo desde el primer momento
 - Determinar alcance e impacto en el negocio
 
 FASE 3 — CONTENCIÓN:
-- Corto plazo: Aislar sistemas afectados AHORA
+- Corto plazo: Aislar sistemas afectados ahora
 - Largo plazo: Parches, cambio de credenciales
 - CRÍTICO: Preservar evidencias antes de actuar
 
@@ -436,32 +589,20 @@ FASE 6 — LECCIONES APRENDIDAS:
         teoria:`Clasificar correctamente es una de las habilidades más críticas del analista L1.
 
 NIVELES DE SEVERIDAD:
-
-🔴 CRÍTICO — Impacto inmediato en el negocio
-   Ejemplos: Ransomware activo, DC comprometido, exfiltración masiva
-   Respuesta requerida: < 15 minutos — CISO notificado
-
-🟠 ALTO — Riesgo significativo que puede escalar
-   Ejemplos: Malware detectado, cuentas privilegiadas comprometidas
-   Respuesta requerida: < 1 hora
-
-🟡 MEDIO — Impacto limitado o contenido
-   Ejemplos: Malware en endpoint aislado, phishing no ejecutado
-   Respuesta requerida: < 4 horas
-
-🟢 BAJO — Poco impacto, probable falso positivo
-   Ejemplos: Escaneo de puertos externo, brute force bloqueado
-   Respuesta requerida: < 24 horas
+- 🔴 CRÍTICO — Impacto inmediato en el negocio. Ransomware activo, DC comprometido. Respuesta menor de 15 minutos.
+- 🟠 ALTO — Riesgo significativo que puede escalar. Malware detectado, cuentas privilegiadas. Respuesta menor de 1 hora.
+- 🟡 MEDIO — Impacto limitado. Malware en endpoint aislado. Respuesta menor de 4 horas.
+- 🟢 BAJO — Poco impacto. Escaneo de puertos bloqueado. Respuesta menor de 24 horas.
 
 FACTORES PARA CLASIFICAR:
-- ¿Qué sistemas están afectados? DC > servidor > endpoint
+- ¿Qué sistemas están afectados? DC mayor que servidor mayor que endpoint
 - ¿Hay datos sensibles en riesgo?
 - ¿El ataque está activo o ya fue contenido?
 - ¿Cuántos usuarios y sistemas están afectados?
 - ¿Hay impacto en la operativa del negocio?`,
         preguntas:[
           {pregunta:'Ransomware activo en 50 sistemas. ¿Qué severidad?',opciones:['Baja','Media','Alta','Crítica'],correcta:3},
-          {pregunta:'Escaneo de puertos bloqueado por firewall desde IP externa. ¿Severidad?',opciones:['Crítica','Alta','Baja','Media'],correcta:2},
+          {pregunta:'Escaneo de puertos bloqueado por firewall. ¿Severidad?',opciones:['Crítica','Alta','Baja','Media'],correcta:2},
           {pregunta:'¿Cuál es el tiempo máximo de respuesta para un incidente CRÍTICO?',opciones:['24 horas','4 horas','1 hora','15 minutos'],correcta:3},
           {pregunta:'Un Domain Controller comprometido se clasifica como...',opciones:['Medio','Bajo','Crítico','Alto'],correcta:2},
           {pregunta:'¿Qué factor NO influye en la severidad?',opciones:['Sistemas afectados','Datos en riesgo','Color del servidor','Si el ataque está activo'],correcta:2},
@@ -471,33 +612,31 @@ FACTORES PARA CLASIFICAR:
         id:3, titulo:'CASO — Respuesta completa a Ransomware', xp:70,
         teoria:`CASO REAL: Ataque de ransomware tipo WannaCry
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LUNES 08:47 — Inicio del incidente
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Usuario contabilidad: "mis archivos tienen extensión .encrypted"
+CRONOLOGÍA DEL INCIDENTE:
+- 08:20 — Phishing ejecutado por usuario de contabilidad
+- 08:22 — Descarga de payload desde 91.108.4.55
+- 08:23 — Explota MS17-010 (EternalBlue) via SMB 445
+- 08:25 — Propagación automática a 12 equipos de la red
+- 08:47 — Primera alerta en SIEM (27 minutos después)
+
+SEÑALES DETECTADAS:
+- Usuario contabilidad: mis archivos tienen extensión .encrypted
 - EDR: svchost_update.exe cifrando archivos masivamente
 - SIEM: EventID 7045 en 12 equipos (servicio malicioso instalado)
 - Red: tráfico SMB masivo interno en puerto 445
 
-RECONSTRUCCIÓN DEL ATAQUE:
-08:20 — Phishing ejecutado por usuario de contabilidad
-08:22 — Descarga de payload desde 91.108.4.55
-08:23 — Explota MS17-010 (EternalBlue) via SMB 445
-08:25 — Propagación automática a 12 equipos de la red
-08:47 — Primera alerta en SIEM (27 minutos después)
-
-TÉCNICAS MITRE IDENTIFICADAS:
-T1566.001 — Phishing Attachment (Initial Access)
-T1210 — Exploitation of Remote Services (Lateral Movement)
-T1486 — Data Encrypted for Impact (Impact)
+TÉCNICAS MITRE:
+- T1566.001 — Phishing Attachment (Initial Access)
+- T1210 — Exploitation of Remote Services (Lateral Movement)
+- T1486 — Data Encrypted for Impact
 
 RESPUESTA EJECUTADA:
-08:50 — CONTENCIÓN: Segmentar red, aislar 12 equipos
-09:30 — ERRADICACIÓN: Identificar y eliminar payload
-12:00 — RECUPERACIÓN: Restaurar desde backup del domingo
-Semana siguiente — Parchear MS17-010 en toda la red
+- 08:50 — Segmentar red, aislar 12 equipos afectados
+- 09:30 — Identificar y eliminar payload
+- 12:00 — Restaurar desde backup del domingo
+- Semana siguiente — Parchear MS17-010 en toda la red
 
-COSTE: 4 horas de downtime + 4 horas de datos perdidos`,
+Coste total: 4 horas de downtime y 4 horas de datos perdidos.`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Responde sobre la gestión del ransomware',
@@ -519,21 +658,21 @@ COSTE: 4 horas de downtime + 4 horas de datos perdidos`,
     lecciones:[
       {
         id:1, titulo:'¿Qué es el Threat Hunting?', xp:40,
-        teoria:`El Threat Hunting es la búsqueda PROACTIVA de amenazas que han evadido las defensas automatizadas.
+        teoria:`El Threat Hunting es la búsqueda proactiva de amenazas que han evadido las defensas automatizadas.
 
-DETECCIÓN REACTIVA vs THREAT HUNTING:
-- Reactiva — Esperas a que el SIEM/EDR genere una alerta
-- Hunting — Buscas activamente SIN esperar alertas
+DETECCIÓN REACTIVA VS THREAT HUNTING:
+- Reactiva — Esperas a que el SIEM o EDR genere una alerta
+- Hunting — Buscas activamente sin esperar alertas
 
 ¿POR QUÉ ES NECESARIO?
-Los atacantes avanzados (APT) pueden permanecer MESES en una red sin generar ninguna alerta. El dwell time medio es de 24 días.
+Los atacantes avanzados (APT) pueden permanecer meses en una red sin generar ninguna alerta. El dwell time medio es de 24 días.
 
 PROCESO DE THREAT HUNTING:
-1. HIPÓTESIS — "Creo que hay un atacante usando PowerShell para moverse lateralmente"
-2. INVESTIGACIÓN — Busco en logs: ¿PowerShell ejecutándose de forma inusual?
-3. ANÁLISIS — Evalúo los resultados encontrados
-4. RESPUESTA — Si encuentro algo, inicio el proceso de IR
-5. MEJORA — Si no encuentro nada, mejoro las detecciones del SIEM
+- HIPÓTESIS — Creo que hay un atacante usando PowerShell para moverse lateralmente
+- INVESTIGACIÓN — Busco en logs PowerShell ejecutándose de forma inusual
+- ANÁLISIS — Evalúo los resultados encontrados
+- RESPUESTA — Si encuentro algo, inicio el proceso de IR
+- MEJORA — Si no encuentro nada, mejoro las detecciones del SIEM
 
 FUENTES DE HIPÓTESIS:
 - Nuevas técnicas publicadas en MITRE ATT&CK
@@ -544,42 +683,40 @@ FUENTES DE HIPÓTESIS:
           {pregunta:'¿Cuál es la diferencia clave entre detección reactiva y hunting?',opciones:['No hay diferencia','Detección reactiva espera alertas; hunting busca activamente','Hunting es más lento','La detección reactiva es más efectiva'],correcta:1},
           {pregunta:'¿Cuánto tiempo puede pasar un APT sin detectarse (dwell time medio)?',opciones:['1 hora','1 día','24 días','1 año'],correcta:2},
           {pregunta:'El primer paso del proceso de hunting es...',opciones:['Analizar logs','Formular una hipótesis','Instalar herramientas','Escalar al CISO'],correcta:1},
-          {pregunta:'¿Qué indica un "dwell time" largo en una red?',opciones:['Buena seguridad','El atacante ha pasado mucho tiempo sin ser detectado','Muchas alertas generadas','Red de alta disponibilidad'],correcta:1},
+          {pregunta:'¿Qué indica un dwell time largo en una red?',opciones:['Buena seguridad','El atacante ha pasado mucho tiempo sin ser detectado','Muchas alertas generadas','Red de alta disponibilidad'],correcta:1},
         ]
       },
       {
         id:2, titulo:'CASO — Hunting de cuenta comprometida', xp:60,
         teoria:`CASO HUNTING: Detectar cuenta administrativa comprometida
 
-HIPÓTESIS: "Un atacante usa credenciales válidas para moverse lateralmente fuera del horario laboral"
+HIPÓTESIS: Un atacante usa credenciales válidas para moverse lateralmente fuera del horario laboral.
 
-QUERY SIEM (Splunk) para probar la hipótesis:
+QUERY SIEM PARA PROBAR LA HIPÓTESIS:
 index=windows EventID=4624 LogonType=3
 | eval hour=strftime(_time,"%H")
 | where hour<6 OR hour>22
 | stats count by user, src_ip, dest
 | where count > 3
 
-RESULTADOS SOSPECHOSOS ENCONTRADOS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Usuario: svc_backup (cuenta de servicio)
-Horario: 02:14 - 04:37 AM
-IPs origen: 5 IPs internas diferentes
-Destinos accedidos: file-server-01, dc-01, hr-server
-Total logins: 47 en 2 horas
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESULTADOS SOSPECHOSOS:
+- Usuario: svc_backup (cuenta de servicio)
+- Horario: 02:14 a 04:37 AM
+- IPs origen: 5 IPs internas diferentes
+- Destinos: file-server-01, dc-01, hr-server
+- Total logins: 47 en 2 horas
 
 ANÁLISIS:
-- svc_backup NO debería hacer logins interactivos nunca
-- Acceso a DC + HR server = reconocimiento y posible exfiltración
-- 5 IPs de origen = se está moviendo entre equipos
-- Horario nocturno = menor vigilancia, menor probabilidad de detección
+- svc_backup NO debe hacer logins interactivos nunca
+- Acceso a DC y HR server — reconocimiento y posible exfiltración
+- 5 IPs de origen — movimiento entre equipos
+- Horario nocturno — menor vigilancia
 
 CONCLUSIÓN: Cuenta de servicio comprometida.
 
 TÉCNICAS MITRE:
-T1078.002 — Domain Accounts (Persistence)
-T1021.002 — SMB/Windows Admin Shares (Lateral Movement)`,
+- T1078.002 — Domain Accounts (Persistence)
+- T1021.002 — SMB/Windows Admin Shares (Lateral Movement)`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Analiza el caso de hunting',
@@ -601,7 +738,7 @@ T1021.002 — SMB/Windows Admin Shares (Lateral Movement)`,
     lecciones:[
       {
         id:1, titulo:'Fundamentos del Forense Digital', xp:45,
-        teoria:`El forense digital investiga QUÉ pasó, CÓMO pasó y QUIÉN lo hizo.
+        teoria:`El forense digital investiga qué pasó, cómo pasó y quién lo hizo.
 
 PRINCIPIOS FUNDAMENTALES:
 - Preservación — Nunca alterar la evidencia original
@@ -609,13 +746,13 @@ PRINCIPIOS FUNDAMENTALES:
 - Integridad — Verificar con hashes (MD5/SHA256) que nada cambió
 - Reproducibilidad — El análisis debe poder repetirse
 
-ORDEN DE VOLATILIDAD — Recopilar de más a menos volátil:
-1. Registros CPU y caché
-2. Memoria RAM (se pierde al apagar el equipo)
-3. Tráfico de red activo en ese momento
-4. Disco duro y SSD
-5. Logs del sistema operativo
-6. Backups externos
+ORDEN DE VOLATILIDAD — RECOPILAR DE MÁS A MENOS VOLÁTIL:
+- Registros CPU y caché
+- Memoria RAM (se pierde al apagar el equipo)
+- Tráfico de red activo en ese momento
+- Disco duro y SSD
+- Logs del sistema operativo
+- Backups externos
 
 ARTEFACTOS CLAVE EN WINDOWS:
 - Prefetch — Lista de programas ejecutados recientemente
@@ -628,43 +765,40 @@ ARTEFACTOS CLAVE EN WINDOWS:
           {pregunta:'¿Por qué recopilar la RAM antes que el disco duro?',opciones:['El disco es más grande','La RAM es más volátil — su contenido se pierde al apagar','La RAM es más fácil de analizar','Por protocolo estándar'],correcta:1},
           {pregunta:'¿Para qué se usan los hashes MD5/SHA256 en forense?',opciones:['Para cifrar evidencias','Para verificar que la evidencia no ha sido alterada','Para comprimir archivos','Para acelerar el análisis'],correcta:1},
           {pregunta:'¿Qué artefacto Windows revela programas ejecutados recientemente?',opciones:['Registry','Prefetch','$MFT','LNK files'],correcta:1},
-          {pregunta:'La "cadena de custodia" en forense sirve para...',opciones:['Organizar archivos','Documentar quién maneja las evidencias y cuándo','Cifrar datos sensibles','Crear backups automáticos'],correcta:1},
+          {pregunta:'La cadena de custodia en forense sirve para...',opciones:['Organizar archivos','Documentar quién maneja las evidencias y cuándo','Cifrar datos sensibles','Crear backups automáticos'],correcta:1},
         ]
       },
       {
         id:2, titulo:'CASO — Investigar una infección por malware', xp:65,
         teoria:`CASO FORENSE: Investigar RAT en equipo directivo
 
-CONTEXTO: El equipo del director financiero muestra comportamiento anómalo.
-
 ARTEFACTOS RECOPILADOS Y ANALIZADOS:
 
-1. MEMORY DUMP (volcado de RAM):
-   • Proceso activo: svchost_update.exe (PID 4821)
-   • Conexión activa: 185.234.219.56:4444 (C2)
-   • Strings en memoria: "keylogger", "upload_data", "screenshot"
+MEMORY DUMP:
+- Proceso activo: svchost_update.exe (PID 4821)
+- Conexión activa: 185.234.219.56:4444 (C2)
+- Strings en memoria: keylogger, upload_data, screenshot
 
-2. PREFETCH:
-   • svchost_update.exe ejecutado 14 veces en 3 días
-   • Primera ejecución: martes 14:23:07
+PREFETCH:
+- svchost_update.exe ejecutado 14 veces en 3 días
+- Primera ejecución: martes 14:23:07
 
-3. REGISTRY (clave de autorun):
-   HKCU\Software\Microsoft\Windows\CurrentVersion\Run
-   "WindowsUpdate" = "C:\Users\director\AppData\Roaming\svchost_update.exe"
+REGISTRY (clave de autorun):
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+WindowsUpdate = C:\Users\director\AppData\Roaming\svchost_update.exe
 
-4. EVENT LOGS:
-   EventID 4688: svchost_update.exe creado POR outlook.exe (martes 14:22)
-   EventID 4698: Tarea programada "SysUpdate" creada (martes 14:23)
+EVENT LOGS:
+- EventID 4688: svchost_update.exe creado POR outlook.exe
+- EventID 4698: Tarea programada SysUpdate creada (martes 14:23)
 
-CONCLUSIÓN FORENSE:
-Phishing → ejecución de RAT → persistencia via registro + tarea → keylogger activo → exfiltración durante 3 días`,
+CONCLUSIÓN: Phishing, ejecución de RAT, persistencia via registro y tarea, keylogger activo, exfiltración durante 3 días.`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Responde sobre el análisis forense',
           preguntas:[
             {pregunta:'svchost_update.exe fue creado por outlook.exe (EventID 4688). ¿Qué indica?',opciones:['Actualización normal de Windows','El malware se ejecutó desde un adjunto de email (phishing)','Error del sistema operativo','Instalación de software legítimo'],correcta:1},
             {pregunta:'La clave de registro en CurrentVersion\\Run indica...',opciones:['Que el programa se ejecuta manualmente','Persistencia — el malware arranca automáticamente al iniciar sesión','Un error de Windows','Software legítimo de inicio'],correcta:1},
-            {pregunta:'¿Qué revela la conexión activa a 185.234.219.56:4444?',opciones:['Actualización de Windows','Comunicación activa con servidor C2 (Command & Control)','Backup en la nube','Sincronización de email'],correcta:1},
+            {pregunta:'¿Qué revela la conexión activa a 185.234.219.56:4444?',opciones:['Actualización de Windows','Comunicación activa con servidor C2','Backup en la nube','Sincronización de email'],correcta:1},
             {pregunta:'El malware lleva 3 días activo con keylogger. ¿Cuál es el riesgo principal?',opciones:['Que el equipo vaya lento','Que haya capturado y exfiltrado credenciales y datos sensibles durante 3 días','Que ocupe espacio en disco','Que cambie el fondo de pantalla'],correcta:1},
           ]
         }
@@ -681,32 +815,32 @@ Phishing → ejecución de RAT → persistencia via registro + tarea → keylogg
         id:1, titulo:'IDS, IPS y análisis de tráfico', xp:45,
         teoria:`La seguridad de red es la segunda línea de defensa crítica.
 
-IDS (Intrusion Detection System):
-- Monitoriza el tráfico y GENERA ALERTAS de actividad sospechosa
+IDS — INTRUSION DETECTION SYSTEM:
+- Monitoriza el tráfico y genera alertas de actividad sospechosa
 - NO bloquea — solo detecta y avisa
 - Tipos: NIDS (monitoriza la red) y HIDS (monitoriza el host)
 
-IPS (Intrusion Prevention System):
-- Monitoriza el tráfico y BLOQUEA el tráfico malicioso
-- Se despliega en línea (inline) en el flujo de tráfico
+IPS — INTRUSION PREVENTION SYSTEM:
+- Monitoriza el tráfico y bloquea el tráfico malicioso
+- Se despliega inline en el flujo de tráfico
 - Puede generar falsos positivos que interrumpan el servicio
 
 FILTROS ÚTILES EN WIRESHARK:
-- ip.src == 192.168.1.100 → Tráfico desde IP específica
-- tcp.port == 4444 → Puerto C2 típico de Metasploit
-- dns → Ver todas las consultas DNS realizadas
-- http.request.method == "POST" → Posible exfiltración via HTTP
+- ip.src == 192.168.1.100 — Tráfico desde IP específica
+- tcp.port == 4444 — Puerto C2 típico de Metasploit
+- dns — Ver todas las consultas DNS realizadas
+- http.request.method == POST — Posible exfiltración via HTTP
 
 SEÑALES DE TRÁFICO MALICIOSO:
-🔴 Conexiones a puertos altos inusuales (1234, 4444, 9999)
-🔴 Beacon traffic — conexiones regulares cada X segundos exactos (C2)
-🔴 DNS queries con subdominios muy largos (DGA o DNS tunneling)
-🔴 Volumen anómalo de datos saliendo de la red (exfiltración)
-🔴 Protocolos en puertos incorrectos (HTTP en 443 sin TLS)`,
+- 🔴 Conexiones a puertos altos inusuales (1234, 4444, 9999)
+- 🔴 Beacon traffic — conexiones regulares cada X segundos exactos
+- 🔴 DNS queries con subdominios muy largos
+- 🔴 Volumen anómalo de datos saliendo de la red
+- 🔴 Protocolos en puertos incorrectos`,
         preguntas:[
           {pregunta:'¿Cuál es la diferencia entre IDS e IPS?',opciones:['Son lo mismo','IDS detecta y alerta; IPS detecta y bloquea','IPS detecta, IDS bloquea','IDS es tecnología más nueva'],correcta:1},
           {pregunta:'Tráfico que se conecta al exterior cada 30 segundos exactos. ¿Qué indica?',opciones:['Sincronización de hora NTP','Beacon traffic — probable comunicación con C2','Backup automático','Actualización de antivirus'],correcta:1},
-          {pregunta:'¿Qué son las DGA (Domain Generation Algorithms)?',opciones:['Herramientas de DNS','Malware que genera dominios aleatorios para comunicarse con C2','Protocolo de seguridad','Tipo de firewall avanzado'],correcta:1},
+          {pregunta:'¿Qué son las DGA (Domain Generation Algorithms)?',opciones:['Herramientas de DNS','Malware que genera dominios aleatorios para C2','Protocolo de seguridad','Tipo de firewall avanzado'],correcta:1},
           {pregunta:'Filtro Wireshark "tcp.port == 4444" sirve para...',opciones:['Ver tráfico web','Ver tráfico en puerto 4444 — típico de reverse shells','Filtrar consultas DNS','Ver emails en texto plano'],correcta:1},
         ]
       },
@@ -714,26 +848,23 @@ SEÑALES DE TRÁFICO MALICIOSO:
         id:2, titulo:'CASO — Detectar exfiltración via DNS', xp:65,
         teoria:`CASO REAL: DNS Tunneling para exfiltrar datos
 
-DNS TUNNELING: Técnica para exfiltrar datos codificando la información en consultas DNS.
-Los datos se incrustan en subdominios: [datos-en-base64].dominio-atacante.com
+DNS TUNNELING: Los datos robados se codifican en Base64 y se incrustan en subdominios de consultas DNS.
 
 ANOMALÍAS DETECTADAS EN LOGS DNS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-09:14:23 — dGhpcyBpcyBzZWNyZXQgZGF0YQ.evil-corp.xyz
-09:14:24 — c2Vuc2l0aXZlIGluZm9ybWF0aW9u.evil-corp.xyz
-09:14:25 — cGFzc3dvcmRzIGFuZCBrZXlz.evil-corp.xyz
-[... 847 queries al mismo dominio en 3 minutos]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 09:14:23 — dGhpcyBpcyBzZWNyZXQgZGF0YQ.evil-corp.xyz
+- 09:14:24 — c2Vuc2l0aXZlIGluZm9ybWF0aW9u.evil-corp.xyz
+- 09:14:25 — cGFzc3dvcmRzIGFuZCBrZXlz.evil-corp.xyz
+- 847 queries al mismo dominio en 3 minutos
 
-SEÑALES DE ALERTA IDENTIFICADAS:
-- Subdominio con >50 caracteres — datos codificados en Base64
-- 847 queries al mismo dominio en 3 minutos — volumen anómalo
-- Dominio evil-corp.xyz no está en la whitelist corporativa
-- Todas las queries desde el mismo host: DESKTOP-HR-02
+SEÑALES DE ALERTA:
+- Subdominio con más de 50 caracteres — datos en Base64
+- 847 queries en 3 minutos — volumen anómalo
+- Dominio evil-corp.xyz no está en whitelist corporativa
+- Todas las queries desde DESKTOP-HR-02
 
 DECODIFICANDO BASE64:
-dGhpcyBpcyBzZWNyZXQgZGF0YQ == "this is secret data"
-cGFzc3dvcmRzIGFuZCBrZXlz == "passwords and keys"
+- dGhpcyBpcyBzZWNyZXQgZGF0YQ == this is secret data
+- cGFzc3dvcmRzIGFuZCBrZXlz == passwords and keys
 
 CONCLUSIÓN: Exfiltración activa via DNS tunneling desde equipo de RRHH.`,
         ejercicio:{
@@ -741,7 +872,7 @@ CONCLUSIÓN: Exfiltración activa via DNS tunneling desde equipo de RRHH.`,
           instruccion:'Analiza el caso de DNS tunneling',
           preguntas:[
             {pregunta:'847 consultas DNS al mismo dominio en 3 minutos. ¿Qué indica?',opciones:['Navegación web normal','DNS Tunneling — datos exfiltrados codificados en consultas DNS','Caché DNS llena','Problema de conectividad'],correcta:1},
-            {pregunta:'Los subdominios tienen >50 caracteres en Base64. ¿Por qué?',opciones:['Nombres de dominio largos son normales','Los datos robados se codifican en Base64 dentro del subdominio','Error de configuración DNS','Política de naming corporativa'],correcta:1},
+            {pregunta:'Los subdominios tienen más de 50 caracteres en Base64. ¿Por qué?',opciones:['Nombres de dominio largos son normales','Los datos robados se codifican en Base64 dentro del subdominio','Error de configuración DNS','Política de naming corporativa'],correcta:1},
             {pregunta:'¿Cómo detendrías esta exfiltración inmediatamente?',opciones:['Reiniciar el servidor DNS','Bloquear evil-corp.xyz en el firewall y aislar DESKTOP-HR-02','Limpiar la caché DNS','Desactivar DNS en toda la red'],correcta:1},
             {pregunta:'¿Qué control preventivo hubiera detectado esto antes?',opciones:['Antivirus actualizado','DNS filtering con whitelist de dominios aprobados','Firewall de aplicación web','VPN obligatoria para todos'],correcta:1},
           ]
@@ -764,7 +895,7 @@ MODELO DE RESPONSABILIDAD COMPARTIDA:
 - Cliente — Seguridad EN la infraestructura (datos, configs, accesos)
 
 LOGS ESENCIALES EN AWS:
-- CloudTrail — Registra TODAS las llamadas a la API (quién hizo qué)
+- CloudTrail — Registra todas las llamadas a la API (quién hizo qué)
 - VPC Flow Logs — Todo el tráfico de red
 - GuardDuty — Detección automática de amenazas
 
@@ -773,7 +904,7 @@ LOGS ESENCIALES EN AZURE:
 - Azure AD Sign-In Logs — Autenticación de usuarios
 - Microsoft Defender for Cloud — Alertas de seguridad
 
-IAM — Identity and Access Management:
+IAM — IDENTITY AND ACCESS MANAGEMENT:
 - Principio de mínimo privilegio — Solo los permisos necesarios
 - MFA obligatorio para todas las cuentas privilegiadas
 - Revisar y rotar credenciales periódicamente
@@ -794,34 +925,32 @@ ATAQUES CLOUD MÁS FRECUENTES:
         id:2, titulo:'CASO — Escalada de privilegios en AWS', xp:70,
         teoria:`CASO REAL: Cuenta AWS comprometida y cryptojacking
 
-ALERTA GuardDuty:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B
-Usuario IAM: dev-user-03
-IP origen: 185.220.101.45 (Tor Exit Node)
-Hora: 03:42 AM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALERTA GUARDDUTY:
+- UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B
+- Usuario IAM: dev-user-03
+- IP origen: 185.220.101.45 (Tor Exit Node)
+- Hora: 03:42 AM
 
 ACCIONES POST-LOGIN (CloudTrail):
-03:42 — ConsoleLogin exitoso
-03:43 — ListRoles (reconocimiento de permisos disponibles)
-03:44 — AttachUserPolicy → AdministratorAccess (ESCALADA)
-03:45 — CreateUser "backup-admin" (backdoor creado)
-03:46 — CreateAccessKey para backup-admin (acceso programático)
-03:47 — RunInstances ×50 EC2 (cryptojacking iniciado)
+- 03:42 — ConsoleLogin exitoso
+- 03:43 — ListRoles (reconocimiento de permisos disponibles)
+- 03:44 — AttachUserPolicy — AdministratorAccess (ESCALADA)
+- 03:45 — CreateUser backup-admin (backdoor creado)
+- 03:46 — CreateAccessKey para backup-admin
+- 03:47 — RunInstances x50 EC2 (cryptojacking iniciado)
 
 ANÁLISIS:
-- Tor = anonimización intencional
-- ListRoles primero = reconocimiento típico post-compromiso
-- AttachUserPolicy:AdministratorAccess = escalada de privilegios
-- CreateUser backup-admin = backdoor persistente
-- 50 EC2 instances = miles de euros por hora en cryptojacking`,
+- Tor — anonimización intencional
+- ListRoles primero — reconocimiento típico post-compromiso
+- AttachUserPolicy:AdministratorAccess — escalada de privilegios
+- CreateUser backup-admin — backdoor persistente
+- 50 EC2 instances — miles de euros por hora en cryptojacking`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Analiza el compromiso de AWS',
           preguntas:[
             {pregunta:'AttachUserPolicy:AdministratorAccess. ¿Qué intenta el atacante?',opciones:['Auditar la cuenta','Escalar privilegios para tener acceso total a AWS','Crear backups de seguridad','Revisar la facturación'],correcta:1},
-            {pregunta:'¿Por qué crea el usuario "backup-admin"?',opciones:['Para hacer backups reales','Backdoor — si revocan al usuario original, mantiene acceso','Es una cuenta de servicio necesaria','Por política de AWS'],correcta:1},
+            {pregunta:'¿Por qué crea el usuario backup-admin?',opciones:['Para hacer backups reales','Backdoor — si revocan al usuario original, mantiene acceso','Es una cuenta de servicio necesaria','Por política de AWS'],correcta:1},
             {pregunta:'Primera acción de respuesta ante este incidente...',opciones:['Esperar confirmación','Deshabilitar dev-user-03 y backup-admin + revocar todas las access keys','Revisar las instancias EC2 lanzadas','Contactar a AWS Support primero'],correcta:1},
             {pregunta:'¿Qué control preventivo hubiera evitado la escalada?',opciones:['MFA en el login','SCPs limitando AttachUserPolicy a roles específicos','CloudTrail activo','VPN obligatoria'],correcta:1},
           ]
@@ -846,7 +975,7 @@ CASOS DE USO REALES EN SOC:
 - Enriquecer alertas del SIEM con Threat Intelligence
 - Automatizar respuestas repetitivas (SOAR casero)
 
-SCRIPT REAL — Verificar reputación de IPs:
+SCRIPT REAL — VERIFICAR REPUTACIÓN DE IPS:
 import requests
 
 def check_ip_reputation(ip):
@@ -862,12 +991,12 @@ with open("failed_logins.txt") as f:
 for ip in set(ips):
     score = check_ip_reputation(ip)
     if score > 50:
-        print(f"[ALERTA] IP maliciosa: {ip} — Score: {score}")
+        print(f"ALERTA IP maliciosa: {ip} — Score: {score}")
 
-REGEX ÚTILES PARA EXTRAER IOCs:
+REGEX PARA EXTRAER IOCS:
 import re
 ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
-hash_pattern = r'\b[a-fA-F0-9]{64}\b'  # SHA256
+hash_pattern = r'\b[a-fA-F0-9]{64}\b'
 ips_encontradas = re.findall(ip_pattern, texto_del_log)`,
         preguntas:[
           {pregunta:'¿Para qué usarías Python en un SOC?',opciones:['Crear aplicaciones web','Automatizar análisis de logs, IOC lookup y reportes','Diseñar interfaces gráficas','Gestionar bases de datos SQL'],correcta:1},
@@ -888,25 +1017,25 @@ ips_encontradas = re.findall(ip_pattern, texto_del_log)`,
         id:1, titulo:'Análisis estático vs dinámico', xp:55,
         teoria:`El análisis de malware determina exactamente qué hace un archivo malicioso.
 
-ANÁLISIS ESTÁTICO — Sin ejecutar el malware:
-- Calcular hash SHA256 → buscar en VirusTotal
+ANÁLISIS ESTÁTICO — SIN EJECUTAR EL MALWARE:
+- Calcular hash SHA256 y buscar en VirusTotal
 - Strings — Extraer texto legible: URLs, IPs, mensajes de error
 - PE Headers — Metadatos del ejecutable Windows
 - Imports — Funciones de Windows que usa el malware
 - Detección de packers u ofuscación
 
 FUNCIONES WINDOWS MÁS SOSPECHOSAS:
-🔴 CreateRemoteThread → Inyección de código en otros procesos
-🔴 VirtualAllocEx → Reserva memoria en proceso ajeno
-🔴 WriteProcessMemory → Escribe código en proceso ajeno
-🔴 RegSetValueEx → Modifica registro (persistencia)
-🔴 WinExec / CreateProcess → Ejecuta comandos del sistema
-🔴 InternetOpen / Connect → Conexiones de red (C2)
+- 🔴 CreateRemoteThread — Inyección de código en otros procesos
+- 🔴 VirtualAllocEx — Reserva memoria en proceso ajeno
+- 🔴 WriteProcessMemory — Escribe código en proceso ajeno
+- 🔴 RegSetValueEx — Modifica registro (persistencia)
+- 🔴 WinExec o CreateProcess — Ejecuta comandos del sistema
+- 🔴 InternetOpen o Connect — Conexiones de red (C2)
 
-ANÁLISIS DINÁMICO — Ejecutar en sandbox aislado:
+ANÁLISIS DINÁMICO — EJECUTAR EN SANDBOX:
 - Sandbox: Any.run, Cuckoo Sandbox, Joe Sandbox
 - Se observa el comportamiento real en tiempo de ejecución
-- Se capturan: procesos creados, conexiones de red, cambios de registro
+- Se capturan procesos creados, conexiones de red, cambios de registro
 
 INDICADORES DE COMPORTAMIENTO MALICIOSO:
 - Se copia a sí mismo en múltiples ubicaciones del disco
@@ -933,40 +1062,27 @@ INDICADORES DE COMPORTAMIENTO MALICIOSO:
         id:1, titulo:'La Cyber Kill Chain — Mentalidad del atacante', xp:55,
         teoria:`Un buen defensor debe entender cómo piensa y actúa el atacante.
 
-CYBER KILL CHAIN — Las 7 fases de un ataque:
-
-1. RECONOCIMIENTO — Recopilar información del objetivo
-   • Pasivo: LinkedIn, web pública, WHOIS, Shodan
-   • Activo: Escaneo de puertos, enumeración de servicios
-
-2. WEAPONIZATION — Preparar el arma de ataque
-   • Crear malware, payload, exploit personalizado
-
-3. DELIVERY — Entregar el arma al objetivo
-   • Phishing, USB malicioso, watering hole attack
-
-4. EXPLOITATION — Explotar la vulnerabilidad
-   • RCE, buffer overflow, credenciales débiles
-
-5. INSTALLATION — Instalar persistencia
-   • RAT, backdoor, rootkit en el sistema
-
-6. COMMAND & CONTROL — Establecer canal de comunicación
-   • El atacante controla el malware remotamente
-
-7. ACTIONS ON OBJECTIVES — Ejecutar el objetivo final
-   • Robar datos, cifrar (ransomware), disrumpir servicios
+CYBER KILL CHAIN — LAS 7 FASES DE UN ATAQUE:
+- RECONOCIMIENTO — Recopilar información del objetivo (LinkedIn, Shodan, WHOIS)
+- WEAPONIZATION — Preparar el arma de ataque (crear malware, exploit)
+- DELIVERY — Entregar el arma al objetivo (phishing, USB malicioso)
+- EXPLOITATION — Explotar la vulnerabilidad (RCE, buffer overflow)
+- INSTALLATION — Instalar persistencia (RAT, backdoor, rootkit)
+- COMMAND AND CONTROL — Establecer canal de comunicación remota
+- ACTIONS ON OBJECTIVES — Ejecutar el objetivo final (robar datos, cifrar)
 
 HERRAMIENTAS DE RECONOCIMIENTO:
 - Nmap — Escaneo de puertos y detección de servicios
-  nmap -sV -O 192.168.1.0/24
 - Shodan — Encontrar dispositivos expuestos en internet
-- TheHarvester — Emails, subdominios e IPs de un dominio`,
+- TheHarvester — Emails, subdominios e IPs de un dominio
+
+EJEMPLO NMAP:
+nmap -sV -O 192.168.1.0/24`,
         preguntas:[
           {pregunta:'¿Cuál es la fase "Delivery" en la Kill Chain?',opciones:['Preparar el malware','Establecer canal C2','Entregar el arma al objetivo (phishing, USB)','Robar datos finales'],correcta:2},
           {pregunta:'Nmap se usa principalmente para...',opciones:['Análisis de malware','Escaneo de puertos y detección de servicios','Análisis forense de disco','Gestión de logs SIEM'],correcta:1},
-          {pregunta:'¿Para qué sirve el reconocimiento PASIVO?',opciones:['Explotar vulnerabilidades directamente','Recopilar información sin interactuar directamente con el objetivo','Instalar backdoors en el sistema','Crear exploits personalizados'],correcta:1},
-          {pregunta:'La fase C2 (Command & Control) permite al atacante...',opciones:['Entrar al sistema por primera vez','Controlar el malware instalado de forma remota','Cifrar todos los datos del objetivo','Hacer el reconocimiento inicial'],correcta:1},
+          {pregunta:'¿Para qué sirve el reconocimiento pasivo?',opciones:['Explotar vulnerabilidades directamente','Recopilar información sin interactuar directamente con el objetivo','Instalar backdoors en el sistema','Crear exploits personalizados'],correcta:1},
+          {pregunta:'La fase C2 (Command and Control) permite al atacante...',opciones:['Entrar al sistema por primera vez','Controlar el malware instalado de forma remota','Cifrar todos los datos del objetivo','Hacer el reconocimiento inicial'],correcta:1},
         ]
       },
     ]
@@ -982,10 +1098,10 @@ HERRAMIENTAS DE RECONOCIMIENTO:
         teoria:`La fatiga de alertas es uno de los problemas más críticos y subestimados en los SOC modernos.
 
 EL PROBLEMA EN NÚMEROS:
-- Un SOC medio recibe >10.000 alertas diarias
+- Un SOC medio recibe más de 10.000 alertas diarias
 - El 45% son falsos positivos según estudios del sector
 - Los analistas se vuelven insensibles y empiezan a ignorar alertas
-- Resultado final: Incidentes reales no detectados a tiempo
+- Resultado: incidentes reales no detectados a tiempo
 
 CAUSAS PRINCIPALES:
 - Reglas SIEM demasiado amplias o mal calibradas
@@ -995,26 +1111,26 @@ CAUSAS PRINCIPALES:
 
 SOLUCIONES PROBADAS:
 
-1. TUNING DE REGLAS SIEM:
-   Antes: 1 login fallido = alerta (miles de alertas diarias)
-   Después: >20 logins fallidos en 1 minuto = alerta (señal real)
+TUNING DE REGLAS SIEM:
+- Antes: 1 login fallido = alerta (miles de alertas diarias)
+- Después: más de 20 logins fallidos en 1 minuto = alerta (señal real)
 
-2. PRIORIZACIÓN INTELIGENTE:
-   Login fallido en endpoint usuario = baja prioridad
-   Login fallido en Domain Controller = alta prioridad
+PRIORIZACIÓN INTELIGENTE:
+- Login fallido en endpoint usuario = baja prioridad
+- Login fallido en Domain Controller = alta prioridad
 
-3. REDUCIR FALSOS POSITIVOS:
-   • Whitelists de IPs, usuarios y comportamientos legítimos conocidos
-   • Correlación de múltiples eventos antes de generar la alerta
+REDUCIR FALSOS POSITIVOS:
+- Whitelists de IPs, usuarios y comportamientos legítimos conocidos
+- Correlación de múltiples eventos antes de generar la alerta
 
-4. AUTOMATIZACIÓN CON SOAR:
-   • Enriquecer alertas automáticamente con Threat Intelligence
-   • Cerrar automáticamente FPs conocidos y documentados
-   • Solo escalar al analista lo que realmente necesita análisis humano`,
+AUTOMATIZACIÓN CON SOAR:
+- Enriquecer alertas automáticamente con Threat Intelligence
+- Cerrar automáticamente FPs conocidos y documentados
+- Solo escalar al analista lo que realmente necesita análisis humano`,
         preguntas:[
           {pregunta:'¿Qué porcentaje aproximado de alertas SOC son falsos positivos?',opciones:['5%','15%','45%','80%'],correcta:2},
-          {pregunta:'La "alert fatigue" provoca que los analistas...',opciones:['Trabajen más eficientemente','Se vuelvan insensibles e ignoren alertas reales','Detecten más incidentes','Reduzcan el tiempo de respuesta'],correcta:1},
-          {pregunta:'¿Qué es el "tuning" de reglas SIEM?',opciones:['Actualizar el software del SIEM','Ajustar umbrales y condiciones para reducir falsos positivos','Añadir más reglas de detección','Eliminar todas las reglas existentes'],correcta:1},
+          {pregunta:'La alert fatigue provoca que los analistas...',opciones:['Trabajen más eficientemente','Se vuelvan insensibles e ignoren alertas reales','Detecten más incidentes','Reduzcan el tiempo de respuesta'],correcta:1},
+          {pregunta:'¿Qué es el tuning de reglas SIEM?',opciones:['Actualizar el software del SIEM','Ajustar umbrales y condiciones para reducir falsos positivos','Añadir más reglas de detección','Eliminar todas las reglas existentes'],correcta:1},
           {pregunta:'Una whitelist en SIEM sirve para...',opciones:['Bloquear IPs maliciosas conocidas','Excluir comportamientos legítimos conocidos de las alertas','Aumentar el número de alertas','Crear nuevas reglas de detección'],correcta:1},
         ]
       },
@@ -1032,34 +1148,31 @@ SOLUCIONES PROBADAS:
 
 USA TODO LO APRENDIDO EN LOS 11 MÓDULOS ANTERIORES.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ALERTAS ACTIVAS EN ESTE MOMENTO:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. [CRÍTICA] 1847 EventID 4625 → CORP-DC01 desde 185.220.101.45
-2. [CRÍTICA] EDR: svchost.exe → cmd.exe → powershell -enc [base64]
-3. [ALTA] DNS: 847 queries a random-xyz.evil en 3 minutos
-4. [ALTA] Nuevo usuario admin creado: backup_svc
-5. [MEDIA] 50 instancias EC2 lanzadas en AWS a las 23:45
-6. [MEDIA] RDP desde IP de Tor → servidor de contabilidad
-7. [BAJA] Escaneo de puertos desde 10.0.0.45 (interno)
-8. [BAJA] 3 intentos fallidos VPN (usuario: jgarcia)
-9. [INFO] Antivirus actualizado en 200 equipos
-10. [INFO] Certificado SSL caducado en web corporativa
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 1. CRÍTICA — 1847 EventID 4625 hacia CORP-DC01 desde 185.220.101.45
+- 2. CRÍTICA — EDR: svchost.exe lanza cmd.exe lanza powershell -enc base64
+- 3. ALTA — DNS: 847 queries a random-xyz.evil en 3 minutos
+- 4. ALTA — Nuevo usuario admin creado: backup_svc
+- 5. MEDIA — 50 instancias EC2 lanzadas en AWS a las 23:45
+- 6. MEDIA — RDP desde IP de Tor hacia servidor de contabilidad
+- 7. BAJA — Escaneo de puertos desde 10.0.0.45 (interno)
+- 8. BAJA — 3 intentos fallidos VPN (usuario: jgarcia)
+- 9. INFO — Antivirus actualizado en 200 equipos
+- 10. INFO — Certificado SSL caducado en web corporativa
 
 CLAVES PARA RESOLVERLO:
 - Prioriza por impacto real en el negocio
-- Correlaciona: alertas 1 + 2 + 4 pueden ser EL MISMO ataque
+- Correlaciona: alertas 1, 2 y 4 pueden ser el mismo ataque
 - Distingue incidentes reales de ruido operativo
 - Las alertas INFO no requieren investigación inmediata
-- El DC comprometido = máxima prioridad siempre`,
+- El DC comprometido es siempre máxima prioridad`,
         ejercicio:{
           tipo:'caso_practico',
           instruccion:'Simulacro final — gestiona las 10 alertas correctamente',
           preguntas:[
             {pregunta:'¿Cuál es la PRIMERA alerta que debes investigar?',opciones:['Certificado SSL caducado','Antivirus actualizado en 200 equipos','1847 logins fallidos en el Domain Controller','3 intentos fallidos de VPN'],correcta:2},
             {pregunta:'Alertas 1 (brute force DC) + 2 (powershell malicioso) + 4 (nuevo admin). Probablemente son...',opciones:['Tres incidentes completamente independientes','Un único ataque coordinado en progreso activo','Falsos positivos de mantenimiento','Pruebas del equipo de desarrollo'],correcta:1},
-            {pregunta:'Alerta 9: antivirus actualizado en 200 equipos. ¿Qué haces?',opciones:['Investigar urgentemente — 200 equipos es sospechoso','Escalar al CISO inmediatamente','Cerrar como informativa — actividad legítima programada','Aislar los 200 equipos preventivamente'],correcta:2},
+            {pregunta:'Alerta 9: antivirus actualizado en 200 equipos. ¿Qué haces?',opciones:['Investigar urgentemente','Escalar al CISO inmediatamente','Cerrar como informativa — actividad legítima programada','Aislar los 200 equipos preventivamente'],correcta:2},
             {pregunta:'Alertas 3 (DNS tunneling) + 5 (50 EC2 en AWS) pueden indicar...',opciones:['Mantenimiento normal de infraestructura','Exfiltración activa + cryptojacking — atacante con acceso a red y cloud','Actualizaciones programadas del equipo de sistemas','Pruebas de carga del equipo de desarrollo'],correcta:1},
             {pregunta:'Primera acción con alerta 2 (powershell -enc base64)...',opciones:['Ignorar — PowerShell es normal en Windows','Decodificar el Base64, aislar el equipo e investigar el proceso padre','Reiniciar el equipo afectado','Actualizar el antivirus en ese equipo'],correcta:1},
           ]
@@ -1069,99 +1182,40 @@ CLAVES PARA RESOLVERLO:
   },
 ];
 
-// ─── CURSOS ───────────────────────────────────────────────────────────────────
 const CURSOS = [
   {
-    id: 1,
-    titulo: 'SOC Fundamentals',
-    subtitulo: 'De cero a analista L1',
-    descripcion: 'Aprende los fundamentos de ciberseguridad, redes, logs, el rol del SOC y cómo responder a tus primeros incidentes reales.',
-    color: '#2564F1',
-    colorRgb: '37,100,241',
-    icono: '🛡️',
-    moduloIds: [1, 2, 3, 4],
-    nivel: 'Principiante',
-    duracion: '~8 horas',
-    certificado: 'SOC Fundamentals Certificate',
+    id:1, titulo:'SOC Fundamentals', subtitulo:'De cero a analista L1',
+    descripcion:'Aprende los fundamentos de ciberseguridad, redes, logs, el rol del SOC y cómo responder a tus primeros incidentes reales.',
+    color:'#2564F1', colorRgb:'37,100,241', icono:'🛡️',
+    moduloIds:[1,2,3,4], nivel:'Principiante', duracion:'~8 horas',
+    certificado:'SOC Fundamentals Certificate',
   },
   {
-    id: 2,
-    titulo: 'Detection & Analysis',
-    subtitulo: 'Detecta y analiza amenazas reales',
-    descripcion: 'Domina el forense digital, seguridad en redes, cloud security y la automatización con Python para operar como analista L2.',
-    color: '#7C3AED',
-    colorRgb: '124,58,237',
-    icono: '🔍',
-    moduloIds: [5, 6, 7, 8],
-    nivel: 'Intermedio',
-    duracion: '~10 horas',
-    certificado: 'Detection & Analysis Certificate',
+    id:2, titulo:'Detection & Analysis', subtitulo:'Detecta y analiza amenazas reales',
+    descripcion:'Domina el forense digital, seguridad en redes, cloud security y la automatización con Python para operar como analista L2.',
+    color:'#7C3AED', colorRgb:'124,58,237', icono:'🔍',
+    moduloIds:[5,6,7,8], nivel:'Intermedio', duracion:'~10 horas',
+    certificado:'Detection & Analysis Certificate',
   },
   {
-    id: 3,
-    titulo: 'Advanced SOC Operations',
-    subtitulo: 'Nivel profesional L2/L3',
-    descripcion: 'Análisis de malware, red team awareness, gestión de fatiga de alertas y el simulacro final de certificación profesional.',
-    color: '#EF4444',
-    colorRgb: '239,68,68',
-    icono: '⚔️',
-    moduloIds: [9, 10, 11, 12],
-    nivel: 'Avanzado',
-    duracion: '~12 horas',
-    certificado: 'Advanced SOC Operations Certificate',
+    id:3, titulo:'Advanced SOC Operations', subtitulo:'Nivel profesional L2/L3',
+    descripcion:'Análisis de malware, red team awareness, gestión de fatiga de alertas y el simulacro final de certificación profesional.',
+    color:'#EF4444', colorRgb:'239,68,68', icono:'⚔️',
+    moduloIds:[9,10,11,12], nivel:'Avanzado', duracion:'~12 horas',
+    certificado:'Advanced SOC Operations Certificate',
   },
 ];
-
-// ─── IMAGEN POR LECCIÓN ───────────────────────────────────────────────────────
-const LeccionImagen = ({ query }) => {
-  const [src, setSrc] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!query) return;
-    const url = `https://source.unsplash.com/800x400/?${encodeURIComponent(query)}`;
-    setSrc(url);
-    setLoading(false);
-  }, [query]);
-
-  if (!src) return null;
-
-  return (
-    <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', border: `1px solid ${BD}`, position: 'relative' }}>
-      {loading && (
-        <div style={{ height: '220px', backgroundColor: 'rgba(8,21,37,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ color: T3, fontSize: '13px', fontFamily: 'monospace' }}>Cargando imagen...</span>
-        </div>
-      )}
-      <img
-        src={src}
-        alt={query}
-        onLoad={() => setLoading(false)}
-        onError={() => setSrc(null)}
-        style={{ width: '100%', height: '220px', objectFit: 'cover', display: loading ? 'none' : 'block' }}
-      />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 14px', background: 'linear-gradient(transparent, rgba(3,3,10,0.85))' }}>
-        <span style={{ fontSize: '11px', color: T3, fontFamily: 'monospace' }}>📷 {query}</span>
-      </div>
-    </div>
-  );
-};
-
-// ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
 export default function TrainingPage() {
   const navigate = useNavigate();
-
-  const [vista, setVista] = useState('cursos'); // cursos | modulos | leccion
+  const [vista, setVista]               = useState('cursos');
   const [cursoActivo, setCursoActivo]   = useState(null);
   const [moduloActivo, setModuloActivo] = useState(null);
   const [leccionActiva, setLeccionActiva] = useState(null);
-  const [fase, setFase] = useState('teoria');
-
-  const [respuestasTest, setRespuestasTest] = useState({});
-  const [testEnviado, setTestEnviado]       = useState(false);
-  const [ordenActual, setOrdenActual]       = useState([]);
+  const [fase, setFase]                 = useState('teoria');
+  const [respuestasTest, setRespuestasTest]   = useState({});
+  const [testEnviado, setTestEnviado]         = useState(false);
+  const [ordenActual, setOrdenActual]         = useState([]);
   const [clasificaciones, setClasificaciones] = useState({});
-
   const [completadas, setCompletadas] = useState(() => {
     try { return JSON.parse(localStorage.getItem('socblast_training_completadas') || '[]'); } catch { return []; }
   });
@@ -1170,29 +1224,28 @@ export default function TrainingPage() {
   });
   const [mostrarCert, setMostrarCert] = useState(null);
 
-  const saveCompletadas = arr => { setCompletadas(arr); localStorage.setItem('socblast_training_completadas', JSON.stringify(arr)); };
+  const saveCompletadas  = arr => { setCompletadas(arr);  localStorage.setItem('socblast_training_completadas',  JSON.stringify(arr)); };
   const saveCertificados = arr => { setCertificados(arr); localStorage.setItem('socblast_certificados_modulos', JSON.stringify(arr)); };
 
-  const iniciarLeccion = leccion => {
-    setLeccionActiva(leccion); setFase('teoria');
+  const iniciarLeccion = l => {
+    setLeccionActiva(l); setFase('teoria');
     setRespuestasTest({}); setTestEnviado(false); setClasificaciones({});
-    if (leccion.ejercicio?.tipo === 'ordenar')
-      setOrdenActual([...leccion.ejercicio.fases].sort(() => Math.random() - 0.5));
+    if (l.ejercicio?.tipo === 'ordenar') setOrdenActual([...l.ejercicio.fases].sort(() => Math.random() - 0.5));
     setVista('leccion');
   };
 
   const calcularNota = () => {
     const pregs = leccionActiva?.preguntas || leccionActiva?.ejercicio?.preguntas;
     if (pregs) {
-      let c = 0; pregs.forEach((p, i) => { if (respuestasTest[i] === p.correcta) c++; });
+      let c = 0; pregs.forEach((p,i) => { if (respuestasTest[i] === p.correcta) c++; });
       return Math.round((c / pregs.length) * 100);
     }
     if (leccionActiva?.ejercicio?.tipo === 'clasificar') {
-      let c = 0; leccionActiva.ejercicio.items.forEach(item => { if (clasificaciones[item.texto] === item.categoria) c++; });
+      let c = 0; leccionActiva.ejercicio.items.forEach(it => { if (clasificaciones[it.texto] === it.categoria) c++; });
       return Math.round((c / leccionActiva.ejercicio.items.length) * 100);
     }
     if (leccionActiva?.ejercicio?.tipo === 'ordenar') {
-      let c = 0; ordenActual.forEach((f, i) => { if (f === leccionActiva.ejercicio.orden_correcto[i]) c++; });
+      let c = 0; ordenActual.forEach((f,i) => { if (f === leccionActiva.ejercicio.orden_correcto[i]) c++; });
       return Math.round((c / ordenActual.length) * 100);
     }
     return 0;
@@ -1200,120 +1253,103 @@ export default function TrainingPage() {
 
   const completarLeccion = () => {
     const key = `${moduloActivo.id}-${leccionActiva.id}`;
-    const nuevasComp = completadas.includes(key) ? completadas : [...completadas, key];
-    saveCompletadas(nuevasComp);
-
-    const todasModulo = moduloActivo.lecciones.map(l => `${moduloActivo.id}-${l.id}`);
-    const moduloCompleto = todasModulo.every(k => nuevasComp.includes(k));
-    if (moduloCompleto && !certificados.find(c => c.moduloId === moduloActivo.id)) {
-      const cert = { moduloId: moduloActivo.id, titulo: moduloActivo.certificado, modulo: moduloActivo.titulo, fecha: new Date().toLocaleDateString('es-ES'), color: moduloActivo.color };
+    const nuevas = completadas.includes(key) ? completadas : [...completadas, key];
+    saveCompletadas(nuevas);
+    const todas = moduloActivo.lecciones.map(l => `${moduloActivo.id}-${l.id}`);
+    if (todas.every(k => nuevas.includes(k)) && !certificados.find(c => c.moduloId === moduloActivo.id)) {
+      const cert = { moduloId:moduloActivo.id, titulo:moduloActivo.certificado, modulo:moduloActivo.titulo, fecha:new Date().toLocaleDateString('es-ES'), color:moduloActivo.color };
       saveCertificados([...certificados, cert]);
       setMostrarCert(cert);
-    } else {
-      setVista('modulos');
-    }
+    } else { setVista('modulos'); }
   };
 
   const moverFase = (i, dir) => {
-    const n = [...ordenActual]; const t = i + dir;
-    if (t < 0 || t >= n.length) return;
-    [n[i], n[t]] = [n[t], n[i]]; setOrdenActual(n);
+    const n = [...ordenActual]; const t = i+dir;
+    if (t<0||t>=n.length) return;
+    [n[i],n[t]]=[n[t],n[i]]; setOrdenActual(n);
   };
 
   const nota = calcularNota();
-
-  // Progress helpers
   const leccionesCompletadasModulo = mod => mod.lecciones.filter(l => completadas.includes(`${mod.id}-${l.id}`)).length;
   const moduloCompleto = mod => mod.lecciones.length > 0 && leccionesCompletadasModulo(mod) === mod.lecciones.length;
   const cursoDesbloqueado = curso => curso.id === 1 || (() => {
-    const cursoPrev = CURSOS[curso.id - 2];
-    return cursoPrev.moduloIds.every(mId => {
-      const mod = MODULOS.find(m => m.id === mId);
-      return moduloCompleto(mod);
-    });
+    const prev = CURSOS[curso.id-2];
+    return prev.moduloIds.every(mId => moduloCompleto(MODULOS.find(m => m.id === mId)));
   })();
   const progresoCurso = curso => {
     const mods = curso.moduloIds.map(id => MODULOS.find(m => m.id === id));
-    const total = mods.reduce((acc, m) => acc + m.lecciones.length, 0);
-    const hechas = mods.reduce((acc, m) => acc + leccionesCompletadasModulo(m), 0);
-    return total > 0 ? Math.round((hechas / total) * 100) : 0;
+    const total = mods.reduce((acc,m) => acc+m.lecciones.length, 0);
+    const hechas = mods.reduce((acc,m) => acc+leccionesCompletadasModulo(m), 0);
+    return total>0 ? Math.round((hechas/total)*100) : 0;
   };
-
-  const xpTotal = MODULOS.reduce((acc, m) => acc + m.xp, 0);
-  const leccionesTotales = MODULOS.reduce((acc, m) => acc + m.lecciones.length, 0);
+  const leccionesTotales = MODULOS.reduce((acc,m) => acc+m.lecciones.length, 0);
+  const leccionesComp    = completadas.length;
 
   const css = `
     @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes certIn{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
-    @keyframes spinLogo{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    @keyframes certIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
     .fade-up{animation:fadeUp 0.35s ease forwards;}
-    .curso-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.6)!important;}
-    .mod-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5)!important;}
-    .lesson-row:hover{border-color:rgba(37,100,241,.35)!important;background:rgba(14,26,46,.98)!important;}
-    .nav-btn:hover{color:#fff!important;background:rgba(37,100,241,.08)!important;}
-    .opt-btn:hover{border-color:rgba(37,100,241,.4)!important;}
-    *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,color .15s ease;}
+    .card-hover:hover{transform:translateY(-4px)!important;box-shadow:0 20px 56px rgba(0,0,0,.7)!important;}
+    .lesson-row:hover{background:rgba(59,123,245,0.04)!important;border-color:rgba(59,123,245,0.22)!important;}
+    .opt-btn:hover{border-color:rgba(59,123,245,0.38)!important;}
+    .nav-btn:hover{color:${T1}!important;}
+    *{transition:transform .18s ease,box-shadow .18s ease,border-color .14s ease,background .14s ease,color .14s ease;}
+    ::-webkit-scrollbar{width:5px;}
+    ::-webkit-scrollbar-track{background:${BG};}
+    ::-webkit-scrollbar-thumb{background:${BD2};border-radius:3px;}
   `;
 
-  const Navbar = ({ titulo, back, right }) => (
-    <nav style={{ position:'sticky', top:0, zIndex:50, height:'60px', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 40px', backgroundColor:'rgba(14,26,46,.9)', backdropFilter:'blur(20px)', borderBottom:`1px solid ${BD}` }}>
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }} onClick={() => navigate('/')}>
-        <img src="/logosoc.png" style={{ height:'30px' }}/>
-        <span style={{ fontSize:'15px', fontWeight:800, color:T1 }}>Soc<span style={{ color:ACC }}>Blast</span></span>
-      </div>
-      {titulo && <span style={{ fontSize:'14px', fontWeight:600, color:T2 }}>{titulo}</span>}
-      <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-        {right && <span style={{ fontSize:'12px', color:GREEN, fontFamily:'monospace', fontWeight:700 }}>{right}</span>}
-        {back && <button className="nav-btn" onClick={back} style={{ padding:'6px 14px', borderRadius:'7px', background:'none', border:`1px solid ${BD}`, color:T2, fontSize:'13px', cursor:'pointer' }}>← Volver</button>}
-      </div>
-    </nav>
-  );
-
-  // ── CERTIFICADO MODAL ─────────────────────────────────────────────────────
+  // ── CERTIFICADO MODAL ──────────────────────────────────────────────────────
   if (mostrarCert) return (
     <>
       <style>{css}</style>
-      <div style={{ minHeight:'100vh', backgroundColor:BG, display:'flex', alignItems:'center', justifyContent:'center', padding:'28px', fontFamily:"'Inter',-apple-system,sans-serif" }}>
-        <div style={{ maxWidth:'520px', width:'100%', animation:'certIn .5s ease forwards' }}>
-          <div style={{ padding:'44px', borderRadius:'18px', backgroundColor:CARD, border:`1px solid ${mostrarCert.color}45`, backdropFilter:'blur(10px)', textAlign:'center', position:'relative', overflow:'hidden', marginBottom:'16px', boxShadow:`0 0 80px ${mostrarCert.color}20` }}>
-            <div style={{ position:'absolute', top:0, left:0, right:0, height:'3px', background:`linear-gradient(90deg,transparent,${mostrarCert.color},transparent)` }}/>
-            <div style={{ fontSize:'56px', marginBottom:'18px' }}>🏅</div>
-            <p style={{ fontSize:'11px', color:mostrarCert.color, fontFamily:'monospace', fontWeight:700, letterSpacing:'3px', marginBottom:'10px' }}>CERTIFICADO DE COMPLETACIÓN</p>
-            <h1 style={{ fontSize:'24px', fontWeight:900, color:T1, marginBottom:'8px', letterSpacing:'-0.5px' }}>{mostrarCert.titulo}</h1>
-            <p style={{ fontSize:'14px', color:T3, marginBottom:'6px' }}>{mostrarCert.modulo}</p>
-            <p style={{ fontSize:'12px', color:T3, fontFamily:'monospace' }}>SocBlast · {mostrarCert.fecha}</p>
-          </div>
-          <div style={{ display:'flex', gap:'12px' }}>
-            <button onClick={() => { setMostrarCert(null); setVista('modulos'); }} style={{ flex:1, padding:'14px', borderRadius:'10px', backgroundColor:ACC, border:'none', color:T1, fontWeight:700, fontSize:'14px', cursor:'pointer' }}>Continuar →</button>
-            <button onClick={() => { setMostrarCert(null); navigate('/perfil'); }} style={{ flex:1, padding:'14px', borderRadius:'10px', backgroundColor:'transparent', border:`1px solid ${BD}`, color:T2, fontSize:'14px', cursor:'pointer' }}>Ver en Perfil</button>
+      <div style={{ minHeight:'100vh', backgroundColor:BG, display:'flex', alignItems:'center', justifyContent:'center', padding:'28px', fontFamily:"system-ui,sans-serif" }}>
+        <div style={{ maxWidth:'520px', width:'100%', animation:'certIn .45s ease forwards' }}>
+          <div style={{ padding:'52px 44px', borderRadius:'20px', backgroundColor:CARD, border:`1px solid rgba(240,180,41,0.28)`, textAlign:'center', position:'relative', overflow:'hidden', boxShadow:`0 0 80px rgba(240,180,41,0.07), 0 40px 80px rgba(0,0,0,0.6)` }}>
+            <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,transparent,${GOLD},transparent)` }}/>
+            {/* Esquinas decorativas */}
+            {[{top:'18px',left:'18px',bt:'1px',bl:'1px'},{top:'18px',right:'18px',bt:'1px',br:'1px'},{bottom:'18px',left:'18px',bb:'1px',bl:'1px'},{bottom:'18px',right:'18px',bb:'1px',br:'1px'}].map((s,i)=>(
+              <div key={i} style={{ position:'absolute', width:'18px', height:'18px', ...Object.fromEntries(Object.entries(s).filter(([k])=>!['bt','bl','br','bb'].includes(k)).map(([k,v])=>[k,v])), borderTop:s.bt?`1px solid rgba(240,180,41,0.35)`:undefined, borderBottom:s.bb?`1px solid rgba(240,180,41,0.35)`:undefined, borderLeft:s.bl?`1px solid rgba(240,180,41,0.35)`:undefined, borderRight:s.br?`1px solid rgba(240,180,41,0.35)`:undefined }}/>
+            ))}
+            <div style={{ width:'60px', height:'60px', borderRadius:'50%', backgroundColor:'rgba(240,180,41,0.09)', border:`1px solid rgba(240,180,41,0.25)`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', fontSize:'26px' }}>🏅</div>
+            <p style={{ fontSize:'10px', color:GOLD, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'4px', marginBottom:'14px' }}>CERTIFICADO DE COMPLETACIÓN</p>
+            <h1 style={{ fontSize:'24px', fontWeight:700, color:T1, marginBottom:'8px', letterSpacing:'-0.3px', lineHeight:1.3 }}>{mostrarCert.titulo}</h1>
+            <p style={{ fontSize:'14px', color:T3, marginBottom:'5px' }}>{mostrarCert.modulo}</p>
+            <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace", marginBottom:'30px' }}>SocBlast · {mostrarCert.fecha}</p>
+            <div style={{ width:'100%', height:'1px', backgroundColor:BD, marginBottom:'26px' }}/>
+            <div style={{ display:'flex', gap:'12px' }}>
+              <button onClick={() => { setMostrarCert(null); setVista('modulos'); }} style={{ flex:1, padding:'13px', borderRadius:'10px', backgroundColor:ACC, border:'none', color:T1, fontWeight:600, fontSize:'14px', cursor:'pointer' }}>Continuar →</button>
+              <button onClick={() => { setMostrarCert(null); navigate('/perfil'); }} style={{ flex:1, padding:'13px', borderRadius:'10px', backgroundColor:'transparent', border:`1px solid ${BD2}`, color:T2, fontSize:'14px', cursor:'pointer' }}>Ver en perfil</button>
+            </div>
           </div>
         </div>
       </div>
     </>
   );
 
-  // ── LECCIÓN ───────────────────────────────────────────────────────────────
+  // ── LECCIÓN ────────────────────────────────────────────────────────────────
   if (vista === 'leccion') {
-    const tieneCaso = leccionActiva?.ejercicio?.tipo === 'caso_practico';
-    const tieneOrdenar = leccionActiva?.ejercicio?.tipo === 'ordenar';
+    const tieneCaso       = leccionActiva?.ejercicio?.tipo === 'caso_practico';
+    const tieneOrdenar    = leccionActiva?.ejercicio?.tipo === 'ordenar';
     const tieneClasificar = leccionActiva?.ejercicio?.tipo === 'clasificar';
-    const tieneTest = !!leccionActiva?.preguntas?.length;
-    const pregsPractica = leccionActiva?.preguntas || leccionActiva?.ejercicio?.preguntas || [];
-    const imgQuery = LESSON_IMAGES[`${moduloActivo?.id}-${leccionActiva?.id}`];
+    const tieneTest       = !!leccionActiva?.preguntas?.length;
+    const pregsPractica   = leccionActiva?.preguntas || leccionActiva?.ejercicio?.preguntas || [];
+    const imgQuery        = LESSON_IMAGES[`${moduloActivo?.id}-${leccionActiva?.id}`];
+    const modColor        = moduloActivo?.color || ACC;
 
     return (
       <>
         <style>{css}</style>
-        <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"'Inter',-apple-system,sans-serif", color:T1 }}>
-          <Navbar titulo={leccionActiva.titulo} back={() => { setVista('modulos'); setLeccionActiva(null); }} right={`+${leccionActiva.xp} XP`}/>
-          <div style={{ maxWidth:'800px', margin:'0 auto', padding:'32px 40px 72px' }}>
+        <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"system-ui,sans-serif", color:T1 }}>
+          <Navbar titulo={leccionActiva.titulo} back={() => { setVista('modulos'); setLeccionActiva(null); }} right={`+${leccionActiva.xp} XP`} onLogoClick={() => navigate('/')}/>
+          <div style={{ maxWidth:'780px', margin:'0 auto', padding:'36px 40px 80px' }}>
 
             {/* Tabs */}
-            <div style={{ display:'flex', gap:'8px', marginBottom:'28px' }}>
-              {['teoria','practica'].map((f,i) => (
-                <div key={f} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'7px 16px', borderRadius:'8px', fontSize:'12px', fontWeight:700, fontFamily:'monospace', backgroundColor:fase===f?`${ACC}18`:'transparent', color:fase===f?ACC:T3, border:`1px solid ${fase===f?ACC+'40':BD}` }}>
-                  {fase==='practica' && f==='teoria' && <span style={{ color:GREEN }}>✓</span>}
-                  {f==='teoria' ? '📖 TEORÍA' : tieneCaso ? '🎯 CASO PRÁCTICO' : '⚡ PRÁCTICA'}
+            <div style={{ display:'flex', gap:'4px', marginBottom:'32px', padding:'4px', backgroundColor:'rgba(10,18,35,0.8)', borderRadius:'12px', border:`1px solid ${BD}` }}>
+              {['teoria','practica'].map(f => (
+                <div key={f} onClick={() => f==='teoria' && setFase('teoria')}
+                  style={{ flex:1, padding:'10px', borderRadius:'9px', textAlign:'center', fontSize:'11px', fontWeight:700, letterSpacing:'2px', fontFamily:"'Courier New',monospace", cursor:'pointer', backgroundColor:fase===f?CARD:'transparent', color:fase===f?T1:T3, border:fase===f?`1px solid ${BD2}`:'1px solid transparent', boxShadow:fase===f?'0 2px 10px rgba(0,0,0,0.4)':'none' }}>
+                  {f==='teoria' ? (fase==='practica'?'✓ TEORÍA':'TEORÍA') : (tieneCaso?'CASO PRÁCTICO':'PRÁCTICA')}
                 </div>
               ))}
             </div>
@@ -1322,11 +1358,15 @@ export default function TrainingPage() {
             {fase==='teoria' && (
               <div className="fade-up">
                 {imgQuery && <LeccionImagen query={imgQuery}/>}
-                <div style={{ padding:'28px 32px', borderRadius:'14px', backgroundColor:CARD, border:`1px solid ${BD}`, marginBottom:'20px', backdropFilter:'blur(10px)', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,transparent,${moduloActivo?.color||ACC}60,transparent)` }}/>
-                  <pre style={{ whiteSpace:'pre-wrap', fontSize:'16px', color:T2, lineHeight:2.0, fontFamily:"'Fira Code',monospace", margin:0 }}>{leccionActiva.teoria}</pre>
+                <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'24px' }}>
+                  <div style={{ width:'3px', height:'26px', borderRadius:'2px', backgroundColor:modColor }}/>
+                  <h2 style={{ fontSize:'21px', fontWeight:700, color:T1, letterSpacing:'-0.4px' }}>{leccionActiva.titulo}</h2>
                 </div>
-                <button onClick={() => setFase('practica')} style={{ width:'100%', padding:'16px', borderRadius:'10px', backgroundColor:ACC, border:'none', color:T1, fontWeight:700, fontSize:'16px', cursor:'pointer', boxShadow:`0 4px 20px rgba(37,100,241,.4)` }}>
+                <div style={{ marginBottom:'28px' }}>
+                  <TeoriaVisual texto={leccionActiva.teoria}/>
+                </div>
+                <button onClick={() => setFase('practica')}
+                  style={{ width:'100%', padding:'17px', borderRadius:'12px', background:`linear-gradient(135deg,${modColor}dd,${modColor}88)`, border:'none', color:T1, fontWeight:700, fontSize:'15px', cursor:'pointer', letterSpacing:'0.3px', boxShadow:`0 4px 20px ${modColor}25` }}>
                   {tieneCaso ? 'Ir al Caso Práctico →' : 'Ir a la Práctica →'}
                 </button>
               </div>
@@ -1335,33 +1375,45 @@ export default function TrainingPage() {
             {/* PRÁCTICA */}
             {fase==='practica' && (
               <div className="fade-up">
+                <div style={{ padding:'16px 20px', borderRadius:'11px', backgroundColor:`${modColor}08`, border:`1px solid ${modColor}18`, marginBottom:'24px', display:'flex', alignItems:'center', gap:'13px' }}>
+                  <div style={{ width:'38px', height:'38px', borderRadius:'9px', backgroundColor:`${modColor}13`, border:`1px solid ${modColor}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', flexShrink:0 }}>
+                    {tieneCaso?'⚡':'📝'}
+                  </div>
+                  <div>
+                    <p style={{ fontSize:'12px', fontWeight:700, color:T1, marginBottom:'2px', fontFamily:"'Courier New',monospace", letterSpacing:'1px' }}>
+                      {tieneCaso?'CASO PRÁCTICO — TOMA DE DECISIONES REAL':'TEST DE CONOCIMIENTOS'}
+                    </p>
+                    <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>
+                      {pregsPractica.length} {tieneCaso?'escenarios':'preguntas'} · Mínimo 60% para superar
+                    </p>
+                  </div>
+                </div>
 
-                {/* Test / Caso práctico */}
+                {/* Test / Caso */}
                 {(tieneTest || tieneCaso) && (
-                  <>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'18px' }}>
-                      <span style={{ fontSize:'10px', color:T3, fontWeight:700, letterSpacing:'2px', fontFamily:'monospace' }}>
-                        {tieneCaso ? 'CASO PRÁCTICO — TOMA DE DECISIONES' : 'TEST DE CONOCIMIENTOS'}
-                      </span>
-                      {tieneCaso && <span style={{ fontSize:'10px', padding:'3px 8px', borderRadius:'5px', backgroundColor:'rgba(239,68,68,.1)', color:'#EF4444', border:'1px solid rgba(239,68,68,.2)', fontFamily:'monospace' }}>CASO REAL</span>}
-                    </div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:'14px', marginBottom:'18px' }}>
-                      {pregsPractica.map((p,i) => (
-                        <div key={i} style={{ padding:'22px 24px', borderRadius:'12px', backgroundColor:CARD, border:`1px solid ${BD}`, backdropFilter:'blur(10px)', position:'relative', overflow:'hidden' }}>
-                          {tieneCaso && <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:'linear-gradient(90deg,transparent,rgba(239,68,68,.4),transparent)' }}/>}
-                          <p style={{ fontSize:'16px', color:T1, fontWeight:600, marginBottom:'14px', lineHeight:1.6 }}>{i+1}. {p.pregunta}</p>
-                          <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:'14px', marginBottom:'18px' }}>
+                    {pregsPractica.map((p,i) => (
+                      <div key={i} style={{ borderRadius:'13px', backgroundColor:CARD, border:`1px solid ${BD}`, overflow:'hidden' }}>
+                        {tieneCaso && <div style={{ height:'2px', background:`linear-gradient(90deg,${RED}55,transparent)` }}/>}
+                        <div style={{ padding:'20px 22px' }}>
+                          <div style={{ display:'flex', alignItems:'flex-start', gap:'12px', marginBottom:'16px' }}>
+                            <div style={{ width:'26px', height:'26px', borderRadius:'7px', backgroundColor:`${ACC}10`, border:`1px solid ${ACC}22`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                              <span style={{ fontSize:'11px', fontWeight:700, color:ACC, fontFamily:"'Courier New',monospace" }}>{i+1}</span>
+                            </div>
+                            <p style={{ fontSize:'15px', color:T1, fontWeight:500, lineHeight:1.65 }}>{p.pregunta}</p>
+                          </div>
+                          <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
                             {p.opciones.map((op,j) => {
-                              let bg='rgba(8,21,37,.8)', border=BD, color=T2;
+                              let bg='rgba(6,12,24,0.8)', border=BD, color=T2, icon=null;
                               if (testEnviado) {
-                                if (j===p.correcta) { bg='rgba(74,222,128,.08)'; border='#4ADE8045'; color=GREEN; }
-                                else if (respuestasTest[i]===j) { bg='rgba(239,68,68,.08)'; border='#EF444445'; color=RED; }
-                              } else if (respuestasTest[i]===j) { bg=`${ACC}12`; border=`${ACC}55`; color=ACC; }
+                                if (j===p.correcta)            { bg='rgba(34,211,160,0.06)'; border='rgba(34,211,160,0.28)'; color=GREEN; icon='✓'; }
+                                else if (respuestasTest[i]===j){ bg='rgba(240,80,112,0.06)'; border='rgba(240,80,112,0.22)'; color=RED;   icon='✗'; }
+                              } else if (respuestasTest[i]===j){ bg=`${ACC}0e`; border=`${ACC}38`; color=T1; }
                               return (
-                                <button key={j} className="opt-btn" onClick={() => !testEnviado && setRespuestasTest(p => ({...p,[i]:j}))}
-                                  style={{ padding:'13px 16px', borderRadius:'9px', backgroundColor:bg, border:`1px solid ${border}`, color, fontSize:'15px', cursor:testEnviado?'default':'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:'10px' }}>
-                                  <div style={{ width:'20px', height:'20px', borderRadius:'50%', border:`2px solid ${border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'11px', color }}>
-                                    {testEnviado && j===p.correcta?'✓':testEnviado&&respuestasTest[i]===j?'✗':''}
+                                <button key={j} className="opt-btn" onClick={() => !testEnviado && setRespuestasTest(p=>({...p,[i]:j}))}
+                                  style={{ padding:'12px 16px', borderRadius:'9px', backgroundColor:bg, border:`1px solid ${border}`, color, fontSize:'14px', cursor:testEnviado?'default':'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:'11px' }}>
+                                  <div style={{ width:'18px', height:'18px', borderRadius:'50%', border:`1.5px solid ${border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'10px', fontWeight:700, color }}>
+                                    {icon || String.fromCharCode(65+j)}
                                   </div>
                                   {op}
                                 </button>
@@ -1369,26 +1421,28 @@ export default function TrainingPage() {
                             })}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </>
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {/* Clasificar */}
                 {tieneClasificar && (
                   <>
-                    <p style={{ fontSize:'10px', color:T3, fontWeight:700, letterSpacing:'2px', marginBottom:'16px', fontFamily:'monospace' }}>CLASIFICAR — {leccionActiva.ejercicio.instruccion.toUpperCase()}</p>
-                    <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginBottom:'18px' }}>
+                    <div style={{ padding:'12px 16px', borderRadius:'9px', backgroundColor:`${ACC}07`, border:`1px solid ${ACC}18`, marginBottom:'16px' }}>
+                      <p style={{ fontSize:'11px', color:ACC, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'1.5px' }}>CLASIFICAR — {leccionActiva.ejercicio.instruccion?.toUpperCase()}</p>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'9px', marginBottom:'18px' }}>
                       {leccionActiva.ejercicio.items.map((item,i) => {
-                        const ok = testEnviado && clasificaciones[item.texto]===item.categoria;
+                        const ok   = testEnviado && clasificaciones[item.texto]===item.categoria;
                         const fail = testEnviado && clasificaciones[item.texto] && clasificaciones[item.texto]!==item.categoria;
                         return (
-                          <div key={i} style={{ padding:'16px 18px', borderRadius:'10px', backgroundColor:ok?'rgba(74,222,128,.06)':fail?'rgba(239,68,68,.06)':CARD, border:`1px solid ${ok?'#4ADE8030':fail?'#EF444430':BD}` }}>
-                            <p style={{ fontSize:'15px', color:T1, marginBottom:'10px' }}>{item.texto}</p>
+                          <div key={i} style={{ padding:'15px 18px', borderRadius:'11px', backgroundColor:ok?'rgba(34,211,160,0.05)':fail?'rgba(240,80,112,0.05)':CARD, border:`1px solid ${ok?'rgba(34,211,160,0.22)':fail?'rgba(240,80,112,0.18)':BD}` }}>
+                            <p style={{ fontSize:'14px', color:T1, marginBottom:'10px' }}>{item.texto}</p>
                             {testEnviado
-                              ? <p style={{ fontSize:'14px', color:ok?GREEN:RED, fontFamily:'monospace' }}>{ok?`✓ ${item.categoria}`:`✗ Tu respuesta: ${clasificaciones[item.texto]||'Sin responder'} | Correcto: ${item.categoria}`}</p>
-                              : <select value={clasificaciones[item.texto]||''} onChange={e => setClasificaciones(p=>({...p,[item.texto]:e.target.value}))}
-                                  style={{ width:'100%', padding:'9px 12px', borderRadius:'8px', backgroundColor:'rgba(8,21,37,.8)', border:`1px solid ${BD}`, color:T2, fontSize:'14px', outline:'none', fontFamily:'monospace' }}>
+                              ? <p style={{ fontSize:'12px', color:ok?GREEN:RED, fontFamily:"'Courier New',monospace" }}>{ok?`✓ ${item.categoria}`:`✗ Tu respuesta: ${clasificaciones[item.texto]||'—'} · Correcto: ${item.categoria}`}</p>
+                              : <select value={clasificaciones[item.texto]||''} onChange={e=>setClasificaciones(p=>({...p,[item.texto]:e.target.value}))}
+                                  style={{ width:'100%', padding:'8px 12px', borderRadius:'8px', backgroundColor:'rgba(6,12,24,0.9)', border:`1px solid ${BD2}`, color:T2, fontSize:'13px', outline:'none', fontFamily:"'Courier New',monospace" }}>
                                   <option value=''>Selecciona categoría...</option>
                                   {leccionActiva.ejercicio.categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                 </select>
@@ -1403,21 +1457,26 @@ export default function TrainingPage() {
                 {/* Ordenar */}
                 {tieneOrdenar && (
                   <>
-                    <p style={{ fontSize:'10px', color:T3, fontWeight:700, letterSpacing:'2px', marginBottom:'16px', fontFamily:'monospace' }}>ORDENAR — {leccionActiva.ejercicio.instruccion.toUpperCase()}</p>
-                    <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginBottom:'18px' }}>
+                    <div style={{ padding:'12px 16px', borderRadius:'9px', backgroundColor:`${GOLD}07`, border:`1px solid ${GOLD}18`, marginBottom:'16px' }}>
+                      <p style={{ fontSize:'11px', color:GOLD, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'1.5px' }}>ORDENAR — {leccionActiva.ejercicio.instruccion?.toUpperCase()}</p>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'7px', marginBottom:'18px' }}>
                       {ordenActual.map((f,i) => {
                         const ok = testEnviado && f===leccionActiva.ejercicio.orden_correcto[i];
                         return (
-                          <div key={f} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'14px 18px', borderRadius:'10px', backgroundColor:testEnviado?(ok?'rgba(74,222,128,.06)':'rgba(239,68,68,.06)'):CARD, border:`1px solid ${testEnviado?(ok?'#4ADE8030':'#EF444430'):BD}` }}>
-                            <span style={{ fontSize:'13px', color:testEnviado?(ok?GREEN:RED):ACC, fontFamily:'monospace', width:'26px', fontWeight:700 }}>{i+1}.</span>
-                            <span style={{ fontSize:'15px', color:T1, flex:1 }}>{f}</span>
+                          <div key={f} style={{ display:'flex', alignItems:'center', gap:'11px', padding:'13px 16px', borderRadius:'10px', backgroundColor:testEnviado?(ok?'rgba(34,211,160,0.05)':'rgba(240,80,112,0.05)'):CARD, border:`1px solid ${testEnviado?(ok?'rgba(34,211,160,0.2)':'rgba(240,80,112,0.14)'):BD}` }}>
+                            <div style={{ width:'26px', height:'26px', borderRadius:'7px', backgroundColor:`${testEnviado?(ok?GREEN:RED):ACC}12`, border:`1px solid ${testEnviado?(ok?GREEN:RED):ACC}28`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                              <span style={{ fontSize:'11px', fontWeight:700, color:testEnviado?(ok?GREEN:RED):ACC, fontFamily:"'Courier New',monospace" }}>{i+1}</span>
+                            </div>
+                            <span style={{ fontSize:'14px', color:T1, flex:1 }}>{f}</span>
                             {!testEnviado && (
-                              <div style={{ display:'flex', gap:'5px' }}>
-                                <button onClick={() => moverFase(i,-1)} style={{ padding:'5px 10px', borderRadius:'6px', backgroundColor:'rgba(8,21,37,.8)', border:`1px solid ${BD}`, color:T3, fontSize:'13px', cursor:'pointer' }}>↑</button>
-                                <button onClick={() => moverFase(i,1)} style={{ padding:'5px 10px', borderRadius:'6px', backgroundColor:'rgba(8,21,37,.8)', border:`1px solid ${BD}`, color:T3, fontSize:'13px', cursor:'pointer' }}>↓</button>
+                              <div style={{ display:'flex', gap:'4px' }}>
+                                {[['↑',-1],['↓',1]].map(([label,dir]) => (
+                                  <button key={label} onClick={() => moverFase(i,dir)} style={{ padding:'4px 9px', borderRadius:'6px', backgroundColor:'rgba(6,12,24,0.8)', border:`1px solid ${BD2}`, color:T3, fontSize:'13px', cursor:'pointer' }}>{label}</button>
+                                ))}
                               </div>
                             )}
-                            {testEnviado && <span style={{ fontSize:'12px', color:ok?GREEN:RED }}>{ok?'✓':`→ ${leccionActiva.ejercicio.orden_correcto[i]}`}</span>}
+                            {testEnviado && !ok && <span style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>→ {leccionActiva.ejercicio.orden_correcto[i]}</span>}
                           </div>
                         );
                       })}
@@ -1425,27 +1484,33 @@ export default function TrainingPage() {
                   </>
                 )}
 
-                {/* Botón enviar / resultado */}
+                {/* Resultado */}
                 {!testEnviado
-                  ? <button onClick={() => setTestEnviado(true)} style={{ width:'100%', padding:'16px', borderRadius:'10px', backgroundColor:ACC, border:'none', color:T1, fontWeight:700, fontSize:'16px', cursor:'pointer', boxShadow:`0 4px 20px rgba(37,100,241,.4)` }}>Enviar respuestas</button>
-                  : (
-                    <>
-                      <div style={{ padding:'22px 24px', borderRadius:'12px', backgroundColor:nota>=60?'rgba(74,222,128,.06)':'rgba(239,68,68,.06)', border:`1px solid ${nota>=60?'#4ADE8030':'#EF444430'}`, marginBottom:'14px', display:'flex', alignItems:'center', justifyContent:'space-between', backdropFilter:'blur(10px)' }}>
+                  ? <button onClick={() => setTestEnviado(true)}
+                      style={{ width:'100%', padding:'17px', borderRadius:'12px', background:`linear-gradient(135deg,${ACC},#2050c8)`, border:'none', color:T1, fontWeight:700, fontSize:'15px', cursor:'pointer', boxShadow:`0 4px 20px rgba(59,123,245,0.28)` }}>
+                      Enviar respuestas
+                    </button>
+                  : <>
+                      <div style={{ padding:'22px 26px', borderRadius:'13px', backgroundColor:nota>=60?'rgba(34,211,160,0.05)':'rgba(240,80,112,0.05)', border:`1px solid ${nota>=60?'rgba(34,211,160,0.2)':'rgba(240,80,112,0.18)'}`, marginBottom:'13px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                         <div>
-                          <p style={{ fontSize:'36px', fontWeight:900, color:nota>=60?GREEN:RED, fontFamily:'monospace', lineHeight:1 }}>{nota}%</p>
-                          <p style={{ fontSize:'14px', color:T3, marginTop:'5px' }}>{nota>=60?'✓ Lección superada':'Necesitas al menos 60%'}</p>
+                          <p style={{ fontSize:'42px', fontWeight:800, color:nota>=60?GREEN:RED, lineHeight:1, fontFamily:"'Courier New',monospace" }}>{nota}%</p>
+                          <p style={{ fontSize:'12px', color:T3, marginTop:'5px', fontFamily:"'Courier New',monospace" }}>{nota>=60?'Lección superada':'Mínimo 60% requerido'}</p>
                         </div>
-                        <p style={{ fontSize:'14px', color:T3, fontFamily:'monospace' }}>+{nota>=60?leccionActiva.xp:0} XP</p>
+                        <div style={{ textAlign:'right' }}>
+                          <p style={{ fontSize:'20px', fontWeight:700, color:nota>=60?GREEN:T3, fontFamily:"'Courier New',monospace" }}>+{nota>=60?leccionActiva.xp:0}</p>
+                          <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>XP</p>
+                        </div>
                       </div>
                       {nota>=60
-                        ? <button onClick={completarLeccion} style={{ width:'100%', padding:'16px', borderRadius:'10px', backgroundColor:'#059669', border:'none', color:T1, fontWeight:700, fontSize:'16px', cursor:'pointer' }}>✓ Completar lección (+{leccionActiva.xp} XP)</button>
+                        ? <button onClick={completarLeccion} style={{ width:'100%', padding:'17px', borderRadius:'12px', backgroundColor:'rgba(34,211,160,0.1)', border:'1px solid rgba(34,211,160,0.28)', color:GREEN, fontWeight:700, fontSize:'15px', cursor:'pointer' }}>
+                            Completar lección (+{leccionActiva.xp} XP) →
+                          </button>
                         : <button onClick={() => { setTestEnviado(false); setRespuestasTest({}); setClasificaciones({}); if (tieneOrdenar) setOrdenActual([...leccionActiva.ejercicio.fases].sort(()=>Math.random()-.5)); setFase('teoria'); }}
-                            style={{ width:'100%', padding:'16px', borderRadius:'10px', backgroundColor:'transparent', border:`1px solid ${BD}`, color:T2, fontWeight:600, fontSize:'16px', cursor:'pointer' }}>
+                            style={{ width:'100%', padding:'17px', borderRadius:'12px', backgroundColor:'transparent', border:`1px solid ${BD2}`, color:T2, fontWeight:600, fontSize:'15px', cursor:'pointer' }}>
                             Revisar teoría e intentar de nuevo
                           </button>
                       }
                     </>
-                  )
                 }
               </div>
             )}
@@ -1455,109 +1520,99 @@ export default function TrainingPage() {
     );
   }
 
-  // ── MÓDULOS DEL CURSO ─────────────────────────────────────────────────────
-  if (vista === 'modulos' && cursoActivo) {
+  // ── MÓDULOS ────────────────────────────────────────────────────────────────
+  if (vista==='modulos' && cursoActivo) {
     const modsCurso = cursoActivo.moduloIds.map(id => MODULOS.find(m => m.id === id));
-
     return (
       <>
         <style>{css}</style>
-        <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"'Inter',-apple-system,sans-serif", color:T1 }}>
-          <Navbar titulo={cursoActivo.titulo} back={() => { setVista('cursos'); setCursoActivo(null); }} right={`+${modsCurso.reduce((acc,m)=>acc+m.xp,0)} XP`}/>
-          <div style={{ maxWidth:'900px', margin:'0 auto', padding:'32px 40px 72px' }}>
+        <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"system-ui,sans-serif", color:T1 }}>
+          <Navbar titulo={cursoActivo.titulo} back={() => { setVista('cursos'); setCursoActivo(null); }} right={`+${modsCurso.reduce((acc,m)=>acc+m.xp,0)} XP`} onLogoClick={() => navigate('/')}/>
+          <div style={{ maxWidth:'960px', margin:'0 auto', padding:'36px 40px 80px' }}>
 
             {/* Header curso */}
-            <div style={{ padding:'24px 28px', borderRadius:'14px', backgroundColor:CARD, border:`1px solid rgba(${cursoActivo.colorRgb},.3)`, backdropFilter:'blur(10px)', marginBottom:'24px', position:'relative', overflow:'hidden' }}>
+            <div style={{ padding:'26px 30px', borderRadius:'16px', background:`linear-gradient(135deg,rgba(${cursoActivo.colorRgb||'59,123,245'},.07) 0%,rgba(${cursoActivo.colorRgb||'59,123,245'},.02) 100%)`, border:`1px solid rgba(${cursoActivo.colorRgb||'59,123,245'},.18)`, marginBottom:'26px', position:'relative', overflow:'hidden' }}>
               <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,transparent,${cursoActivo.color},transparent)` }}/>
               <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
-                <div style={{ width:'52px', height:'52px', borderRadius:'14px', backgroundColor:`rgba(${cursoActivo.colorRgb},.12)`, border:`1px solid rgba(${cursoActivo.colorRgb},.25)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', flexShrink:0 }}>{cursoActivo.icono}</div>
+                <span style={{ fontSize:'34px' }}>{cursoActivo.icono}</span>
                 <div style={{ flex:1 }}>
-                  <h2 style={{ fontSize:'20px', fontWeight:800, color:T1, marginBottom:'4px' }}>{cursoActivo.titulo}</h2>
-                  <p style={{ fontSize:'14px', color:T3 }}>{cursoActivo.descripcion}</p>
+                  <h2 style={{ fontSize:'21px', fontWeight:700, color:T1, marginBottom:'4px', letterSpacing:'-0.3px' }}>{cursoActivo.titulo}</h2>
+                  <p style={{ fontSize:'13px', color:T3 }}>{cursoActivo.descripcion}</p>
                 </div>
                 <div style={{ textAlign:'right', flexShrink:0 }}>
-                  <p style={{ fontSize:'11px', color:T3, fontFamily:'monospace', marginBottom:'3px' }}>{cursoActivo.nivel}</p>
-                  <p style={{ fontSize:'18px', fontWeight:900, color:cursoActivo.color, fontFamily:'monospace' }}>{progresoCurso(cursoActivo)}%</p>
+                  <p style={{ fontSize:'30px', fontWeight:800, color:cursoActivo.color, lineHeight:1, fontFamily:"'Courier New',monospace" }}>{progresoCurso(cursoActivo)}%</p>
+                  <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>completado</p>
                 </div>
               </div>
             </div>
 
-            {/* Módulos */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-              {modsCurso.map(modulo => {
-                const lComp = leccionesCompletadasModulo(modulo);
-                const total = modulo.lecciones.length;
-                const completo = moduloCompleto(modulo);
-                const certObt = certificados.find(c => c.moduloId === modulo.id);
-
+            {/* Grid módulos */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'13px', marginBottom:'26px' }}>
+              {modsCurso.map(mod => {
+                const lComp   = leccionesCompletadasModulo(mod);
+                const total   = mod.lecciones.length;
+                const completo= moduloCompleto(mod);
+                const certObt = certificados.find(c => c.moduloId === mod.id);
+                const pct     = total>0?(lComp/total)*100:0;
                 return (
-                  <div key={modulo.id} className="mod-card" onClick={() => { setModuloActivo(modulo); }}
-                    style={{ padding:'24px', borderRadius:'14px', backgroundColor:CARD, border:completo?`1px solid rgba(74,222,128,.25)`:`1px solid rgba(${modulo.colorRgb},.25)`, cursor:'pointer', backdropFilter:'blur(10px)', boxShadow:'0 4px 20px rgba(0,0,0,.3)', position:'relative', overflow:'hidden' }}>
-                    <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:completo?'linear-gradient(90deg,transparent,#4ADE8070,transparent)':`linear-gradient(90deg,transparent,${modulo.color}60,transparent)` }}/>
-
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
-                      <div style={{ width:'48px', height:'48px', borderRadius:'12px', backgroundColor:`rgba(${modulo.colorRgb},.12)`, border:`1px solid rgba(${modulo.colorRgb},.25)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }}>{modulo.icono}</div>
-                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'5px' }}>
-                        <span style={{ fontSize:'10px', padding:'3px 9px', borderRadius:'5px', fontFamily:'monospace', fontWeight:700, backgroundColor:completo?'rgba(74,222,128,.1)':`rgba(${modulo.colorRgb},.12)`, color:completo?GREEN:modulo.color, border:`1px solid ${completo?'rgba(74,222,128,.25)':`rgba(${modulo.colorRgb},.25)`}` }}>
-                          {completo?'DONE ✓':'OPEN'}
-                        </span>
-                        {certObt && <span style={{ fontSize:'14px' }}>🏅</span>}
+                  <div key={mod.id} className="card-hover" onClick={() => setModuloActivo(moduloActivo?.id===mod.id?null:mod)}
+                    style={{ padding:'22px', borderRadius:'13px', backgroundColor:CARD, border:completo?`1px solid rgba(34,211,160,0.18)`:`1px solid rgba(${mod.colorRgb||'59,123,245'},.15)`, cursor:'pointer', position:'relative', overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.4)' }}>
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:completo?`linear-gradient(90deg,transparent,${GREEN}55,transparent)`:`linear-gradient(90deg,transparent,${mod.color}45,transparent)` }}/>
+                    <div style={{ position:'absolute', left:0, top:'2px', bottom:0, width:'3px', backgroundColor:BD }}>
+                      <div style={{ position:'absolute', top:0, left:0, width:'100%', height:`${pct}%`, backgroundColor:completo?GREEN:mod.color }}/>
+                    </div>
+                    <div style={{ paddingLeft:'10px' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
+                        <span style={{ fontSize:'11px', color:mod.color, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'1px' }}>MÓD {mod.num}</span>
+                        <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                          {certObt && <span style={{ fontSize:'13px' }}>🏅</span>}
+                          <span style={{ fontSize:'10px', padding:'2px 8px', borderRadius:'5px', fontFamily:"'Courier New',monospace", fontWeight:700, backgroundColor:completo?'rgba(34,211,160,0.07)':`rgba(${mod.colorRgb||'59,123,245'},.07)`, color:completo?GREEN:mod.color, border:`1px solid ${completo?'rgba(34,211,160,0.18)':`rgba(${mod.colorRgb||'59,123,245'},.18)`}` }}>
+                            {completo?'DONE':'OPEN'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-
-                    <h3 style={{ fontSize:'15px', fontWeight:700, color:T1, marginBottom:'6px', lineHeight:1.3 }}>{modulo.titulo}</h3>
-                    <p style={{ fontSize:'13px', color:T3, marginBottom:'16px', lineHeight:1.5 }}>{modulo.descripcion}</p>
-
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
-                      <span style={{ fontSize:'13px', color:completo?GREEN:modulo.color, fontFamily:'monospace', fontWeight:700 }}>+{modulo.xp} XP</span>
-                      <span style={{ fontSize:'12px', color:T3, fontFamily:'monospace' }}>{lComp}/{total} lecciones</span>
-                    </div>
-                    <div style={{ height:'4px', borderRadius:'2px', backgroundColor:BD, overflow:'hidden' }}>
-                      <div style={{ width:`${total>0?(lComp/total)*100:0}%`, height:'100%', borderRadius:'2px', backgroundColor:completo?GREEN:modulo.color }}/>
+                      <h3 style={{ fontSize:'15px', fontWeight:600, color:T1, marginBottom:'5px', lineHeight:1.4, letterSpacing:'-0.2px' }}>{mod.titulo}</h3>
+                      <p style={{ fontSize:'12px', color:T3, marginBottom:'14px', lineHeight:1.6 }}>{mod.descripcion}</p>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span style={{ fontSize:'12px', color:completo?GREEN:mod.color, fontFamily:"'Courier New',monospace", fontWeight:600 }}>+{mod.xp} XP</span>
+                        <span style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>{lComp}/{total} lecciones</span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Lista de lecciones si hay módulo activo */}
+            {/* Lista lecciones */}
             {moduloActivo && cursoActivo.moduloIds.includes(moduloActivo.id) && (
-              <div style={{ marginTop:'24px' }}>
-                <div style={{ padding:'20px 24px', borderRadius:'14px', backgroundColor:CARD, border:`1px solid rgba(${moduloActivo.colorRgb},.25)`, backdropFilter:'blur(10px)', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,transparent,${moduloActivo.color},transparent)` }}/>
-                  <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'18px' }}>
-                    <span style={{ fontSize:'20px' }}>{moduloActivo.icono}</span>
-                    <div>
-                      <h3 style={{ fontSize:'16px', fontWeight:700, color:T1, marginBottom:'2px' }}>{moduloActivo.titulo}</h3>
-                      <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <span style={{ fontSize:'12px', color:T3, fontFamily:'monospace' }}>{moduloActivo.certificado}</span>
-                        {certificados.find(c=>c.moduloId===moduloActivo.id) && <span style={{ fontSize:'11px', padding:'2px 7px', borderRadius:'4px', backgroundColor:'rgba(74,222,128,.1)', color:GREEN, border:'1px solid rgba(74,222,128,.2)', fontFamily:'monospace' }}>OBTENIDO ✓</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-                    {moduloActivo.lecciones.map(leccion => {
-                      const completada = completadas.includes(`${moduloActivo.id}-${leccion.id}`);
-                      const esCaso = leccion.ejercicio?.tipo==='caso_practico';
-                      return (
-                        <div key={leccion.id} className="lesson-row" onClick={() => iniciarLeccion(leccion)}
-                          style={{ display:'flex', alignItems:'center', gap:'14px', padding:'16px 18px', borderRadius:'10px', backgroundColor:completada?'rgba(74,222,128,.04)':CARD2, border:completada?'1px solid rgba(74,222,128,.18)':`1px solid ${BD}`, cursor:'pointer', position:'relative', overflow:'hidden' }}>
-                          {completada && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'3px', backgroundColor:GREEN }}/>}
-                          <div style={{ width:'38px', height:'38px', borderRadius:'9px', backgroundColor:completada?'rgba(74,222,128,.1)':`rgba(${moduloActivo.colorRgb},.1)`, border:`1px solid ${completada?'rgba(74,222,128,.25)':`rgba(${moduloActivo.colorRgb},.25)`}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                            <span style={{ fontSize:'14px', fontWeight:800, color:completada?GREEN:moduloActivo.color, fontFamily:'monospace' }}>{completada?'✓':leccion.id}</span>
-                          </div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'3px' }}>
-                              <p style={{ fontSize:'14px', color:completada?GREEN:T1, fontWeight:600 }}>{leccion.titulo}</p>
-                              {esCaso && <span style={{ fontSize:'10px', padding:'2px 7px', borderRadius:'4px', backgroundColor:'rgba(239,68,68,.1)', color:'#EF4444', border:'1px solid rgba(239,68,68,.2)', fontFamily:'monospace' }}>CASO</span>}
-                            </div>
-                            <p style={{ fontSize:'12px', color:T3, fontFamily:'monospace' }}>+{leccion.xp} XP</p>
-                          </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T3} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <div style={{ padding:'22px 26px', borderRadius:'15px', backgroundColor:CARD, border:`1px solid rgba(${moduloActivo.colorRgb||'59,123,245'},.18)`, position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,transparent,${moduloActivo.color},transparent)` }}/>
+                <div style={{ marginBottom:'18px' }}>
+                  <h3 style={{ fontSize:'16px', fontWeight:700, color:T1, marginBottom:'3px', letterSpacing:'-0.2px' }}>{moduloActivo.titulo}</h3>
+                  <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>{moduloActivo.certificado}</p>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+                  {moduloActivo.lecciones.map(leccion => {
+                    const done  = completadas.includes(`${moduloActivo.id}-${leccion.id}`);
+                    const esCaso= leccion.ejercicio?.tipo==='caso_practico';
+                    return (
+                      <div key={leccion.id} className="lesson-row" onClick={() => iniciarLeccion(leccion)}
+                        style={{ display:'flex', alignItems:'center', gap:'13px', padding:'13px 16px', borderRadius:'10px', backgroundColor:done?'rgba(34,211,160,0.03)':CARD2, border:done?'1px solid rgba(34,211,160,0.13)':`1px solid ${BD}`, cursor:'pointer', position:'relative', overflow:'hidden' }}>
+                        {done && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'3px', backgroundColor:GREEN }}/>}
+                        <div style={{ width:'34px', height:'34px', borderRadius:'8px', backgroundColor:done?'rgba(34,211,160,0.07)':`rgba(${moduloActivo.colorRgb||'59,123,245'},.07)`, border:`1px solid ${done?'rgba(34,211,160,0.18)':`rgba(${moduloActivo.colorRgb||'59,123,245'},.18)`}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <span style={{ fontSize:'12px', fontWeight:700, color:done?GREEN:moduloActivo.color, fontFamily:"'Courier New',monospace" }}>{done?'✓':leccion.id}</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'2px' }}>
+                            <p style={{ fontSize:'14px', color:done?GREEN:T1, fontWeight:500 }}>{leccion.titulo}</p>
+                            {esCaso && <span style={{ fontSize:'9px', padding:'2px 6px', borderRadius:'4px', backgroundColor:'rgba(240,80,112,0.07)', color:RED, border:'1px solid rgba(240,80,112,0.18)', fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'1px' }}>CASO</span>}
+                          </div>
+                          <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>+{leccion.xp} XP</p>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T3} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1567,113 +1622,109 @@ export default function TrainingPage() {
     );
   }
 
-  // ── VISTA PRINCIPAL — 3 CURSOS ────────────────────────────────────────────
-  const leccionesComp = completadas.length;
-
+  // ── VISTA PRINCIPAL — CURSOS ───────────────────────────────────────────────
   return (
     <>
       <style>{css}</style>
-      <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"'Inter',-apple-system,sans-serif", color:T1 }}>
-        <nav style={{ position:'sticky', top:0, zIndex:50, height:'60px', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 40px', backgroundColor:'rgba(14,26,46,.9)', backdropFilter:'blur(20px)', borderBottom:`1px solid ${BD}` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }} onClick={() => navigate('/')}>
-            <img src="/logosoc.png" style={{ height:'30px' }}/>
-            <span style={{ fontSize:'15px', fontWeight:800, color:T1 }}>Soc<span style={{ color:ACC }}>Blast</span></span>
+      <div style={{ minHeight:'100vh', backgroundColor:BG, fontFamily:"system-ui,sans-serif", color:T1 }}>
+        <nav style={{ position:'sticky', top:0, zIndex:50, height:'62px', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 44px', backgroundColor:'rgba(6,8,16,0.97)', backdropFilter:'blur(24px)', borderBottom:`1px solid ${BD}` }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'12px', cursor:'pointer' }} onClick={() => navigate('/')}>
+            <img src="/logosoc.png" alt="SocBlast" style={{ height:'28px' }}/>
+            <span style={{ fontSize:'15px', fontWeight:800, color:T1, letterSpacing:'-0.3px' }}>Soc<span style={{ color:ACC }}>Blast</span></span>
           </div>
           <div style={{ display:'flex', gap:'2px' }}>
             {[{label:'← Dashboard',path:'/dashboard'},{label:'Ranking',path:'/ranking'},{label:'Perfil',path:'/perfil'}].map((item,i) => (
-              <button key={i} className="nav-btn" onClick={() => navigate(item.path)} style={{ padding:'5px 14px', borderRadius:'7px', background:'none', border:'none', color:T2, fontSize:'13px', cursor:'pointer' }}>{item.label}</button>
+              <button key={i} className="nav-btn" onClick={() => navigate(item.path)} style={{ padding:'6px 14px', borderRadius:'8px', background:'none', border:'none', color:T2, fontSize:'13px', cursor:'pointer' }}>{item.label}</button>
             ))}
           </div>
-          <span style={{ fontSize:'12px', color:GREEN, fontFamily:'monospace', fontWeight:700 }}>{leccionesComp}/{leccionesTotales} lecciones · {certificados.length} certs</span>
+          <span style={{ fontSize:'11px', color:GREEN, fontFamily:"'Courier New',monospace", fontWeight:600, padding:'4px 10px', borderRadius:'6px', backgroundColor:'rgba(34,211,160,0.06)', border:'1px solid rgba(34,211,160,0.14)' }}>
+            {leccionesComp}/{leccionesTotales} · {certificados.length} certs
+          </span>
         </nav>
 
-        <div style={{ maxWidth:'1080px', margin:'0 auto', padding:'36px 40px 72px' }}>
-
-          {/* Header */}
-          <div style={{ marginBottom:'36px' }}>
-            <h1 style={{ fontSize:'26px', fontWeight:800, color:T1, marginBottom:'8px', letterSpacing:'-0.6px' }}>Centro de Formación SOC</h1>
-            <p style={{ fontSize:'14px', color:T3, marginBottom:'18px', fontFamily:'monospace' }}>3 cursos · {MODULOS.length} módulos · {xpTotal} XP disponibles</p>
-            <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
-              <div style={{ flex:1, maxWidth:'500px', height:'7px', borderRadius:'4px', backgroundColor:BD, overflow:'hidden' }}>
-                <div style={{ width:`${leccionesTotales>0?(leccionesComp/leccionesTotales)*100:0}%`, height:'100%', borderRadius:'4px', background:`linear-gradient(90deg,${ACC},${GREEN})` }}/>
+        <div style={{ maxWidth:'1100px', margin:'0 auto', padding:'48px 44px 80px' }}>
+          <div style={{ marginBottom:'48px' }}>
+            <p style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'3px', marginBottom:'10px' }}>CENTRO DE FORMACIÓN SOC</p>
+            <h1 style={{ fontSize:'38px', fontWeight:800, color:T1, letterSpacing:'-1.5px', marginBottom:'10px', lineHeight:1.1 }}>
+              SOC Training<br/><span style={{ color:ACC }}>Platform</span>
+            </h1>
+            <p style={{ fontSize:'14px', color:T3, marginBottom:'22px' }}>3 cursos · {MODULOS.length} módulos · {MODULOS.reduce((acc,m)=>acc+m.xp,0)} XP disponibles</p>
+            <div style={{ display:'flex', alignItems:'center', gap:'14px', maxWidth:'540px' }}>
+              <div style={{ flex:1, height:'5px', borderRadius:'3px', backgroundColor:BD, overflow:'hidden' }}>
+                <div style={{ width:`${leccionesTotales>0?(leccionesComp/leccionesTotales)*100:0}%`, height:'100%', borderRadius:'3px', background:`linear-gradient(90deg,${ACC},${GREEN})` }}/>
               </div>
-              <span style={{ fontSize:'13px', color:T3, fontFamily:'monospace' }}>{Math.round(leccionesTotales>0?(leccionesComp/leccionesTotales)*100:0)}% completado</span>
+              <span style={{ fontSize:'12px', color:T3, fontFamily:"'Courier New',monospace", flexShrink:0 }}>
+                {Math.round(leccionesTotales>0?(leccionesComp/leccionesTotales)*100:0)}%
+              </span>
             </div>
           </div>
 
-          {/* Certificados obtenidos */}
           {certificados.length > 0 && (
-            <div style={{ padding:'18px 22px', borderRadius:'12px', backgroundColor:CARD, border:'1px solid rgba(74,222,128,.2)', backdropFilter:'blur(10px)', marginBottom:'28px' }}>
-              <p style={{ fontSize:'10px', color:T3, fontWeight:700, letterSpacing:'2px', marginBottom:'12px', fontFamily:'monospace' }}>CERTIFICADOS OBTENIDOS</p>
-              <div style={{ display:'flex', gap:'10px', flexWrap:'wrap' }}>
+            <div style={{ padding:'18px 22px', borderRadius:'13px', backgroundColor:CARD, border:`1px solid rgba(240,180,41,0.13)`, marginBottom:'32px' }}>
+              <p style={{ fontSize:'10px', color:GOLD, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'2px', marginBottom:'12px' }}>CERTIFICADOS OBTENIDOS</p>
+              <div style={{ display:'flex', gap:'9px', flexWrap:'wrap' }}>
                 {certificados.map((cert,i) => (
-                  <div key={i} style={{ display:'flex', alignItems:'center', gap:'7px', padding:'6px 12px', borderRadius:'8px', backgroundColor:`${cert.color}12`, border:`1px solid ${cert.color}30` }}>
-                    <span style={{ fontSize:'14px' }}>🏅</span>
-                    <span style={{ fontSize:'13px', color:cert.color, fontWeight:600 }}>{cert.titulo}</span>
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:'7px', padding:'6px 13px', borderRadius:'8px', backgroundColor:'rgba(240,180,41,0.06)', border:`1px solid rgba(240,180,41,0.18)` }}>
+                    <span style={{ fontSize:'13px' }}>🏅</span>
+                    <span style={{ fontSize:'12px', color:GOLD, fontWeight:600, fontFamily:"'Courier New',monospace" }}>{cert.titulo}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* 3 CURSOS */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px' }}>
             {CURSOS.map(curso => {
               const desbloqueado = cursoDesbloqueado(curso);
-              const progreso = progresoCurso(curso);
-              const completo = progreso === 100;
-
+              const progreso     = progresoCurso(curso);
+              const completo     = progreso===100;
               return (
-                <div key={curso.id} className={desbloqueado?'curso-card':''} onClick={() => { if (!desbloqueado) return; setCursoActivo(curso); setModuloActivo(null); setVista('modulos'); }}
-                  style={{ borderRadius:'16px', backgroundColor:CARD, border:!desbloqueado?`1px solid rgba(26,48,80,.4)`:completo?`1px solid rgba(74,222,128,.3)`:`1px solid rgba(${curso.colorRgb},.3)`, cursor:desbloqueado?'pointer':'not-allowed', opacity:desbloqueado?1:.35, position:'relative', overflow:'hidden', backdropFilter:'blur(10px)', boxShadow:desbloqueado?'0 4px 24px rgba(0,0,0,.35)':'none' }}>
+                <div key={curso.id} className={desbloqueado?'card-hover':''}
+                  onClick={() => { if (!desbloqueado) return; setCursoActivo(curso); setModuloActivo(null); setVista('modulos'); }}
+                  style={{ borderRadius:'17px', backgroundColor:CARD, border:!desbloqueado?`1px solid ${BD}`:completo?`1px solid rgba(34,211,160,0.22)`:`1px solid rgba(${curso.colorRgb||'59,123,245'},.2)`, cursor:desbloqueado?'pointer':'not-allowed', opacity:desbloqueado?1:.28, position:'relative', overflow:'hidden', boxShadow:desbloqueado?'0 6px 28px rgba(0,0,0,0.45)':'none' }}>
 
-                  {/* Banner superior con gradiente */}
-                  <div style={{ height:'120px', background:desbloqueado?`linear-gradient(135deg, rgba(${curso.colorRgb},.3) 0%, rgba(${curso.colorRgb},.08) 100%)`:'rgba(26,48,80,.3)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
-                    <span style={{ fontSize:'48px' }}>{curso.icono}</span>
-                    <div style={{ position:'absolute', top:'12px', right:'12px' }}>
-                      <span style={{ fontSize:'10px', padding:'3px 9px', borderRadius:'5px', fontFamily:'monospace', fontWeight:700, backgroundColor:!desbloqueado?'rgba(26,48,80,.8)':completo?'rgba(74,222,128,.15)':`rgba(${curso.colorRgb},.15)`, color:!desbloqueado?T3:completo?GREEN:curso.color, border:`1px solid ${!desbloqueado?BD:completo?'rgba(74,222,128,.3)':`rgba(${curso.colorRgb},.3)`}` }}>
-                        {!desbloqueado?'🔒 LOCKED':completo?'DONE ✓':'OPEN'}
+                  <div style={{ height:'124px', background:desbloqueado?`linear-gradient(135deg,rgba(${curso.colorRgb||'59,123,245'},.22) 0%,rgba(${curso.colorRgb||'59,123,245'},.05) 100%)`:'rgba(10,18,35,0.5)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+                    <span style={{ fontSize:'50px' }}>{curso.icono}</span>
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:desbloqueado?`linear-gradient(90deg,transparent,${curso.color},transparent)`:undefined }}/>
+                    <div style={{ position:'absolute', top:'11px', right:'13px' }}>
+                      <span style={{ fontSize:'10px', padding:'2px 8px', borderRadius:'5px', fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'0.5px', backgroundColor:!desbloqueado?'rgba(10,18,35,0.8)':completo?'rgba(34,211,160,0.09)':`rgba(${curso.colorRgb||'59,123,245'},.09)`, color:!desbloqueado?T3:completo?GREEN:curso.color, border:`1px solid ${!desbloqueado?BD:completo?'rgba(34,211,160,0.22)':`rgba(${curso.colorRgb||'59,123,245'},.22)`}` }}>
+                        {!desbloqueado?'LOCKED':completo?'DONE':'OPEN'}
                       </span>
                     </div>
-                    <div style={{ position:'absolute', bottom:'12px', left:'16px' }}>
-                      <span style={{ fontSize:'11px', padding:'3px 8px', borderRadius:'5px', backgroundColor:'rgba(3,3,10,.6)', color:T3, fontFamily:'monospace', border:`1px solid ${BD}` }}>{curso.nivel}</span>
+                    <div style={{ position:'absolute', bottom:'11px', left:'15px' }}>
+                      <span style={{ fontSize:'10px', padding:'2px 7px', borderRadius:'5px', backgroundColor:'rgba(6,8,16,0.7)', color:T3, fontFamily:"'Courier New',monospace", border:`1px solid ${BD}` }}>{curso.nivel}</span>
                     </div>
                   </div>
 
                   <div style={{ padding:'20px 22px 24px' }}>
-                    <div style={{ marginBottom:'6px' }}>
-                      <span style={{ fontSize:'11px', color:curso.color, fontFamily:'monospace', fontWeight:700 }}>CURSO {curso.id.toString().padStart(2,'0')}</span>
-                    </div>
-                    <h3 style={{ fontSize:'18px', fontWeight:800, color:T1, marginBottom:'5px', letterSpacing:'-0.4px' }}>{curso.titulo}</h3>
-                    <p style={{ fontSize:'13px', color:curso.color, marginBottom:'10px', fontStyle:'italic' }}>{curso.subtitulo}</p>
-                    <p style={{ fontSize:'13px', color:T3, marginBottom:'18px', lineHeight:1.6 }}>{curso.descripcion}</p>
+                    <p style={{ fontSize:'10px', color:curso.color, fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'2px', marginBottom:'7px' }}>CURSO {String(curso.id).padStart(2,'0')}</p>
+                    <h3 style={{ fontSize:'19px', fontWeight:700, color:T1, marginBottom:'4px', letterSpacing:'-0.3px', lineHeight:1.2 }}>{curso.titulo}</h3>
+                    <p style={{ fontSize:'12px', color:curso.color, marginBottom:'9px', fontStyle:'italic' }}>{curso.subtitulo}</p>
+                    <p style={{ fontSize:'13px', color:T3, marginBottom:'18px', lineHeight:1.7 }}>{curso.descripcion}</p>
 
-                    <div style={{ display:'flex', gap:'10px', marginBottom:'16px' }}>
-                      <div style={{ flex:1, padding:'10px 12px', borderRadius:'8px', backgroundColor:'rgba(8,21,37,.8)', border:`1px solid ${BD}`, textAlign:'center' }}>
-                        <p style={{ fontSize:'11px', color:T3, fontFamily:'monospace', marginBottom:'3px' }}>Módulos</p>
-                        <p style={{ fontSize:'15px', fontWeight:700, color:T1 }}>{curso.moduloIds.length}</p>
-                      </div>
-                      <div style={{ flex:1, padding:'10px 12px', borderRadius:'8px', backgroundColor:'rgba(8,21,37,.8)', border:`1px solid ${BD}`, textAlign:'center' }}>
-                        <p style={{ fontSize:'11px', color:T3, fontFamily:'monospace', marginBottom:'3px' }}>Duración</p>
-                        <p style={{ fontSize:'15px', fontWeight:700, color:T1 }}>{curso.duracion}</p>
-                      </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'7px', marginBottom:'16px' }}>
+                      {[{label:'Módulos',value:curso.moduloIds.length},{label:'Duración',value:curso.duracion}].map((s,i) => (
+                        <div key={i} style={{ padding:'9px 11px', borderRadius:'8px', backgroundColor:'rgba(6,12,24,0.8)', border:`1px solid ${BD}`, textAlign:'center' }}>
+                          <p style={{ fontSize:'10px', color:T3, fontFamily:"'Courier New',monospace", marginBottom:'3px' }}>{s.label}</p>
+                          <p style={{ fontSize:'13px', fontWeight:700, color:T2, fontFamily:"'Courier New',monospace" }}>{s.value}</p>
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Progreso */}
                     <div style={{ marginBottom:'14px' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
-                        <span style={{ fontSize:'12px', color:T3, fontFamily:'monospace' }}>Progreso</span>
-                        <span style={{ fontSize:'12px', color:completo?GREEN:curso.color, fontFamily:'monospace', fontWeight:700 }}>{progreso}%</span>
+                        <span style={{ fontSize:'11px', color:T3, fontFamily:"'Courier New',monospace" }}>Progreso</span>
+                        <span style={{ fontSize:'11px', color:completo?GREEN:curso.color, fontFamily:"'Courier New',monospace", fontWeight:700 }}>{progreso}%</span>
                       </div>
-                      <div style={{ height:'5px', borderRadius:'3px', backgroundColor:BD, overflow:'hidden' }}>
-                        <div style={{ width:`${progreso}%`, height:'100%', borderRadius:'3px', backgroundColor:completo?GREEN:curso.color }}/>
+                      <div style={{ height:'4px', borderRadius:'2px', backgroundColor:BD, overflow:'hidden' }}>
+                        <div style={{ width:`${progreso}%`, height:'100%', borderRadius:'2px', backgroundColor:completo?GREEN:curso.color }}/>
                       </div>
                     </div>
 
                     {desbloqueado && (
-                      <div style={{ display:'flex', alignItems:'center', gap:'6px', color:curso.color, fontSize:'13px', fontWeight:600 }}>
-                        <span>{completo?'Ver certificado':'Empezar curso'}</span>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                      <div style={{ display:'flex', alignItems:'center', gap:'5px', color:curso.color, fontSize:'12px', fontWeight:700, fontFamily:"'Courier New',monospace" }}>
+                        <span>{completo?'Ver certificados':'Comenzar curso'}</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                       </div>
                     )}
                   </div>
