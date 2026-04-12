@@ -1,95 +1,139 @@
 from openai import OpenAI
 import json
-import time
 import os
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_arena_config(arena: str):
+    # Normaliza arena (puede venir como "Bronce I", "Plata III", etc.)
+    if "Diamante" in arena:
+        tier = "Diamante"
+    elif "Oro" in arena:
+        tier = "Oro"
+    elif "Plata" in arena:
+        tier = "Plata"
+    else:
+        tier = "Bronce"
+
     configs = {
         "Bronce": {
             "dificultad": "básica",
             "num_incidentes": 3,
-            "tipo": "decisiones simples con 4 opciones",
-            "amenazas": "brute force, phishing simple, malware básico",
-            "tiempo": 20
+            "num_alertas": "2-3",
+            "num_logs": "6-8",
+            "senuelos": "1 log claramente irrelevante mezclado con los relevantes",
+            "tipo": "decisiones simples, amenazas identificables sin correlación compleja",
+            "amenazas": "brute force, phishing simple, malware básico, acceso no autorizado",
+            "falsos_positivos": "0-1 alertas que parecen sospechosas pero son legítimas",
+            "tiempo": 20,
+            "contexto_empresa": "PYME de 50 empleados con infraestructura básica",
         },
         "Plata": {
             "dificultad": "intermedia",
             "num_incidentes": 3,
-            "tipo": "correlación de eventos y decisiones",
-            "amenazas": "movimiento lateral, escalada de privilegios, C2",
-            "tiempo": 15
+            "num_alertas": "3-4",
+            "num_logs": "8-10",
+            "senuelos": "2 logs irrelevantes o misleading mezclados con los importantes",
+            "tipo": "correlación de eventos entre sistemas, decisiones con contexto ambiguo",
+            "amenazas": "movimiento lateral, escalada de privilegios, C2 básico, spear phishing",
+            "falsos_positivos": "1 alerta que parece crítica pero es actividad legítima (mantenimiento, backup, etc.)",
+            "tiempo": 15,
+            "contexto_empresa": "empresa de 200 empleados con Active Directory y SIEM básico",
         },
         "Oro": {
             "dificultad": "avanzada",
             "num_incidentes": 4,
-            "tipo": "investigación compleja con múltiples vectores",
-            "amenazas": "ransomware, exfiltración de datos, APT inicial",
-            "tiempo": 10
+            "num_alertas": "4-5",
+            "num_logs": "10-12",
+            "senuelos": "3 logs misleading o irrelevantes, 1 alerta que parece crítica pero es ruido",
+            "tipo": "investigación con múltiples vectores de ataque, correlación SIEM/EDR compleja",
+            "amenazas": "ransomware, exfiltración de datos, APT inicial, DNS tunneling",
+            "falsos_positivos": "1-2 alertas ambiguas que requieren análisis profundo para determinar si son reales",
+            "tiempo": 10,
+            "contexto_empresa": "empresa Fortune 1000 con SOC 24/7, EDR, SIEM y segmentación de red",
         },
-        "Elite": {
+        "Diamante": {
             "dificultad": "experta",
             "num_incidentes": 5,
-            "tipo": "simulación APT completa multi-fase",
-            "amenazas": "APT avanzado, zero-day, supply chain attack",
-            "tiempo": 7
+            "num_alertas": "5-6",
+            "num_logs": "12-14",
+            "senuelos": "4+ logs misleading, alertas de distracción coordinadas, ruido artificial del atacante",
+            "tipo": "simulación APT completa multi-fase, el atacante usa técnicas de evasión activa",
+            "amenazas": "APT avanzado, zero-day, supply chain attack, insider threat avanzado, living-off-the-land",
+            "falsos_positivos": "2-3 alertas que el atacante ha generado deliberadamente para distraer al analista",
+            "tiempo": 7,
+            "contexto_empresa": "infraestructura crítica nacional o banco de primer nivel con SOC tier 3",
         }
     }
-    return configs.get(arena, configs["Bronce"])
+    return configs.get(tier, configs["Bronce"])
+
 
 async def generar_sesion(arena: str):
     config = get_arena_config(arena)
 
-    prompt = f"""Eres un generador de escenarios SOC profesionales.
+    prompt = f"""Eres un generador experto de escenarios SOC profesionales para una plataforma de entrenamiento.
 
-Genera una sesión SOC de dificultad {config['dificultad']} con {config['num_incidentes']} incidentes.
-Tipo de ejercicio: {config['tipo']}
-Amenazas posibles: {config['amenazas']}
+CONFIGURACIÓN:
+- Arena: {arena} (dificultad: {config['dificultad']})
+- Número de incidentes: {config['num_incidentes']}
+- Alertas por incidente: {config['num_alertas']}
+- Logs por incidente: {config['num_logs']}
+- Señuelos/ruido: {config['senuelos']}
+- Tipo de ejercicio: {config['tipo']}
+- Amenazas posibles: {config['amenazas']}
+- Falsos positivos: {config['falsos_positivos']}
+- Contexto empresa: {config['contexto_empresa']}
+
+INSTRUCCIONES CRÍTICAS PARA SEÑUELOS:
+1. Incluye logs completamente irrelevantes (actividad normal, backups, actualizaciones) mezclados con los importantes
+2. Incluye al menos 1 alerta que parece sospechosa pero tiene explicación legítima
+3. En arenas avanzadas, el atacante genera ruido deliberadamente para confundir
+4. Las IPs, hostnames, usuarios y procesos deben ser técnicamente realistas
+5. Los timestamps deben mostrar una progresión lógica de los eventos
 
 Devuelve SOLO un JSON válido con esta estructura exacta:
 {{
-  "titulo": "nombre del escenario",
-  "contexto": "descripción del entorno empresarial (2-3 frases)",
+  "titulo": "nombre descriptivo y técnico del escenario",
+  "contexto": "descripción del entorno empresarial específico (2-3 frases con detalles técnicos)",
   "incidentes": [
     {{
       "id": 1,
-      "titulo": "nombre del incidente",
-      "descripcion": "qué está pasando",
+      "titulo": "título técnico del incidente",
+      "descripcion": "descripción detallada de qué está ocurriendo (2-3 frases técnicas)",
       "alertas": [
         {{
           "id": "ALT-001",
           "severidad": "CRITICA|ALTA|MEDIA|BAJA",
-          "sistema": "nombre del sistema afectado",
-          "descripcion": "descripción de la alerta",
-          "timestamp": "2024-01-15 14:23:11",
+          "sistema": "nombre específico del sistema (ej: CORP-DC01, WEB-SRV-03)",
+          "descripcion": "descripción técnica de la alerta",
+          "timestamp": "2024-03-15 14:23:11",
           "detalles": {{
             "ip_origen": "x.x.x.x",
             "ip_destino": "x.x.x.x",
-            "proceso": "nombre del proceso",
-            "usuario": "nombre del usuario",
-            "accion": "qué hizo"
+            "proceso": "nombre_proceso.exe",
+            "usuario": "dominio\\\\usuario",
+            "accion": "descripción de la acción detectada"
           }}
         }}
       ],
       "logs": [
         {{
-          "timestamp": "2024-01-15 14:23:11",
-          "sistema": "nombre",
+          "timestamp": "2024-03-15 14:23:11",
+          "sistema": "nombre_sistema",
           "nivel": "ERROR|WARNING|INFO",
-          "mensaje": "contenido del log"
+          "mensaje": "mensaje técnico del log — puede ser ruido o relevante"
         }}
       ],
       "solucion_correcta": {{
-        "tipo_ataque": "Brute Force / Password Spray|Phishing con payload|Ransomware activo|Movimiento lateral interno|Exfiltración de datos|Insider Threat|Falso positivo — actividad legítima|DNS Tunneling / C2|Escalada de privilegios|Supply Chain Attack",
-        "acciones_correctas": ["acción 1", "acción 2", "acción 3"],
-        "explicacion": "explicación detallada de qué pasó y cómo responder"
+        "tipo_ataque": "EXACTAMENTE uno de los valores listados abajo",
+        "acciones_correctas": ["acción 1 específica", "acción 2 específica", "acción 3 específica"],
+        "explicacion": "explicación detallada de qué pasó, por qué y cómo responder correctamente (3-4 frases)"
       }}
     }}
   ]
 }}
 
-IMPORTANTE: El campo tipo_ataque DEBE ser exactamente uno de estos valores:
+VALORES EXACTOS para tipo_ataque (usa uno de estos literalmente):
 - Brute Force / Password Spray
 - Phishing con payload
 - Ransomware activo
@@ -101,35 +145,97 @@ IMPORTANTE: El campo tipo_ataque DEBE ser exactamente uno de estos valores:
 - Escalada de privilegios
 - Supply Chain Attack
 
-Asegúrate de que los escenarios sean realistas y técnicamente precisos."""
+IMPORTANTE:
+- Los escenarios deben ser técnicamente precisos y realistas
+- Los logs irrelevantes deben parecer legítimos (no obviamente falsos)
+- Al menos 1 incidente por sesión debe tener un componente de falso positivo o señuelo relevante
+- Los mensajes de log deben seguir formatos reales (Syslog, Windows Event Log, etc.)
+- Las IPs internas en rango 10.x.x.x o 192.168.x.x, las externas en rangos públicos reales"""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.8,
-        max_tokens=3000
+        temperature=0.85,
+        max_tokens=4000,
+        response_format={"type": "json_object"}
     )
 
     content = response.choices[0].message.content
-    content = content.replace("```json", "").replace("```", "").strip()
     return json.loads(content)
 
 
-async def evaluar_respuesta(incidente: dict, respuesta_usuario: str, tiempo_usado: int, tiempo_limite: int, pistas_usadas: int):
-    prompt = f"""Eres un evaluador experto de analistas SOC.
+async def evaluar_respuesta(
+    incidente: dict,
+    respuesta_usuario: str,
+    tiempo_usado: int,
+    tiempo_limite: int,
+    pistas_usadas: int
+):
+    # Parsear la respuesta del usuario
+    partes = {}
+    for parte in respuesta_usuario.split('|'):
+        if ':' in parte:
+            k, v = parte.split(':', 1)
+            partes[k.strip()] = v.strip()
 
-INCIDENTE:
+    diag_usuario  = partes.get('DIAG', 'Sin diagnóstico')
+    just_usuario  = partes.get('JUST', 'Sin justificación')
+    logs_usuario  = partes.get('LOGS', '')
+    acciones_txt  = partes.get('ACCIONES', '')
+
+    prompt = f"""Eres un evaluador experto de analistas SOC. Evalúa la respuesta con criterio profesional pero justo.
+
+═══ INCIDENTE ═══
 Título: {incidente['titulo']}
 Descripción: {incidente['descripcion']}
-Solución correcta: {json.dumps(incidente['solucion_correcta'], ensure_ascii=False)}
 
-RESPUESTA DEL ANALISTA:
-{respuesta_usuario}
+Solución correcta:
+- Tipo de ataque: {incidente['solucion_correcta']['tipo_ataque']}
+- Acciones correctas: {', '.join(incidente['solucion_correcta']['acciones_correctas'])}
+- Explicación: {incidente['solucion_correcta']['explicacion']}
 
-TIEMPO USADO: {tiempo_usado} segundos de {tiempo_limite * 60} segundos disponibles
-PISTAS USADAS: {pistas_usadas}
+═══ RESPUESTA DEL ANALISTA ═══
+Diagnóstico elegido: {diag_usuario}
+Logs seleccionados (índices): {logs_usuario}
+Acciones elegidas: {acciones_txt}
+Justificación escrita:
+"{just_usuario}"
 
-Evalúa la respuesta del analista y devuelve SOLO un JSON válido:
+═══ MÉTRICAS ═══
+Tiempo usado: {tiempo_usado}s de {tiempo_limite * 60}s disponibles
+Pistas usadas: {pistas_usadas}
+
+═══ CRITERIOS DE EVALUACIÓN ═══
+
+PUNTUACIÓN CALIDAD (0-12):
+- Diagnóstico correcto: +5 puntos
+- Diagnóstico parcialmente correcto (mismo vector de ataque): +2 puntos
+- Justificación técnicamente precisa y detallada: +4 puntos
+- Justificación básica pero correcta: +2 puntos
+- Acciones correctas y en buen orden: +3 puntos
+- Acciones correctas pero mal ordenadas: +1 punto
+
+PUNTUACIÓN VELOCIDAD (0-5):
+- Menos del 30% del tiempo: 5 puntos
+- 30-50% del tiempo: 4 puntos
+- 50-70% del tiempo: 3 puntos
+- 70-90% del tiempo: 2 puntos
+- 90-100% del tiempo: 1 punto
+- Timeout: 0 puntos
+
+PUNTUACIÓN PISTAS (0-3):
+- 0 pistas: 3 puntos
+- 1 pista: 1 punto
+- 2+ pistas: 0 puntos
+
+COPAS_DELTA:
+- Total 17-20: entre +35 y +40
+- Total 13-16: entre +20 y +34
+- Total 9-12: entre +8 y +19
+- Total 5-8: entre 0 y +7
+- Total 0-4: entre -5 y -15
+
+Devuelve SOLO un JSON válido:
 {{
   "puntuacion_calidad": <0-12>,
   "puntuacion_velocidad": <0-5>,
@@ -137,35 +243,39 @@ Evalúa la respuesta del analista y devuelve SOLO un JSON válido:
   "total": <0-20>,
   "copas_delta": <-15 a 40>,
   "identifico_ataque": <true|false>,
-  "acciones_correctas": <0-3>,
-  "feedback": "feedback detallado de qué hizo bien y mal",
-  "solucion_explicada": "explicación completa de la solución correcta",
+  "acciones_correctas_count": <0-3>,
+  "feedback": "feedback detallado en 2-3 frases: qué hizo bien, qué falló, consejo específico",
+  "solucion_explicada": "explicación completa de la solución correcta con contexto técnico (2-3 frases)",
   "skills_mejoradas": {{
-    "analisis_logs": <0-10>,
-    "deteccion_amenazas": <0-10>,
-    "respuesta_incidentes": <0-10>,
-    "threat_hunting": <0-5>,
-    "forense_digital": <0-5>,
-    "gestion_vulnerabilidades": <0-5>,
-    "inteligencia_amenazas": <0-5>
+    "analisis_logs": <0-2>,
+    "deteccion_amenazas": <0-2>,
+    "respuesta_incidentes": <0-2>,
+    "threat_hunting": <0-1>,
+    "forense_digital": <0-1>,
+    "gestion_vulnerabilidades": <0-1>,
+    "inteligencia_amenazas": <0-1>
   }}
 }}
 
-Para copas_delta usa esta escala:
-- Respuesta excelente (total 16-20): entre +30 y +40 copas
-- Buena (total 10-15): entre +15 y +29 copas
-- Regular (total 6-9): entre 0 y +14 copas
-- Mala (total 0-5): entre -5 y -15 copas
-
-Sé justo pero exigente. Si no respondió o respondió mal da puntuación baja."""
+Sé honesto: si la justificación es vaga o incorrecta, penalízala. Si el analista identificó correctamente el ataque aunque eligiera acciones subóptimas, reconócelo."""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=1000
+        temperature=0.2,
+        max_tokens=1200,
+        response_format={"type": "json_object"}
     )
 
     content = response.choices[0].message.content
-    content = content.replace("```json", "").replace("```", "").strip()
-    return json.loads(content)
+    result  = json.loads(content)
+
+    # Garantizar que total = suma de componentes
+    total_calculado = (
+        result.get('puntuacion_calidad', 0) +
+        result.get('puntuacion_velocidad', 0) +
+        result.get('puntuacion_pistas', 0)
+    )
+    result['total'] = min(20, max(0, total_calculado))
+
+    return result
