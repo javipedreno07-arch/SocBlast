@@ -2,164 +2,249 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import QRCode from 'qrcode';
 
-const TIERS = ['', 'SOC Rookie', 'SOC Analyst', 'SOC Specialist', 'SOC Expert', 'SOC Sentinel', 'SOC Architect', 'SOC Master', 'SOC Legend'];
+const ACC = '#4f46e5';
+
+const TIERS = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
+
 const SKILLS_NOMBRES = {
-  analisis_logs: 'Análisis de Logs',
-  deteccion_amenazas: 'Detección de Amenazas',
-  respuesta_incidentes: 'Respuesta a Incidentes',
-  threat_hunting: 'Threat Hunting',
-  forense_digital: 'Forense Digital',
-  gestion_vulnerabilidades: 'Gestión de Vulnerabilidades',
-  inteligencia_amenazas: 'Inteligencia de Amenazas'
+  analisis_logs:           'Análisis de Logs',
+  deteccion_amenazas:      'Detección de Amenazas',
+  respuesta_incidentes:    'Respuesta a Incidentes',
+  threat_hunting:          'Threat Hunting',
+  forense_digital:         'Forense Digital',
+  gestion_vulnerabilidades:'Gestión de Vulnerabilidades',
+  inteligencia_amenazas:   'Inteligencia de Amenazas',
 };
 
-const CertificadoPage = () => {
-  const { token } = useAuth();
-  const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const certRef = useRef(null);
+const ARENAS_COLORS = {
+  'Bronce I':'#d97706','Bronce II':'#f59e0b','Bronce III':'#fbbf24',
+  'Plata I':'#64748b','Plata II':'#94a3b8','Plata III':'#cbd5e1',
+  'Oro I':'#d97706','Oro II':'#f59e0b','Oro III':'#fbbf24',
+  'Diamante I':'#1e40af','Diamante II':'#2563eb','Diamante III':'#3b82f6',
+};
+const getArenaColor = a => ARENAS_COLORS[a] || ACC;
 
-  useEffect(() => {
-    fetchDatos();
-  }, []);
+export default function CertificadoPage() {
+  const { token }   = useAuth();
+  const navigate    = useNavigate();
+  const certRef     = useRef(null);
+  const qrCanvasRef = useRef(null);
+
+  const [userData, setUserData] = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+
+  useEffect(() => { fetchDatos(); }, []);
 
   const fetchDatos = async () => {
     try {
-      const res = await axios.get('https://socblast-production.up.railway.app/api/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUserData(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+      const r = await axios.get('https://socblast-production.up.railway.app/api/me', { headers:{ Authorization:`Bearer ${token}` } });
+      setUserData(r.data);
+    } catch {}
     setLoading(false);
   };
 
-  const handleDescargar = () => {
-    window.print();
-  };
+  // Generar QR cuando llegan los datos
+  useEffect(() => {
+    if (!userData) return;
+    const certId  = userData._id?.slice(-12).toUpperCase() || 'CERT000000';
+    const verifyUrl = `https://socblast.vercel.app/verify/${certId}`;
+    QRCode.toDataURL(verifyUrl, {
+      width: 160,
+      margin: 1,
+      color: { dark:'#0f172a', light:'#ffffff' },
+      errorCorrectionLevel: 'H',
+    }).then(url => setQrDataUrl(url)).catch(()=>{});
+  }, [userData]);
+
+  const handleDescargar = () => window.print();
+
+  const css = `
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .fade-up{animation:fadeUp .4s ease forwards;}
+    .nav-btn:hover{background:#f1f5f9!important;color:#0f172a!important;}
+    .action-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,70,229,0.25)!important;}
+    @media print {
+      .no-print{display:none!important;}
+      body{background:#fff!important;}
+      .cert-wrapper{box-shadow:none!important;border:1px solid #e2e8f0!important;}
+    }
+  `;
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0A0F1E' }}>
-      <p className="text-gray-500 animate-pulse">Generando certificado...</p>
+    <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff,#f8f9ff,#f5f0ff)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter',sans-serif"}}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{textAlign:'center'}}>
+        <div style={{width:36,height:36,border:`3px solid #e2e8f0`,borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 16px'}}/>
+        <p style={{color:'#64748b',fontSize:'14px'}}>Generando certificado...</p>
+      </div>
     </div>
   );
 
-  const tierNombre = TIERS[userData?.tier] || 'SOC Rookie';
-  const skills = userData?.skills || {};
-  const fecha = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-  const qrId = userData?._id?.slice(-8).toUpperCase() || 'XXXXXXXX';
+  const tierNombre  = TIERS[userData?.tier] || 'SOC Rookie';
+  const arenaColor  = getArenaColor(userData?.arena);
+  const skills      = userData?.skills || {};
+  const fecha       = new Date().toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'});
+  const certId      = userData?._id?.slice(-12).toUpperCase() || 'CERT000000';
+  const verifyUrl   = `https://socblast.vercel.app/verify/${certId}`;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0A0F1E' }}>
-      <nav className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-50 print:hidden" style={{ borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'rgba(10,15,30,0.95)' }}>
-        <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white text-sm transition">← Dashboard</button>
-        <span className="text-xl font-bold text-white">SoC<span style={{ color: '#3B82F6' }}>Blast</span> Certificado</span>
-        <button onClick={handleDescargar} className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition hover:scale-105" style={{ backgroundColor: '#3B82F6' }}>
+    <>
+      <style>{css}</style>
+
+      {/* Navbar — no se imprime */}
+      <nav className="no-print" style={{position:'sticky',top:0,zIndex:50,height:'56px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 40px',backgroundColor:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 12px rgba(0,0,0,0.06)',fontFamily:"'Inter',sans-serif"}}>
+        <div style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer'}} onClick={()=>navigate('/')}>
+          <img src="/logosoc.png" alt="SocBlast" style={{height:'28px'}}/>
+          <span style={{fontSize:'15px',fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
+        </div>
+        <div style={{display:'flex',gap:'2px'}}>
+          {[{label:'← Dashboard',path:'/dashboard'},{label:'Perfil',path:'/perfil'},{label:'Ranking',path:'/ranking'}].map((item,i)=>(
+            <button key={i} className="nav-btn" onClick={()=>navigate(item.path)} style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',cursor:'pointer'}}>{item.label}</button>
+          ))}
+        </div>
+        <button onClick={handleDescargar} style={{padding:'8px 20px',borderRadius:'9px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',boxShadow:`0 4px 14px ${ACC}30`}}>
           📥 Descargar PDF
         </button>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <div ref={certRef} className="p-8 rounded-2xl border relative overflow-hidden" style={{ backgroundColor: '#050A14', borderColor: 'rgba(59,130,246,0.4)', boxShadow: '0 0 60px rgba(59,130,246,0.1)' }}>
-          <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 20% 20%, #3B82F6, transparent), radial-gradient(circle at 80% 80%, #7C3AED, transparent)' }}></div>
+      <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"'Inter',sans-serif",padding:'32px 24px 72px'}}>
+        <div style={{maxWidth:'800px',margin:'0 auto'}}>
 
-          <div className="relative text-center mb-8">
-            <p className="text-gray-500 text-xs font-mono tracking-widest mb-2">POWERED BY ZORION</p>
-            <h1 className="text-4xl font-black text-white mb-1">SoC<span style={{ color: '#3B82F6' }}>Blast</span></h1>
-            <p className="text-gray-400 text-sm tracking-widest">CERTIFICADO DE ANALISTA SOC</p>
-            <div className="w-24 h-0.5 mx-auto mt-3" style={{ backgroundColor: '#3B82F6' }}></div>
-          </div>
+          {/* CERTIFICADO */}
+          <div className="fade-up cert-wrapper" ref={certRef}
+            style={{backgroundColor:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',boxShadow:'0 16px 56px rgba(79,70,229,0.1)',overflow:'hidden',marginBottom:'20px',position:'relative'}}>
 
-          <div className="relative text-center mb-8">
-            <p className="text-gray-500 text-sm mb-2">Certifica que</p>
-            <h2 className="text-3xl font-black text-white mb-1">{userData?.nombre}</h2>
-            <p className="text-gray-400 text-sm">ha demostrado competencias profesionales en ciberseguridad SOC</p>
-          </div>
+            {/* Banda superior de color */}
+            <div style={{height:'6px',background:`linear-gradient(90deg,${ACC},#818cf8,${arenaColor})`}}/>
 
-          <div className="relative grid grid-cols-2 gap-4 mb-8">
-            <div className="p-4 rounded-xl text-center" style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
-              <p className="text-gray-500 text-xs mb-1">NIVEL</p>
-              <p className="text-white font-bold">{tierNombre}</p>
-              <p className="text-gray-400 text-xs">{userData?.xp || 0} XP acumulada</p>
-            </div>
-            <div className="p-4 rounded-xl text-center" style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
-              <p className="text-gray-500 text-xs mb-1">ARENA</p>
-              <p className="text-white font-bold">{userData?.arena || 'Bronce'}</p>
-              <p className="text-gray-400 text-xs">{userData?.copas || 0} copas</p>
-            </div>
-          </div>
+            {/* Marcas de agua decorativas */}
+            <div style={{position:'absolute',top:'-60px',right:'-60px',width:'220px',height:'220px',borderRadius:'50%',background:`radial-gradient(${ACC}12,transparent)`,pointerEvents:'none'}}/>
+            <div style={{position:'absolute',bottom:'-80px',left:'-60px',width:'260px',height:'260px',borderRadius:'50%',background:`radial-gradient(#818cf812,transparent)`,pointerEvents:'none'}}/>
 
-          <div className="relative mb-8">
-            <p className="text-gray-500 text-xs text-center mb-4 tracking-widest">HABILIDADES CERTIFICADAS</p>
-            <div className="grid grid-cols-2 gap-3">
-              {Object.entries(SKILLS_NOMBRES).map(([key, nombre]) => {
-                const xpSkill = skills[key] || 0;
-                const nivel = xpSkill > 0 ? Math.min(Math.floor(xpSkill / 10) + 1, 10) : 0;
-                return (
-                  <div key={key} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                    <span className="text-gray-400 text-xs">{nombre}</span>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: i < Math.ceil(nivel / 2) ? '#3B82F6' : 'rgba(255,255,255,0.1)' }}></div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+            <div style={{padding:'44px 52px'}}>
 
-          <div className="relative grid grid-cols-3 gap-4 mb-8">
-            {[
-              { label: 'Sesiones completadas', value: userData?.sesiones_completadas || 0 },
-              { label: 'Copas totales', value: userData?.copas || 0 },
-              { label: 'XP total', value: userData?.xp || 0 },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-3 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <p className="text-white font-bold text-lg">{stat.value}</p>
-                <p className="text-gray-600 text-xs">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative flex items-end justify-between pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-            <div>
-              <p className="text-gray-600 text-xs">Fecha de emisión</p>
-              <p className="text-gray-400 text-sm">{fecha}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-1" style={{ backgroundColor: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}>
-                <div className="text-center">
-                  <p className="text-blue-400 font-mono text-xs font-bold">{qrId}</p>
-                  <p className="text-gray-600 text-xs">QR ID</p>
+              {/* Header */}
+              <div style={{textAlign:'center',marginBottom:'36px'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginBottom:'12px'}}>
+                  <img src="/logosoc.png" alt="SocBlast" style={{height:'36px'}}/>
+                  <span style={{fontSize:'26px',fontWeight:900,color:'#0f172a',letterSpacing:'-0.8px'}}>Soc<span style={{color:ACC}}>Blast</span></span>
+                </div>
+                <p style={{fontSize:'11px',color:'#94a3b8',letterSpacing:'4px',fontWeight:700,marginBottom:'18px'}}>CERTIFICADO DE ANALISTA SOC</p>
+                <div style={{display:'flex',alignItems:'center',gap:'12px',justifyContent:'center'}}>
+                  <div style={{flex:1,height:'1px',background:'linear-gradient(90deg,transparent,#e2e8f0)'}}/>
+                  <div style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:ACC}}/>
+                  <div style={{flex:1,height:'1px',background:'linear-gradient(90deg,#e2e8f0,transparent)'}}/>
                 </div>
               </div>
-              <p className="text-gray-600 text-xs">Verificable en</p>
-              <p className="text-gray-500 text-xs">socblast.com/verify</p>
-            </div>
-            <div className="text-right">
-              <p className="text-gray-600 text-xs">Emitido por</p>
-              <p className="text-gray-400 text-sm">SoCBlast Platform</p>
-              <p className="text-gray-600 text-xs">Powered by Zorion</p>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex gap-4 mt-6">
-          <button onClick={handleDescargar} className="flex-1 py-3 rounded-xl font-semibold text-white transition hover:scale-105" style={{ backgroundColor: '#3B82F6' }}>
-            📥 Descargar PDF
-          </button>
-          <button onClick={() => navigate('/perfil')} className="flex-1 py-3 rounded-xl font-semibold transition hover:scale-105" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#9CA3AF', border: '1px solid rgba(255,255,255,0.1)' }}>
-            Ver perfil completo
-          </button>
+              {/* Nombre y descripción */}
+              <div style={{textAlign:'center',marginBottom:'36px'}}>
+                <p style={{fontSize:'13px',color:'#94a3b8',marginBottom:'10px'}}>Certifica que</p>
+                <h2 style={{fontSize:'36px',fontWeight:900,color:'#0f172a',letterSpacing:'-1px',marginBottom:'8px',lineHeight:1}}>{userData?.nombre}</h2>
+                <p style={{fontSize:'13px',color:'#64748b',maxWidth:'420px',margin:'0 auto',lineHeight:1.7}}>ha demostrado competencias profesionales en ciberseguridad SOC mediante simulaciones reales en la plataforma SocBlast</p>
+              </div>
+
+              {/* Stats principales */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'32px'}}>
+                {[
+                  {label:'NIVEL',    value:tierNombre,                        color:ACC},
+                  {label:'ARENA',    value:userData?.arena||'Bronce III',      color:arenaColor},
+                  {label:'XP TOTAL', value:(userData?.xp||0).toLocaleString(), color:'#7c3aed'},
+                  {label:'SESIONES', value:userData?.sesiones_completadas||0,  color:'#059669'},
+                ].map((s,i)=>(
+                  <div key={i} style={{padding:'16px',borderRadius:'12px',backgroundColor:`${s.color}06`,border:`1px solid ${s.color}18`,textAlign:'center'}}>
+                    <p style={{fontSize:'9px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'7px'}}>{s.label}</p>
+                    <p style={{fontSize:'15px',fontWeight:800,color:s.color,lineHeight:1.2}}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Skills */}
+              <div style={{marginBottom:'32px'}}>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',textAlign:'center',marginBottom:'16px'}}>HABILIDADES CERTIFICADAS</p>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                  {Object.entries(SKILLS_NOMBRES).map(([key,nombre])=>{
+                    const val  = skills[key]||0;
+                    const pct  = Math.min((val/10)*100,100);
+                    const color= {analisis_logs:'#3b82f6',deteccion_amenazas:ACC,respuesta_incidentes:'#f59e0b',threat_hunting:'#8b5cf6',forense_digital:'#ec4899',gestion_vulnerabilidades:'#f97316',inteligencia_amenazas:'#10b981'}[key]||ACC;
+                    return (
+                      <div key={key} style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'9px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0'}}>
+                        <div style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:color,flexShrink:0}}/>
+                        <span style={{fontSize:'12px',color:'#475569',flex:1}}>{nombre}</span>
+                        <div style={{width:'60px',height:'4px',borderRadius:'2px',backgroundColor:'#e2e8f0',overflow:'hidden',flexShrink:0}}>
+                          <div style={{width:`${pct}%`,height:'100%',borderRadius:'2px',backgroundColor:color}}/>
+                        </div>
+                        <span style={{fontSize:'11px',color:color,fontWeight:700,width:'28px',textAlign:'right',flexShrink:0}}>{val}/10</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer — fecha + QR + emisor */}
+              <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #e8eaf0'}}>
+
+                {/* Fecha */}
+                <div>
+                  <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,letterSpacing:'1px',marginBottom:'4px'}}>FECHA DE EMISIÓN</p>
+                  <p style={{fontSize:'14px',color:'#0f172a',fontWeight:600}}>{fecha}</p>
+                  <p style={{fontSize:'11px',color:'#94a3b8',marginTop:'2px'}}>Cert. ID: {certId}</p>
+                </div>
+
+                {/* QR CODE REAL */}
+                <div style={{textAlign:'center'}}>
+                  {qrDataUrl ? (
+                    <div style={{padding:'8px',borderRadius:'12px',backgroundColor:'#fff',border:'2px solid #e2e8f0',display:'inline-block',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                      <img src={qrDataUrl} alt="QR verificación" style={{width:'100px',height:'100px',display:'block',borderRadius:'6px'}}/>
+                    </div>
+                  ) : (
+                    <div style={{width:'116px',height:'116px',borderRadius:'12px',backgroundColor:'#f8fafc',border:'2px solid #e2e8f0',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <div style={{width:24,height:24,border:`2px solid #e2e8f0`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+                    </div>
+                  )}
+                  <p style={{fontSize:'10px',color:'#94a3b8',marginTop:'6px'}}>Escanea para verificar</p>
+                </div>
+
+                {/* Firma */}
+                <div style={{textAlign:'right'}}>
+                  <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,letterSpacing:'1px',marginBottom:'4px'}}>EMITIDO POR</p>
+                  <p style={{fontSize:'14px',color:'#0f172a',fontWeight:700}}>SocBlast Platform</p>
+                  <p style={{fontSize:'11px',color:'#94a3b8',marginTop:'2px'}}>Powered by Zorion</p>
+                  <div style={{marginTop:'8px',padding:'3px 10px',borderRadius:'5px',backgroundColor:`${ACC}08`,border:`1px solid ${ACC}18`,display:'inline-block'}}>
+                    <span style={{fontSize:'10px',color:ACC,fontWeight:700}}>✓ VERIFICABLE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Banda inferior */}
+            <div style={{height:'4px',background:`linear-gradient(90deg,${arenaColor},${ACC},#818cf8)`}}/>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="no-print" style={{display:'flex',gap:'12px'}}>
+            <button className="action-btn" onClick={handleDescargar}
+              style={{flex:1,padding:'14px',borderRadius:'12px',background:`linear-gradient(135deg,${ACC},#818cf8)`,border:'none',color:'#fff',fontWeight:700,fontSize:'14px',cursor:'pointer',boxShadow:`0 4px 16px ${ACC}25`,transition:'all .2s'}}>
+              📥 Descargar PDF
+            </button>
+            <button className="action-btn" onClick={()=>navigator.clipboard?.writeText(verifyUrl).then(()=>alert('✓ URL copiada al portapapeles'))}
+              style={{flex:1,padding:'14px',borderRadius:'12px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',color:'#475569',fontWeight:600,fontSize:'14px',cursor:'pointer',transition:'all .2s'}}>
+              🔗 Copiar URL verificación
+            </button>
+            <button className="action-btn" onClick={()=>navigate('/perfil')}
+              style={{padding:'14px 20px',borderRadius:'12px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',color:'#475569',fontWeight:600,fontSize:'14px',cursor:'pointer',transition:'all .2s'}}>
+              Ver perfil
+            </button>
+          </div>
+
+          <p style={{textAlign:'center',color:'#cbd5e1',fontSize:'11px',marginTop:'20px'}}>Powered by Zorion · SocBlast Platform</p>
         </div>
       </div>
-      <p className="text-center text-gray-700 text-xs pb-4">Powered by Zorion</p>
-    </div>
+    </>
   );
-};
-
-export default CertificadoPage;
+}
