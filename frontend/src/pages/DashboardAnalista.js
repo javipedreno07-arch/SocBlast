@@ -5,7 +5,6 @@ import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
 
-// ─── SISTEMA DE ARENAS (12 divisiones, 300 copas cada una) ───────────────────
 const ARENAS = [
   { id:'bronce3', name:'Bronce III', tier:'bronce', div:3, min:0,    max:299,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#d97706', gradTo:'#92400e', colorRgb:'180,83,9'   },
   { id:'bronce2', name:'Bronce II',  tier:'bronce', div:2, min:300,  max:599,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#f59e0b', gradTo:'#b45309', colorRgb:'180,83,9'   },
@@ -23,7 +22,6 @@ const ARENAS = [
 
 const getArenaFromCopas = (copas) => ARENAS.find(a => copas >= a.min && copas <= a.max) || ARENAS[0];
 
-// ─── PLANETAS SVG ─────────────────────────────────────────────────────────────
 const Planet = ({ tier, size = 110 }) => {
   const p = {
     bronce: (
@@ -35,9 +33,7 @@ const Planet = ({ tier, size = 110 }) => {
         <circle cx="60" cy="60" r="52" fill="url(#pb1)"/>
         <ellipse cx="42" cy="38" rx="20" ry="7" fill="rgba(180,90,20,0.35)" transform="rotate(-25,42,38)"/>
         <ellipse cx="72" cy="68" rx="24" ry="6" fill="rgba(90,40,5,0.3)" transform="rotate(12,72,68)"/>
-        <ellipse cx="55" cy="80" rx="14" ry="4" fill="rgba(200,110,30,0.25)" transform="rotate(-5,55,80)"/>
         <circle cx="60" cy="60" r="52" fill="url(#pb2)"/>
-        <ellipse cx="38" cy="35" rx="8" ry="4" fill="rgba(255,220,120,0.2)" transform="rotate(-30,38,35)"/>
       </svg>
     ),
     plata: (
@@ -45,28 +41,22 @@ const Planet = ({ tier, size = 110 }) => {
         <defs>
           <radialGradient id="pp1" cx="35%" cy="30%"><stop offset="0%" stopColor="#F1F5F9"/><stop offset="45%" stopColor="#94A3B8"/><stop offset="100%" stopColor="#1E293B"/></radialGradient>
           <radialGradient id="pp2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient>
-          <linearGradient id="pr1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="30%" stopColor="rgba(148,163,184,0.6)"/><stop offset="70%" stopColor="rgba(203,213,225,0.5)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient>
-          <linearGradient id="pr2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(100,116,139,0)"/><stop offset="50%" stopColor="rgba(100,116,139,0.35)"/><stop offset="100%" stopColor="rgba(100,116,139,0)"/></linearGradient>
+          <linearGradient id="pr1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="50%" stopColor="rgba(148,163,184,0.6)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient>
         </defs>
-        <ellipse cx="75" cy="75" rx="73" ry="8" fill="url(#pr2)" opacity="0.5"/>
         <ellipse cx="75" cy="72" rx="70" ry="6" fill="url(#pr1)" opacity="0.7"/>
         <circle cx="75" cy="60" r="48" fill="url(#pp1)"/>
         <circle cx="75" cy="60" r="48" fill="url(#pp2)"/>
-        <ellipse cx="58" cy="48" rx="10" ry="4" fill="rgba(226,232,240,0.3)" transform="rotate(-20,58,48)"/>
       </svg>
     ),
     oro: (
       <svg width={size} height={size} viewBox="0 0 120 120">
         <defs>
-          <radialGradient id="po1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FEF08A"/><stop offset="35%" stopColor="#F59E0B"/><stop offset="70%" stopColor="#D97706"/><stop offset="100%" stopColor="#78350F"/></radialGradient>
+          <radialGradient id="po1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FEF08A"/><stop offset="35%" stopColor="#F59E0B"/><stop offset="100%" stopColor="#78350F"/></radialGradient>
           <radialGradient id="po2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.38)"/></radialGradient>
         </defs>
         <circle cx="60" cy="60" r="54" fill="url(#po1)"/>
         <ellipse cx="45" cy="42" rx="22" ry="9" fill="rgba(251,191,36,0.3)" transform="rotate(-15,45,42)"/>
-        <ellipse cx="72" cy="55" rx="18" ry="6" fill="rgba(120,53,15,0.25)" transform="rotate(8,72,55)"/>
-        <ellipse cx="50" cy="72" rx="26" ry="7" fill="rgba(217,119,6,0.2)" transform="rotate(-10,50,72)"/>
         <circle cx="60" cy="60" r="54" fill="url(#po2)"/>
-        <ellipse cx="40" cy="38" rx="10" ry="5" fill="rgba(255,240,150,0.25)" transform="rotate(-25,40,38)"/>
       </svg>
     ),
     diamante: (
@@ -74,22 +64,17 @@ const Planet = ({ tier, size = 110 }) => {
         <defs>
           <radialGradient id="pd1" cx="35%" cy="30%"><stop offset="0%" stopColor="#DBEAFE"/><stop offset="30%" stopColor="#93C5FD"/><stop offset="60%" stopColor="#3B82F6"/><stop offset="100%" stopColor="#1E3A8A"/></radialGradient>
           <radialGradient id="pd2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient>
-          <linearGradient id="pdr" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(147,197,253,0)"/><stop offset="40%" stopColor="rgba(147,197,253,0.55)"/><stop offset="75%" stopColor="rgba(96,165,250,0.4)"/><stop offset="100%" stopColor="rgba(147,197,253,0)"/></linearGradient>
+          <linearGradient id="pdr" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(147,197,253,0)"/><stop offset="50%" stopColor="rgba(147,197,253,0.55)"/><stop offset="100%" stopColor="rgba(147,197,253,0)"/></linearGradient>
         </defs>
         <ellipse cx="65" cy="74" rx="64" ry="7" fill="url(#pdr)" opacity="0.6"/>
         <circle cx="65" cy="60" r="52" fill="url(#pd1)"/>
         <circle cx="65" cy="60" r="52" fill="url(#pd2)"/>
-        <ellipse cx="48" cy="44" rx="14" ry="5" fill="rgba(219,234,254,0.35)" transform="rotate(-20,48,44)"/>
-        <ellipse cx="72" cy="62" rx="18" ry="5" fill="rgba(30,58,138,0.2)" transform="rotate(10,72,62)"/>
-        <ellipse cx="55" cy="75" rx="12" ry="3" fill="rgba(147,197,253,0.2)" transform="rotate(-5,55,75)"/>
-        <circle cx="44" cy="40" rx="4" fill="rgba(255,255,255,0.4)"/>
       </svg>
     ),
   };
   return p[tier] || null;
 };
 
-// ─── PARTÍCULAS ───────────────────────────────────────────────────────────────
 const ParticleCanvas = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -111,38 +96,125 @@ const ParticleCanvas = () => {
   return <canvas ref={ref} style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none'}}/>;
 };
 
+// ─── HEATMAP DE ACTIVIDAD (últimos 90 días) ───────────────────────────────────
+const ActivityHeatmap = ({ historial }) => {
+  const days = 90;
+  const today = new Date();
+  const cells = Array.from({length: days}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (days - 1 - i));
+    const dateStr = d.toISOString().split('T')[0];
+    const count = historial.filter(s => {
+      const sDate = new Date(s.inicio * 1000).toISOString().split('T')[0];
+      return sDate === dateStr;
+    }).length;
+    return { date: d, count };
+  });
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i+7));
+
+  const getColor = (count) => {
+    if (count === 0) return 'rgba(79,70,229,0.07)';
+    if (count === 1) return 'rgba(79,70,229,0.3)';
+    if (count === 2) return 'rgba(79,70,229,0.55)';
+    return 'rgba(79,70,229,0.85)';
+  };
+
+  return (
+    <div style={{display:'flex',gap:'3px'}}>
+      {weeks.map((week, wi) => (
+        <div key={wi} style={{display:'flex',flexDirection:'column',gap:'3px'}}>
+          {week.map((day, di) => (
+            <div key={di} title={`${day.date.toLocaleDateString('es-ES')} · ${day.count} sesiones`}
+              style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:getColor(day.count),cursor:'default',transition:'transform .15s'}}
+              onMouseEnter={e=>e.target.style.transform='scale(1.4)'}
+              onMouseLeave={e=>e.target.style.transform='scale(1)'}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── STREAK ───────────────────────────────────────────────────────────────────
+const calcStreak = (historial) => {
+  if (!historial.length) return 0;
+  const dates = [...new Set(historial.map(s =>
+    new Date(s.inicio * 1000).toISOString().split('T')[0]
+  ))].sort().reverse();
+  let streak = 0;
+  let current = new Date();
+  for (const d of dates) {
+    const diff = Math.floor((current - new Date(d)) / 86400000);
+    if (diff <= 1) { streak++; current = new Date(d); }
+    else break;
+  }
+  return streak;
+};
+
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
 const SKILLS = [
-  {key:'analisis_logs',      label:'Análisis de Logs'},
-  {key:'deteccion_amenazas', label:'Detección Amenazas'},
-  {key:'respuesta_incidentes',label:'Respuesta Incidentes'},
-  {key:'threat_hunting',     label:'Threat Hunting'},
-  {key:'forense_digital',    label:'Forense Digital'},
+  {key:'analisis_logs',           label:'Análisis de Logs'},
+  {key:'deteccion_amenazas',      label:'Detección Amenazas'},
+  {key:'respuesta_incidentes',    label:'Respuesta Incidentes'},
+  {key:'threat_hunting',          label:'Threat Hunting'},
+  {key:'forense_digital',         label:'Forense Digital'},
   {key:'gestion_vulnerabilidades',label:'Gestión Vulns'},
-  {key:'inteligencia_amenazas',label:'Intel. Amenazas'},
+  {key:'inteligencia_amenazas',   label:'Intel. Amenazas'},
 ];
 const ACC = '#4f46e5';
+
+// ─── DATOS ESTÁTICOS DE EMPLEO (en producción vendrían de la API) ─────────────
+const OFERTAS_MOCK = [
+  { empresa:'CiberShield S.L.', rol:'Analista SOC L1', ubicacion:'Madrid · Híbrido', salario:'24K–30K', arena:'Bronce I+', badge:'nueva', color:'#059669' },
+  { empresa:'TechDefend',       rol:'SOC Analyst L2', ubicacion:'Remoto',            salario:'32K–40K', arena:'Plata II+', badge:'',      color:'#3b82f6' },
+  { empresa:'Grupo Securitas',  rol:'Threat Hunter',  ubicacion:'Barcelona · Onsite', salario:'40K–52K', arena:'Oro I+',   badge:'urgente',color:'#ef4444' },
+];
+
+const CERTS_MOCK = [
+  { nombre:'CompTIA Security+', nivel:'Entrada', precio:'~380€', relevancia:95, url:'https://www.comptia.org/certifications/security', color:'#e11d48' },
+  { nombre:'CEH — Certified Ethical Hacker', nivel:'Intermedio', precio:'~1.200€', relevancia:88, url:'https://www.eccouncil.org/train-certify/certified-ethical-hacker-ceh/', color:'#7c3aed' },
+  { nombre:'GCIH — GIAC Incident Handler', nivel:'Avanzado', precio:'~2.500€', relevancia:82, url:'https://www.giac.org/certifications/certified-incident-handler-gcih/', color:'#0891b2' },
+  { nombre:'SC-200 Microsoft Sentinel', nivel:'Intermedio', precio:'~165€', relevancia:90, url:'https://learn.microsoft.com/certifications/exams/sc-200/', color:'#0078d4' },
+];
+
+const BOOTCAMPS_MOCK = [
+  { nombre:'Hack4U — SOC completo', tipo:'Bootcamp', duracion:'6 meses', precio:'Desde 297€', stars:4.9 },
+  { nombre:'OpenWebinars — Blue Team', tipo:'Curso', duracion:'40h', precio:'Suscripción', stars:4.7 },
+  { nombre:'TCM Security Practical SOC', tipo:'Bootcamp EN', duracion:'30h', precio:'~29€', stars:4.8 },
+];
+
+const RETOS_MOCK = [
+  { nombre:'TryHackMe — SOC Level 1', tipo:'Plataforma', gratis:true,  url:'https://tryhackme.com/path/outline/soclevel1' },
+  { nombre:'Blue Team Labs Online',   tipo:'Retos',      gratis:true,  url:'https://blueteamlabs.online/' },
+  { nombre:'CyberDefenders',         tipo:'Challenges',  gratis:true,  url:'https://cyberdefenders.org/' },
+  { nombre:'LetsDefend',             tipo:'SOC Simulator',gratis:false, url:'https://letsdefend.io/' },
+];
 
 export default function DashboardAnalista() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData]   = useState(null);
   const [arenaIdx, setArenaIdx]   = useState(0);
   const [termLines, setTermLines] = useState([]);
   const [historial, setHistorial] = useState([]);
+  const [empleoTab, setEmpleoTab] = useState('ofertas'); // ofertas | certs | bootcamps | retos
+  const [ranking, setRanking]     = useState([]);
   const sliderRef = useRef(null);
   const startX    = useRef(null);
 
   const TERM = [
-    {text:'$ iniciando sesión SOC...',   color:'#94a3b8', delay:0},
-    {text:'⚠  ALERT   Brute force detected', color:'#ef4444', delay:400},
+    {text:'$ iniciando sesión SOC...',        color:'#94a3b8', delay:0},
+    {text:'⚠  ALERT   Brute force detected',  color:'#ef4444', delay:400},
     {text:'   →  src: 185.220.101.45   rate: 94/min', color:'#64748b', delay:800},
     {text:'   →  target: CORP-DC01   port: 445/SMB',  color:'#64748b', delay:1200},
-    {text:'$ correlating SIEM events...',color:'#94a3b8', delay:1600},
+    {text:'$ correlating SIEM events...',     color:'#94a3b8', delay:1600},
     {text:'   →  T1078 Valid Accounts detected', color:'#f97316', delay:2000},
-    {text:'$ awaiting analyst action...', color:ACC, delay:2400},
-    {text:'▌', color:ACC, delay:2800},
+    {text:'$ awaiting analyst action...',     color:ACC,       delay:2400},
+    {text:'▌',                                color:ACC,       delay:2800},
   ];
 
   useEffect(() => { fetchUser(); }, []);
@@ -161,10 +233,13 @@ export default function DashboardAnalista() {
     try {
       const r = await axios.get(`${API}/api/me`, { headers:{ Authorization:`Bearer ${token}` } });
       setUserData(r.data);
-      // Historial
       try {
         const h = await axios.get(`${API}/api/sesiones/historial`, { headers:{ Authorization:`Bearer ${token}` } });
         setHistorial(h.data || []);
+      } catch {}
+      try {
+        const rk = await axios.get(`${API}/api/ranking`, { headers:{ Authorization:`Bearer ${token}` } });
+        setRanking((rk.data?.jugadores || []).slice(0, 3));
       } catch {}
     } catch { logout(); navigate('/login'); }
   };
@@ -180,20 +255,28 @@ export default function DashboardAnalista() {
     startX.current = null;
   };
 
-  const copas   = userData?.copas || 0;
-  const xp      = userData?.xp    || 0;
-  const tier    = userData?.tier   || 1;
-  const sesiones= userData?.sesiones_completadas || 0;
-  const skills  = userData?.skills || {};
-  const arena   = ARENAS[arenaIdx];
-  const arenaActual = getArenaFromCopas(copas);
-  const XP_MAX  = [0,500,1500,3000,5000,8000,12000,18000,99999];
-  const xpMin   = XP_MAX[tier-1]||0;
-  const xpMax   = XP_MAX[tier]||99999;
-  const pctXP   = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
-  const pctCopas= arenaActual.max===99999 ? 100 : Math.min(((copas-arenaActual.min)/300)*100, 100);
-  const tierColor = TIER_CLR[tier] || '#64748b';
-  const siguienteArena = ARENAS[ARENAS.findIndex(a=>a.id===arenaActual.id)+1];
+  const copas    = userData?.copas || 0;
+  const xp       = userData?.xp    || 0;
+  const tier     = userData?.tier   || 1;
+  const sesiones = userData?.sesiones_completadas || 0;
+  const skills   = userData?.skills || {};
+  const arena    = ARENAS[arenaIdx];
+  const arenaActual   = getArenaFromCopas(copas);
+  const XP_MAX        = [0,500,1500,3000,5000,8000,12000,18000,99999];
+  const xpMin         = XP_MAX[tier-1]||0;
+  const xpMax         = XP_MAX[tier]||99999;
+  const pctXP         = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
+  const pctCopas      = arenaActual.max===99999 ? 100 : Math.min(((copas-arenaActual.min)/300)*100, 100);
+  const tierColor     = TIER_CLR[tier] || '#64748b';
+  const siguienteArena= ARENAS[ARENAS.findIndex(a=>a.id===arenaActual.id)+1];
+  const streak        = calcStreak(historial);
+  const tierGroups    = ['bronce','plata','oro','diamante'];
+  const tierNames     = {bronce:'Bronce',plata:'Plata',oro:'Oro',diamante:'Diamante'};
+  const tierColors    = {bronce:'#d97706',plata:'#94a3b8',oro:'#f59e0b',diamante:'#3b82f6'};
+
+  // Skill más débil → recomendación
+  const skillEntries = SKILLS.map(s => ({...s, val: skills?.[s.key]||0}));
+  const weakestSkill = [...skillEntries].sort((a,b)=>a.val-b.val)[0];
 
   const css = `
     @keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -202,6 +285,8 @@ export default function DashboardAnalista() {
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes countUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .arena-slide{animation:slideIn 0.3s ease forwards;}
     .planet-anim{animation:float 5s ease-in-out infinite;}
     .session-btn:hover{filter:brightness(1.1);transform:translateY(-2px)!important;box-shadow:0 10px 36px rgba(79,70,229,0.45)!important;}
@@ -211,6 +296,11 @@ export default function DashboardAnalista() {
     .skill-bar-fill{transition:width 1s ease;}
     .hist-row:hover{background:#f8fafc!important;}
     .arena-dot:hover{transform:scale(1.4);}
+    .empleo-tab:hover{background:rgba(79,70,229,0.06)!important;}
+    .oferta-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.1)!important;border-color:#c7d2fe!important;}
+    .cert-row:hover{background:#f8faff!important;}
+    .reto-row:hover{background:#f0fdf4!important;}
+    .bootcamp-row:hover{background:#faf5ff!important;}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
   `;
 
@@ -220,11 +310,6 @@ export default function DashboardAnalista() {
       <div style={{width:40,height:40,border:'3px solid #e2e8f0',borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
-
-  // Agrupar arenas por tier para los puntos de navegación
-  const tierGroups = ['bronce','plata','oro','diamante'];
-  const tierNames  = {bronce:'Bronce',plata:'Plata',oro:'Oro',diamante:'Diamante'};
-  const tierColors = {bronce:'#d97706',plata:'#94a3b8',oro:'#f59e0b',diamante:'#3b82f6'};
 
   return (
     <>
@@ -241,8 +326,10 @@ export default function DashboardAnalista() {
             <span style={{fontSize:'15px',fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
           </div>
           <div style={{display:'flex',gap:'2px'}}>
-            {[{label:'Training',path:'/training'},{label:'Sesiones',path:'/sesion'},{label:'Ranking',path:'/ranking'},{label:'Certificado',path:'/certificado'},{label:'Perfil',path:'/perfil'}].map((item,i)=>(
-              <button key={i} className="nav-btn" onClick={()=>navigate(item.path)} style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer'}}>{item.label}</button>
+            {[{label:'Training',path:'/training'},{label:'Sesiones',path:'/sesion'},{label:'Ranking',path:'/ranking'},{label:'Certificado',path:'/certificado'},{label:'Perfil',path:'/perfil'},{label:'Empleo',path:'#empleo'}].map((item,i)=>(
+              <button key={i} className="nav-btn"
+                onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
+                style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer'}}>{item.label}</button>
             ))}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
@@ -251,20 +338,37 @@ export default function DashboardAnalista() {
               <span style={{fontSize:'13px',color:'#374151',fontWeight:500}}>{user?.nombre}</span>
               <span onClick={()=>navigate('/arenas')} style={{fontSize:'11px',fontWeight:700,color:arenaActual.color,background:arenaActual.colorLight,padding:'2px 8px',borderRadius:'5px',cursor:'pointer'}}>{arenaActual.name}</span>
             </div>
+            {streak > 0 && (
+              <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'5px 10px',borderRadius:'8px',background:'linear-gradient(135deg,#fef3c7,#fffbeb)',border:'1px solid #fcd34d'}}>
+                <span style={{fontSize:'14px'}}>🔥</span>
+                <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
+              </div>
+            )}
             <button onClick={()=>{logout();navigate('/');}} style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer'}}>Salir</button>
           </div>
         </nav>
 
         <div style={{maxWidth:'1160px',margin:'0 auto',padding:'24px 40px 72px'}}>
 
-          {/* BIENVENIDA */}
-          <div style={{marginBottom:'20px'}}>
-            <h1 style={{fontSize:'22px',fontWeight:800,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:'2px'}}>
-              Bienvenido de nuevo, <span style={{color:ACC}}>{user?.nombre}</span>
-            </h1>
-            <p style={{fontSize:'13px',color:'#94a3b8',fontFamily:'monospace'}}>
-              {arenaActual.name} · Tier {tier} — {TIERS[tier]} · {sesiones} sesiones completadas
-            </p>
+          {/* BIENVENIDA + STREAK */}
+          <div style={{marginBottom:'20px',display:'flex',alignItems:'flex-start',justifyContent:'space-between'}}>
+            <div>
+              <h1 style={{fontSize:'22px',fontWeight:800,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:'2px'}}>
+                Bienvenido de nuevo, <span style={{color:ACC}}>{user?.nombre}</span>
+              </h1>
+              <p style={{fontSize:'13px',color:'#94a3b8',fontFamily:'monospace'}}>
+                {arenaActual.name} · Tier {tier} — {TIERS[tier]} · {sesiones} sesiones completadas
+              </p>
+            </div>
+            {streak > 1 && (
+              <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#fffbeb,#fef3c7)',border:'1px solid #fcd34d',boxShadow:'0 2px 8px rgba(251,191,36,0.2)'}}>
+                <span style={{fontSize:'24px'}}>🔥</span>
+                <div>
+                  <div style={{fontSize:'18px',fontWeight:900,color:'#92400e',letterSpacing:'-0.5px',lineHeight:1}}>{streak} días</div>
+                  <div style={{fontSize:'11px',color:'#b45309',fontWeight:600}}>racha activa</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* FILA 1: ARENA + SESIÓN + TERMINAL */}
@@ -272,7 +376,6 @@ export default function DashboardAnalista() {
 
             {/* ARENA CARD */}
             <div>
-              {/* Dots de navegación por tier */}
               <div style={{display:'flex',gap:'12px',marginBottom:'10px',alignItems:'center'}}>
                 {tierGroups.map(t=>(
                   <div key={t} style={{display:'flex',alignItems:'center',gap:'4px'}}>
@@ -293,7 +396,6 @@ export default function DashboardAnalista() {
                 style={{borderRadius:'18px',padding:'30px 38px',background:`linear-gradient(135deg,${arena.gradFrom} 0%,${arena.gradTo} 100%)`,position:'relative',overflow:'hidden',boxShadow:`0 8px 40px rgba(${arena.colorRgb},.35)`,cursor:'pointer'}}>
                 <div style={{position:'absolute',top:'-50px',right:'-30px',width:'280px',height:'280px',borderRadius:'50%',background:'rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
                 <div style={{position:'absolute',bottom:'-70px',left:'-40px',width:'220px',height:'220px',borderRadius:'50%',background:'rgba(0,0,0,0.1)',pointerEvents:'none'}}/>
-
                 <div style={{display:'flex',alignItems:'center',gap:'32px',position:'relative',zIndex:1}}>
                   <div style={{flex:1}}>
                     <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
@@ -308,7 +410,6 @@ export default function DashboardAnalista() {
                     <p style={{fontSize:'11px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace',marginBottom:'18px'}}>
                       {arena.min} — {arena.max===99999?'∞':arena.max} copas · División {arena.div}
                     </p>
-
                     {arena.id===arenaActual.id ? (
                       <>
                         <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'10px'}}>
@@ -326,22 +427,17 @@ export default function DashboardAnalista() {
                         <p style={{fontSize:'10px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace'}}>{Math.round(pctCopas)}% hacia {siguienteArena?.name||'máximo'}</p>
                       </>
                     ) : (
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>
-                        {arena.min > copas ? `Faltan ${(arena.min-copas).toLocaleString()} copas` : '✓ Arena superada'}
-                      </p>
+                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>{arena.min > copas ? `Faltan ${(arena.min-copas).toLocaleString()} copas` : '✓ Arena superada'}</p>
                     )}
                   </div>
                   <div className="planet-anim" style={{flexShrink:0,filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.3))'}}>
                     <Planet tier={arena.tier} size={150}/>
                   </div>
                 </div>
-
                 <div style={{display:'flex',justifyContent:'space-between',marginTop:'14px',position:'relative',zIndex:1}}>
                   <button onClick={e=>{e.stopPropagation();arenaIdx>0&&setArenaIdx(i=>i-1);}} style={{background:'none',border:'none',color:arenaIdx>0?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx>0?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>← {arenaIdx>0?ARENAS[arenaIdx-1].name:''}</button>
                   <button onClick={e=>{e.stopPropagation();arenaIdx<ARENAS.length-1&&setArenaIdx(i=>i+1);}} style={{background:'none',border:'none',color:arenaIdx<ARENAS.length-1?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx<ARENAS.length-1?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>{arenaIdx<ARENAS.length-1?ARENAS[arenaIdx+1].name:''} →</button>
                 </div>
-
-                {/* Hint ver todas */}
                 <div style={{position:'absolute',bottom:'14px',left:'50%',transform:'translateX(-50%)',fontSize:'10px',color:'rgba(255,255,255,0.45)',fontFamily:'monospace',letterSpacing:'1px'}}>CLICK PARA VER TODAS LAS ARENAS</div>
               </div>
             </div>
@@ -406,31 +502,36 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:'10px',color:'#94a3b8',padding:'2px 7px',borderRadius:'5px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',fontFamily:'monospace'}}>T{tier}</span>
                 {tier<8&&<span style={{fontSize:'12px',color:'#94a3b8'}}>→ {TIERS[tier+1]}</span>}
               </div>
-              <span style={{fontSize:'11px',color:'#94a3b8',fontFamily:'monospace'}}>{xp.toLocaleString()} / {xpMax===99999?'∞':xpMax.toLocaleString()} XP{tier<8&&<span style={{color:'#cbd5e1'}}> · {(xpMax-xp).toLocaleString()} restantes</span>}</span>
+              <span style={{fontSize:'11px',color:'#94a3b8',fontFamily:'monospace'}}>{xp.toLocaleString()} / {xpMax===99999?'∞':xpMax.toLocaleString()} XP</span>
             </div>
             <div style={{height:'8px',borderRadius:'4px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
               <div className="skill-bar-fill" style={{width:`${pctXP}%`,height:'100%',borderRadius:'4px',background:`linear-gradient(90deg,${tierColor}80,${tierColor})`}}/>
             </div>
           </div>
 
-          {/* FILA 3: SKILLS + ACCESOS + HISTORIAL */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px'}}>
+          {/* FILA 3: SKILLS + ACTIVIDAD + MINI RANKING */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'14px'}}>
 
             {/* SKILLS */}
             <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
-              <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>HABILIDADES</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>HABILIDADES</p>
+                <span style={{fontSize:'10px',color:ACC,fontWeight:600,padding:'2px 8px',background:'#eef2ff',borderRadius:'5px'}}>
+                  {weakestSkill.label} ↓
+                </span>
+              </div>
               <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-                {SKILLS.map((s,i)=>{
-                  const val = skills?.[s.key]||0;
-                  const pct = Math.min((val/10)*100,100);
+                {skillEntries.map((s,i)=>{
+                  const pct = Math.min((s.val/10)*100,100);
+                  const isWeak = s.key === weakestSkill.key;
                   return (
                     <div key={i}>
                       <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
-                        <span style={{fontSize:'11px',color:'#475569',fontWeight:500}}>{s.label}</span>
-                        <span style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{val}/10</span>
+                        <span style={{fontSize:'11px',color:isWeak?ACC:'#475569',fontWeight:isWeak?600:500}}>{s.label}</span>
+                        <span style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{s.val}/10</span>
                       </div>
                       <div style={{height:'5px',borderRadius:'3px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
-                        <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'3px',background:`linear-gradient(90deg,${ACC}80,${ACC})`}}/>
+                        <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'3px',background:isWeak?`linear-gradient(90deg,#ef444480,#ef4444)`:`linear-gradient(90deg,${ACC}80,${ACC})`}}/>
                       </div>
                     </div>
                   );
@@ -438,33 +539,85 @@ export default function DashboardAnalista() {
               </div>
             </div>
 
-            {/* ACCESOS RÁPIDOS */}
+            {/* ACTIVIDAD HEATMAP */}
             <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
-              <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
-              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                {[
-                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',     color:'#7c3aed',light:'#f5f3ff'},
-                  {label:'Ranking Global',  desc:'Tu posición actual',       path:'/ranking',      color:'#d97706',light:'#fffbeb'},
-                  {label:'Arenas',          desc:'Ver todas las divisiones', path:'/arenas',       color:'#0891b2',light:'#ecfeff'},
-                  {label:'Mi Certificado',  desc:'QR verificable',           path:'/certificado',  color:'#059669',light:'#ecfdf5'},
-                  {label:'Perfil & Tiers',  desc:'Stats y progresión',       path:'/perfil',       color:'#2563eb',light:'#eff6ff'},
-                ].map((item,i)=>(
-                  <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
-                    style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
-                    <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}18`}}>
-                      <div style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:item.color}}/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <span style={{fontSize:'12px',color:'#0f172a',fontWeight:600}}>{item.label}</span>
-                      <span style={{fontSize:'10px',color:'#94a3b8',marginLeft:'6px'}}>{item.desc}</span>
-                    </div>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>ACTIVIDAD — 90 DÍAS</p>
+                <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                  <span style={{fontSize:'10px',color:'#cbd5e1'}}>menos</span>
+                  {[0.07,0.3,0.55,0.85].map((o,i)=>(
+                    <div key={i} style={{width:'8px',height:'8px',borderRadius:'2px',backgroundColor:`rgba(79,70,229,${o})`}}/>
+                  ))}
+                  <span style={{fontSize:'10px',color:'#cbd5e1'}}>más</span>
+                </div>
+              </div>
+              <div style={{overflowX:'auto',paddingBottom:'4px'}}>
+                <ActivityHeatmap historial={historial}/>
+              </div>
+              <div style={{marginTop:'14px',padding:'10px 12px',borderRadius:'8px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9'}}>
+                <div style={{display:'flex',justifyContent:'space-between'}}>
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:'16px',fontWeight:800,color:ACC}}>{sesiones}</div>
+                    <div style={{fontSize:'10px',color:'#94a3b8'}}>sesiones</div>
                   </div>
-                ))}
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:'16px',fontWeight:800,color:'#f59e0b'}}>{streak}</div>
+                    <div style={{fontSize:'10px',color:'#94a3b8'}}>racha</div>
+                  </div>
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:'16px',fontWeight:800,color:'#059669'}}>{historial.filter(s=>s.resultado?.copas_ganadas>0).length}</div>
+                    <div style={{fontSize:'10px',color:'#94a3b8'}}>victorias</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* HISTORIAL */}
+            {/* MINI RANKING + RECOMENDACIÓN */}
+            <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+              {/* Mini ranking */}
+              <div style={{padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',flex:1}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
+                  <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>TOP RANKING</p>
+                  <button onClick={()=>navigate('/ranking')} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo →</button>
+                </div>
+                {ranking.length === 0 ? (
+                  <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Cargando...</p>
+                ) : ranking.map((j,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:i<ranking.length-1?'1px solid #f1f5f9':'none'}}>
+                    <div style={{width:'22px',height:'22px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:800,color:i===0?'#d97706':i===1?'#475569':'#7c3aed',flexShrink:0}}>
+                      {i===0?'🥇':i===1?'🥈':'🥉'}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:'12px',fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.nombre}</div>
+                      <div style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{j.arena}</div>
+                    </div>
+                    <div style={{fontSize:'12px',fontWeight:700,color:'#d97706',fontFamily:'monospace'}}>{j.copas?.toLocaleString()}🏆</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recomendación IA */}
+              <div style={{padding:'16px 18px',borderRadius:'14px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',boxShadow:'0 2px 8px rgba(79,70,229,.08)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px'}}>
+                  <span style={{fontSize:'14px'}}>🎯</span>
+                  <span style={{fontSize:'10px',color:ACC,fontWeight:700,letterSpacing:'1.5px',fontFamily:'monospace'}}>SIGUIENTE MISIÓN</span>
+                </div>
+                <p style={{fontSize:'12px',color:'#3730a3',fontWeight:600,marginBottom:'4px',lineHeight:1.4}}>
+                  Tu skill más débil es <strong>{weakestSkill.label}</strong>
+                </p>
+                <p style={{fontSize:'11px',color:'#6366f1',lineHeight:1.5,marginBottom:'10px'}}>
+                  Completa sesiones en arena {arenaActual.name} para subirla y desbloquear más opciones de empleo.
+                </p>
+                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'8px',borderRadius:'8px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
+                  Entrenar ahora →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* FILA 4: HISTORIAL + ACCESOS */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'28px'}}>
+            {/* Historial */}
             <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>ÚLTIMAS SESIONES</p>
@@ -499,7 +652,237 @@ export default function DashboardAnalista() {
                 </div>
               )}
             </div>
+
+            {/* Accesos rápidos */}
+            <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
+              <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                {[
+                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed',light:'#f5f3ff'},
+                  {label:'Ranking Global',  desc:'Tu posición actual',       path:'/ranking',     color:'#d97706',light:'#fffbeb'},
+                  {label:'Arenas',          desc:'Ver todas las divisiones', path:'/arenas',      color:'#0891b2',light:'#ecfeff'},
+                  {label:'Mi Certificado',  desc:'QR verificable',           path:'/certificado', color:'#059669',light:'#ecfdf5'},
+                  {label:'Perfil & Tiers',  desc:'Stats y progresión',       path:'/perfil',      color:'#2563eb',light:'#eff6ff'},
+                ].map((item,i)=>(
+                  <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
+                    style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
+                    <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}18`}}>
+                      <div style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:item.color}}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span style={{fontSize:'12px',color:'#0f172a',fontWeight:600}}>{item.label}</span>
+                      <span style={{fontSize:'10px',color:'#94a3b8',marginLeft:'6px'}}>{item.desc}</span>
+                    </div>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* ═══════════════════════════════════════════════════════
+              SECCIÓN EMPLEO — FULL WIDTH, DISEÑO ESPECIAL
+          ═══════════════════════════════════════════════════════ */}
+          <div id="empleo-section">
+
+            {/* CABECERA EMPLEO */}
+            <div style={{position:'relative',borderRadius:'20px',overflow:'hidden',marginBottom:'20px',padding:'36px 48px',background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%)'}}>
+              <div style={{position:'absolute',top:'-60px',right:'-60px',width:'300px',height:'300px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.2),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'absolute',bottom:'-80px',left:'200px',width:'250px',height:'250px',borderRadius:'50%',background:'radial-gradient(circle,rgba(99,102,241,0.15),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'32px'}}>
+                <div>
+                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
+                    <span style={{fontSize:'10px',color:'#818cf8',letterSpacing:'3px',fontWeight:700,fontFamily:'monospace'}}>SOCBLAST CAREERS</span>
+                    <div style={{height:'1px',flex:1,background:'linear-gradient(90deg,rgba(129,140,248,0.4),transparent)'}}/>
+                  </div>
+                  <h2 style={{fontSize:'32px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>
+                    Tu próximo paso<br/><span style={{color:'#818cf8'}}>en ciberseguridad.</span>
+                  </h2>
+                  <p style={{fontSize:'14px',color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:'520px'}}>
+                    Ofertas de empresas reales, certificaciones recomendadas para tu nivel, bootcamps y retos gratuitos. Todo en un sitio.
+                  </p>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
+                  <div style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(79,70,229,0.15)',border:'1px solid rgba(99,102,241,0.25)',textAlign:'center'}}>
+                    <div style={{fontSize:'24px',fontWeight:900,color:'#a5b4fc'}}>{OFERTAS_MOCK.length}</div>
+                    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>ofertas activas</div>
+                  </div>
+                  <div style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(79,70,229,0.15)',border:'1px solid rgba(99,102,241,0.25)',textAlign:'center'}}>
+                    <div style={{fontSize:'24px',fontWeight:900,color:'#a5b4fc'}}>{CERTS_MOCK.length}</div>
+                    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>certificaciones</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TABS */}
+              <div style={{position:'relative',zIndex:1,display:'flex',gap:'6px',marginTop:'24px'}}>
+                {[
+                  {id:'ofertas',    label:'💼 Ofertas de empleo'},
+                  {id:'certs',      label:'🎓 Certificaciones'},
+                  {id:'bootcamps',  label:'🚀 Bootcamps'},
+                  {id:'retos',      label:'⚔️ Retos gratuitos'},
+                ].map(tab=>(
+                  <button key={tab.id} className="empleo-tab"
+                    onClick={()=>setEmpleoTab(tab.id)}
+                    style={{padding:'8px 18px',borderRadius:'9px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:600,
+                      background:empleoTab===tab.id?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.06)',
+                      color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.45)',
+                      borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent',
+                    }}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* CONTENIDO TABS */}
+
+            {/* ── OFERTAS ── */}
+            {empleoTab === 'ofertas' && (
+              <div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'14px',marginBottom:'16px'}}>
+                  {OFERTAS_MOCK.map((o,i)=>(
+                    <div key={i} className="oferta-card" style={{padding:'24px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',position:'relative',overflow:'hidden',cursor:'pointer'}}>
+                      <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',backgroundColor:o.color}}/>
+                      {o.badge && (
+                        <span style={{position:'absolute',top:'14px',right:'14px',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'5px',
+                          background:o.badge==='nueva'?'#ecfdf5':o.badge==='urgente'?'#fef2f2':'#f0f9ff',
+                          color:o.badge==='nueva'?'#059669':o.badge==='urgente'?'#ef4444':'#0891b2',
+                          border:`1px solid ${o.badge==='nueva'?'#a7f3d0':o.badge==='urgente'?'#fecaca':'#bae6fd'}`
+                        }}>{o.badge.toUpperCase()}</span>
+                      )}
+                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,border:`1px solid ${o.color}25`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}>
+                        <span style={{fontSize:'18px'}}>🏢</span>
+                      </div>
+                      <div style={{fontSize:'11px',color:'#94a3b8',marginBottom:'4px'}}>{o.empresa}</div>
+                      <div style={{fontSize:'16px',fontWeight:800,color:'#0f172a',marginBottom:'8px',lineHeight:1.2}}>{o.rol}</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'16px'}}>
+                        <div style={{fontSize:'12px',color:'#64748b',display:'flex',alignItems:'center',gap:'4px'}}>
+                          <span>📍</span>{o.ubicacion}
+                        </div>
+                        <div style={{fontSize:'12px',color:'#64748b',display:'flex',alignItems:'center',gap:'4px'}}>
+                          <span>💰</span>{o.salario}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontSize:'10px',fontWeight:700,color:o.color,padding:'3px 8px',borderRadius:'5px',background:`${o.color}12`,border:`1px solid ${o.color}20`}}>
+                          Req: {o.arena}
+                        </span>
+                        <button style={{padding:'7px 14px',borderRadius:'8px',background:o.color,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
+                          Aplicar →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{padding:'16px 20px',borderRadius:'12px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:700,color:'#3730a3',marginBottom:'2px'}}>¿Eres empresa? Publica tus ofertas aquí</div>
+                    <div style={{fontSize:'12px',color:'#6366f1'}}>Accede al talent pool de analistas verificados por SocBlast</div>
+                  </div>
+                  <button onClick={()=>navigate('/company')} style={{padding:'10px 20px',borderRadius:'9px',background:ACC,border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',flexShrink:0}}>
+                    Acceso empresas →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── CERTIFICACIONES ── */}
+            {empleoTab === 'certs' && (
+              <div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+                  {CERTS_MOCK.map((c,i)=>(
+                    <div key={i} className="cert-row" onClick={()=>window.open(c.url,'_blank')}
+                      style={{display:'flex',alignItems:'center',gap:'16px',padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer',position:'relative',overflow:'hidden'}}>
+                      <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',backgroundColor:c.color}}/>
+                      <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,border:`1px solid ${c.color}25`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <span style={{fontSize:'20px'}}>🎓</span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'3px'}}>{c.nombre}</div>
+                        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                          <span style={{fontSize:'11px',color:'#64748b',padding:'2px 7px',borderRadius:'4px',background:'#f8fafc',border:'1px solid #e2e8f0'}}>{c.nivel}</span>
+                          <span style={{fontSize:'11px',color:'#94a3b8'}}>{c.precio}</span>
+                        </div>
+                      </div>
+                      <div style={{textAlign:'center',flexShrink:0}}>
+                        <div style={{fontSize:'18px',fontWeight:900,color:c.color}}>{c.relevancia}%</div>
+                        <div style={{fontSize:'10px',color:'#94a3b8'}}>relevancia</div>
+                        <div style={{width:'48px',height:'4px',borderRadius:'2px',backgroundColor:'#f1f5f9',marginTop:'4px',overflow:'hidden'}}>
+                          <div style={{width:`${c.relevancia}%`,height:'100%',backgroundColor:c.color,borderRadius:'2px'}}/>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{marginTop:'12px',padding:'14px 18px',borderRadius:'12px',background:'#f8fafc',border:'1px solid #e2e8f0',fontSize:'12px',color:'#64748b',display:'flex',alignItems:'center',gap:'8px'}}>
+                  <span>💡</span>
+                  <span>Las certificaciones con mayor relevancia están alineadas con tu arena actual ({arenaActual.name}) y tus skills.</span>
+                </div>
+              </div>
+            )}
+
+            {/* ── BOOTCAMPS ── */}
+            {empleoTab === 'bootcamps' && (
+              <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                {BOOTCAMPS_MOCK.map((b,i)=>(
+                  <div key={i} className="bootcamp-row"
+                    style={{display:'flex',alignItems:'center',gap:'16px',padding:'18px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
+                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',border:'1px solid #ddd6fe',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <span style={{fontSize:'20px'}}>🚀</span>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{b.nombre}</div>
+                      <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                        <span style={{fontSize:'11px',color:'#7c3aed',padding:'2px 7px',borderRadius:'4px',background:'#f5f3ff',border:'1px solid #ddd6fe'}}>{b.tipo}</span>
+                        <span style={{fontSize:'11px',color:'#64748b'}}>⏱ {b.duracion}</span>
+                        <span style={{fontSize:'11px',color:'#059669',fontWeight:600}}>💰 {b.precio}</span>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:'4px',flexShrink:0}}>
+                      <span style={{fontSize:'13px',fontWeight:700,color:'#f59e0b'}}>{b.stars}</span>
+                      <span style={{fontSize:'13px'}}>⭐</span>
+                    </div>
+                    <button style={{padding:'8px 16px',borderRadius:'8px',background:'#f5f3ff',border:'1px solid #ddd6fe',color:'#7c3aed',fontSize:'12px',fontWeight:700,cursor:'pointer',flexShrink:0}}>
+                      Ver →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── RETOS ── */}
+            {empleoTab === 'retos' && (
+              <div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'12px'}}>
+                  {RETOS_MOCK.map((r,i)=>(
+                    <div key={i} className="reto-row" onClick={()=>window.open(r.url,'_blank')}
+                      style={{display:'flex',alignItems:'center',gap:'14px',padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
+                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',border:'1px solid #a7f3d0',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <span style={{fontSize:'18px'}}>⚔️</span>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'13px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{r.nombre}</div>
+                        <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                          <span style={{fontSize:'10px',color:'#059669',padding:'2px 6px',borderRadius:'4px',background:'#ecfdf5',border:'1px solid #a7f3d0'}}>{r.tipo}</span>
+                          {r.gratis && <span style={{fontSize:'10px',color:'#059669',fontWeight:700}}>✓ GRATIS</span>}
+                          {!r.gratis && <span style={{fontSize:'10px',color:'#64748b'}}>De pago</span>}
+                        </div>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  ))}
+                </div>
+                <div style={{marginTop:'12px',padding:'14px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#ecfdf5,#f0fdf4)',border:'1px solid #a7f3d0',display:'flex',alignItems:'center',gap:'8px'}}>
+                  <span>🏆</span>
+                  <span style={{fontSize:'12px',color:'#065f46'}}>Los retos gratuitos son perfectos para subir de arena. Cada challenge completado refuerza tus skills en SocBlast.</span>
+                </div>
+              </div>
+            )}
+
+          </div>
+          {/* FIN SECCIÓN EMPLEO */}
+
         </div>
       </div>
     </>
