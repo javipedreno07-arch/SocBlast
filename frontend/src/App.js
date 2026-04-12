@@ -18,24 +18,44 @@ import SplashScreen from './components/SplashScreen';
 import OAuthCallback from './pages/OAuthCallback';
 import RegistroExitoso from './pages/RegistroExitoso';
 import VerificarEmail from './pages/VerificarEmail';
+import ArenasPage from './pages/ArenasPage';
 
+const GUEST_USER = {
+  nombre: 'Invitado',
+  rol: 'analista',
+  email: 'guest@socblast.com',
+  copas: 450,
+  xp: 820,
+  tier: 2,
+  arena: 'Plata 3',
+  sesiones_completadas: 3,
+  isGuest: true,
+  skills: { analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2, threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1 }
+};
+
+const GuestRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  return children;
+};
 
 const PrivateRoute = ({ children, rol }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#060A14', color: 'white' }}>Cargando...</div>;
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f5f7fa', color: '#0f172a' }}>Cargando...</div>;
   if (!user) return <Navigate to="/login" />;
   if (rol && user.rol !== rol) return <Navigate to="/" />;
   return children;
 };
 
-const AppRoutes = () => {
+const AppRoutes = ({ onGuestLogin }) => {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <LoginPage />} />
-      <Route path="/register" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <RegisterPage />} />
+      <Route path="/" element={<LandingPage onGuestLogin={onGuestLogin} />} />
+      <Route path="/login" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <LoginPage onGuestLogin={onGuestLogin} />} />
+      <Route path="/register" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
       <Route path="/dashboard" element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
+      <Route path="/arenas" element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
       <Route path="/sesion" element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
       <Route path="/training" element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
       <Route path="/ranking" element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
@@ -47,7 +67,7 @@ const AppRoutes = () => {
       <Route path="/ofertas" element={<PrivateRoute rol="company"><OfertasPage /></PrivateRoute>} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/registro-exitoso" element={<RegistroExitoso />} />
-<Route path="/verificar-email" element={<VerificarEmail />} />
+      <Route path="/verificar-email" element={<VerificarEmail />} />
     </Routes>
   );
 };
@@ -55,13 +75,19 @@ const AppRoutes = () => {
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
+  const handleGuestLogin = () => {
+    localStorage.setItem('token', 'guest-token');
+    localStorage.setItem('user', JSON.stringify(GUEST_USER));
+    window.location.href = '/dashboard';
+  };
+
   return (
     <>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <div style={{ opacity: showSplash ? 0 : 1, transition: 'opacity 0.4s ease' }}>
         <AuthProvider>
           <Router>
-            <AppRoutes />
+            <AppRoutes onGuestLogin={handleGuestLogin} />
           </Router>
         </AuthProvider>
       </div>
