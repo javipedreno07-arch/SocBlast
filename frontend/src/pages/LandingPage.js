@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CARD  = '#ffffff';
-const BD    = '#e8eaf0';
+const BD    = '#e2e8f0';
 const T1    = '#0f172a';
 const T2    = '#374151';
 const T3    = '#64748b';
@@ -12,66 +12,24 @@ const BG    = '#f0f4ff';
 
 const Planet = ({ type, size = 120 }) => {
   const planets = {
-    bronce: (
-      <svg width={size} height={size} viewBox="0 0 120 120">
-        <defs>
-          <radialGradient id="b1" cx="35%" cy="35%"><stop offset="0%" stopColor="#E8A050"/><stop offset="40%" stopColor="#CD7F32"/><stop offset="100%" stopColor="#5C3010"/></radialGradient>
-          <radialGradient id="b2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.5)"/></radialGradient>
-        </defs>
-        <circle cx="60" cy="60" r="52" fill="url(#b1)"/>
-        <ellipse cx="45" cy="40" rx="18" ry="8" fill="rgba(180,100,30,0.4)" transform="rotate(-20,45,40)"/>
-        <ellipse cx="70" cy="65" rx="22" ry="6" fill="rgba(100,50,10,0.35)" transform="rotate(10,70,65)"/>
-        <circle cx="60" cy="60" r="52" fill="url(#b2)"/>
-      </svg>
-    ),
-    plata: (
-      <svg width={size} height={size} viewBox="0 0 140 120">
-        <defs>
-          <radialGradient id="p1" cx="35%" cy="35%"><stop offset="0%" stopColor="#E2E8F0"/><stop offset="50%" stopColor="#94A3B8"/><stop offset="100%" stopColor="#2D3748"/></radialGradient>
-          <radialGradient id="p2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.45)"/></radialGradient>
-          <linearGradient id="ring1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="50%" stopColor="rgba(148,163,184,0.6)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient>
-        </defs>
-        <ellipse cx="70" cy="72" rx="68" ry="8" fill="url(#ring1)" opacity="0.5"/>
-        <circle cx="70" cy="60" r="48" fill="url(#p1)"/>
-        <circle cx="70" cy="60" r="48" fill="url(#p2)"/>
-      </svg>
-    ),
-    oro: (
-      <svg width={size} height={size} viewBox="0 0 120 120">
-        <defs>
-          <radialGradient id="o1" cx="35%" cy="35%"><stop offset="0%" stopColor="#FDE68A"/><stop offset="40%" stopColor="#F59E0B"/><stop offset="100%" stopColor="#78350F"/></radialGradient>
-          <radialGradient id="o2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient>
-        </defs>
-        <circle cx="60" cy="60" r="54" fill="url(#o1)"/>
-        <ellipse cx="60" cy="45" rx="48" ry="7" fill="rgba(245,210,50,0.25)" transform="rotate(-5,60,45)"/>
-        <circle cx="60" cy="60" r="54" fill="url(#o2)"/>
-      </svg>
-    ),
-    elite: (
-      <svg width={size} height={size} viewBox="0 0 120 120">
-        <defs>
-          <radialGradient id="e1" cx="35%" cy="35%"><stop offset="0%" stopColor="#DDD6FE"/><stop offset="40%" stopColor="#7C3AED"/><stop offset="100%" stopColor="#1E0A3C"/></radialGradient>
-          <radialGradient id="e2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.5)"/></radialGradient>
-          <radialGradient id="aura" cx="50%" cy="50%"><stop offset="60%" stopColor="rgba(167,139,250,0)"/><stop offset="100%" stopColor="rgba(124,58,237,0.25)"/></radialGradient>
-        </defs>
-        <circle cx="60" cy="60" r="58" fill="url(#aura)"/>
-        <circle cx="60" cy="60" r="50" fill="url(#e1)"/>
-        <circle cx="60" cy="60" r="50" fill="url(#e2)"/>
-      </svg>
-    ),
+    bronce: (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="b1" cx="35%" cy="35%"><stop offset="0%" stopColor="#E8A050"/><stop offset="40%" stopColor="#CD7F32"/><stop offset="100%" stopColor="#5C3010"/></radialGradient><radialGradient id="b2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.5)"/></radialGradient></defs><circle cx="60" cy="60" r="52" fill="url(#b1)"/><ellipse cx="45" cy="40" rx="18" ry="8" fill="rgba(180,100,30,0.4)" transform="rotate(-20,45,40)"/><ellipse cx="70" cy="65" rx="22" ry="6" fill="rgba(100,50,10,0.35)" transform="rotate(10,70,65)"/><circle cx="60" cy="60" r="52" fill="url(#b2)"/></svg>),
+    plata:  (<svg width={size} height={size} viewBox="0 0 140 120"><defs><radialGradient id="p1" cx="35%" cy="35%"><stop offset="0%" stopColor="#E2E8F0"/><stop offset="50%" stopColor="#94A3B8"/><stop offset="100%" stopColor="#2D3748"/></radialGradient><radialGradient id="p2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.45)"/></radialGradient><linearGradient id="ring1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="50%" stopColor="rgba(148,163,184,0.6)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient></defs><ellipse cx="70" cy="72" rx="68" ry="8" fill="url(#ring1)" opacity="0.5"/><circle cx="70" cy="60" r="48" fill="url(#p1)"/><circle cx="70" cy="60" r="48" fill="url(#p2)"/></svg>),
+    oro:    (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="o1" cx="35%" cy="35%"><stop offset="0%" stopColor="#FDE68A"/><stop offset="40%" stopColor="#F59E0B"/><stop offset="100%" stopColor="#78350F"/></radialGradient><radialGradient id="o2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient></defs><circle cx="60" cy="60" r="54" fill="url(#o1)"/><ellipse cx="60" cy="45" rx="48" ry="7" fill="rgba(245,210,50,0.25)" transform="rotate(-5,60,45)"/><circle cx="60" cy="60" r="54" fill="url(#o2)"/></svg>),
+    elite:  (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="e1" cx="35%" cy="35%"><stop offset="0%" stopColor="#DDD6FE"/><stop offset="40%" stopColor="#7C3AED"/><stop offset="100%" stopColor="#1E0A3C"/></radialGradient><radialGradient id="e2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.5)"/></radialGradient><radialGradient id="aura" cx="50%" cy="50%"><stop offset="60%" stopColor="rgba(167,139,250,0)"/><stop offset="100%" stopColor="rgba(124,58,237,0.25)"/></radialGradient></defs><circle cx="60" cy="60" r="58" fill="url(#aura)"/><circle cx="60" cy="60" r="50" fill="url(#e1)"/><circle cx="60" cy="60" r="50" fill="url(#e2)"/></svg>),
   };
   return planets[type] || null;
 };
 
+// ── PARTÍCULAS MÁS VISIBLES ───────────────────────────────────────────────────
 const ParticlesBg = () => {
   const ref = useRef(null);
   useEffect(() => {
     const c = ref.current, ctx = c.getContext('2d');
     let w = c.width = window.innerWidth, h = c.height = window.innerHeight;
-    const pts = Array.from({length:90},()=>({
+    const pts = Array.from({length:120},()=>({
       x:Math.random()*w, y:Math.random()*h,
-      vx:(Math.random()-.5)*1.0, vy:(Math.random()-.5)*1.0,
-      r:Math.random()*2.5+1, o:Math.random()*.25+.08
+      vx:(Math.random()-.5)*1.2, vy:(Math.random()-.5)*1.2,
+      r:Math.random()*3+1.5, o:Math.random()*.45+.18
     }));
     let mouse={x:w/2,y:h/2};
     const onMouse=e=>{mouse.x=e.clientX;mouse.y=e.clientY;};
@@ -81,7 +39,7 @@ const ParticlesBg = () => {
       ctx.clearRect(0,0,w,h);
       pts.forEach(n=>{
         const dx=mouse.x-n.x,dy=mouse.y-n.y,dist=Math.hypot(dx,dy);
-        if(dist<200){n.vx+=dx/dist*.025;n.vy+=dy/dist*.025;}
+        if(dist<220){n.vx+=dx/dist*.03;n.vy+=dy/dist*.03;}
         n.vx*=.98;n.vy*=.98;
         n.x+=n.vx;n.y+=n.vy;
         if(n.x<0||n.x>w)n.vx*=-1;
@@ -91,10 +49,10 @@ const ParticlesBg = () => {
       });
       pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
         const d=Math.hypot(a.x-b.x,a.y-b.y);
-        if(d<150){
+        if(d<160){
           ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-          ctx.strokeStyle=`rgba(99,102,241,${(1-d/150)*.12})`;
-          ctx.lineWidth=.6;ctx.stroke();
+          ctx.strokeStyle=`rgba(99,102,241,${(1-d/160)*.22})`;
+          ctx.lineWidth=.8;ctx.stroke();
         }
       }));
       raf=requestAnimationFrame(draw);
@@ -145,9 +103,17 @@ const LandingPage = () => {
     {tier:8,name:'SOC Legend',    xp:'18.000+',         color:'#A78BFA'},
   ];
 
-  const Section = ({children, alt}) => (
-    <div style={{backgroundColor:alt?'rgba(248,250,252,0.8)':'transparent', borderTop:`1px solid ${BD}`, borderBottom:`1px solid ${BD}`, padding:'110px 60px', backdropFilter:'blur(8px)'}}>
-      <div style={{maxWidth:'1140px',margin:'0 auto'}}>{children}</div>
+  // Sección alternando: texto izq + mockup dch, o mockup izq + texto dch
+  // Sin maxWidth centrado — pegado a los bordes con padding lateral mínimo
+  const SectionRow = ({ children, alt, noBorder }) => (
+    <div style={{
+      position:'relative', zIndex:1,
+      backgroundColor: alt ? 'rgba(241,245,249,0.88)' : 'rgba(240,244,255,0.75)',
+      borderTop: noBorder ? 'none' : `1px solid ${BD}`,
+      backdropFilter:'blur(12px)',
+      padding:'0',
+    }}>
+      {children}
     </div>
   );
 
@@ -158,7 +124,7 @@ const LandingPage = () => {
         <ParticlesBg/>
 
         {/* NAVBAR */}
-        <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,height:'64px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 60px',backgroundColor:'rgba(240,244,255,0.92)',backdropFilter:'blur(24px)',borderBottom:`1px solid ${BD}`}}>
+        <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,height:'64px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 60px',backgroundColor:'rgba(240,244,255,0.94)',backdropFilter:'blur(24px)',borderBottom:`1px solid ${BD}`}}>
           <div style={{display:'flex',alignItems:'center',gap:'12px',cursor:'pointer'}} onClick={()=>navigate('/')}>
             <img src="/logosoc.png" alt="SocBlast" style={{height:'34px'}}/>
             <span style={{fontSize:'18px',fontWeight:800,letterSpacing:'-0.5px',color:T1}}>Soc<span style={{color:ACC}}>Blast</span></span>
@@ -182,16 +148,16 @@ const LandingPage = () => {
 
         {/* HERO */}
         <div style={{position:'relative',minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'64px 24px 0',overflow:'hidden',zIndex:1}}>
-          <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 80% 70% at 50% 40%,rgba(79,70,229,0.08) 0%,transparent 70%)',pointerEvents:'none'}}/>
+          <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 80% 70% at 50% 40%,rgba(79,70,229,0.1) 0%,transparent 70%)',pointerEvents:'none'}}/>
           <div className="fade-up" style={{position:'relative',zIndex:2,maxWidth:'820px'}}>
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'10px',marginBottom:'28px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <img src="/logozorion.png" alt="Zorion" style={{height:'14px',opacity:.4}}/>
-                <span style={{fontSize:'11px',color:T4,fontWeight:500,letterSpacing:'1.5px'}}>POWERED BY ZORION</span>
+                <img src="/logozorion.png" alt="Zorion" style={{height:'14px',opacity:.5}}/>
+                <span style={{fontSize:'11px',color:T3,fontWeight:600,letterSpacing:'1.5px'}}>POWERED BY ZORION</span>
               </div>
-              <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 14px',borderRadius:'100px',border:`1px solid ${ACC}25`,backgroundColor:`${ACC}06`}}>
+              <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 14px',borderRadius:'100px',border:`1.5px solid ${ACC}30`,backgroundColor:`${ACC}08`}}>
                 <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:ACC,animation:'pulse 2s infinite'}}/>
-                <span style={{fontSize:'11px',color:ACC,fontWeight:600,letterSpacing:'2px'}}>SOC PLATFORM — ONLINE</span>
+                <span style={{fontSize:'11px',color:ACC,fontWeight:700,letterSpacing:'2px'}}>SOC PLATFORM — ONLINE</span>
               </div>
             </div>
             <h1 style={{fontSize:'clamp(44px,7.5vw,86px)',fontWeight:900,lineHeight:1.0,letterSpacing:'-3.5px',marginBottom:'22px',color:T1}}>
@@ -223,15 +189,16 @@ const LandingPage = () => {
           <div style={{position:'absolute',bottom:0,left:0,right:0,height:'160px',background:`linear-gradient(to bottom,transparent,${BG})`,zIndex:2,pointerEvents:'none'}}/>
         </div>
 
-        {/* SESSIONS */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backdropFilter:'blur(8px)'}}>
-          <div style={{maxWidth:'1140px',margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:'80px'}}>
-            <div>
+        {/* ── SESSIONS — texto izq, terminal dch, pegados bordes ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(240,244,255,0.8)',backdropFilter:'blur(12px)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
+            {/* Texto izquierda — pegado al borde izq */}
+            <div style={{padding:'100px 60px 100px 80px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
               <p style={{fontSize:'11px',color:ACC,letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>SESSIONS</p>
-              <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
+              <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
                 {es?'Sesiones SOC que\nse sienten reales.':'SOC sessions that\nfeel real.'}
               </h2>
-              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'28px'}}>
+              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'28px',maxWidth:'440px'}}>
                 {es?'Cada sesión genera un escenario único. Alertas SIEM/EDR en tiempo real, logs reales y ataques progresivos. La IA evalúa cada decisión.':'Each session generates a unique scenario. Real-time SIEM/EDR alerts, real logs and progressive attacks. AI evaluates every decision.'}
               </p>
               {(es?['Escenarios únicos generados por IA','Alertas SIEM/EDR en tiempo real','Evaluación automática de cada decisión','Sistema de copas y arenas competitivo']:['Unique AI-generated scenarios','Real-time SIEM/EDR alerts','Automatic evaluation of every decision','Competitive cups and arena system']).map((item,i)=>(
@@ -243,63 +210,69 @@ const LandingPage = () => {
                 </div>
               ))}
             </div>
-            {/* Terminal clara */}
-            <div style={{borderRadius:'16px',overflow:'hidden',border:`1px solid ${BD}`,boxShadow:'0 16px 48px rgba(79,70,229,0.1)'}}>
-              <div style={{backgroundColor:'#f8fafc',padding:'11px 16px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',gap:'6px'}}>
-                {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'10px',height:'10px',borderRadius:'50%',backgroundColor:c}}/>)}
-                <span style={{color:T4,fontSize:'11px',fontFamily:'monospace',marginLeft:'10px'}}>socblast — session active</span>
-              </div>
-              <div style={{backgroundColor:'#0f172a',padding:'28px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:2.2}}>
-                <p style={{color:'#f87171'}}>⚠  CRITICAL   Brute force on Active Directory</p>
-                <p style={{color:'#fb923c'}}>   →  src_ip: 185.220.101.45   rate: 94/min</p>
-                <p style={{color:'#818cf8'}}>   →  target: CORP-DC01   port: 445/SMB</p>
-                <p style={{color:'#34d399'}}>   →  account: administrator   LOCKED</p>
-                <p style={{color:'#475569'}}>   $  correlating SIEM events...</p>
-                <p style={{color:'#fb923c'}}>   →  lateral movement   host: WKS-012</p>
-                <p style={{color:'#a5b4fc'}}>   →  T1078 Valid Accounts detected</p>
-                <p style={{color:'#475569'}}>   $  awaiting analyst response...</p>
-                <p style={{color:ACC}}>   ▌</p>
+            {/* Terminal derecha — pegada al borde dch */}
+            <div style={{display:'flex',alignItems:'center',padding:'60px 0px 60px 40px'}}>
+              <div style={{borderRadius:'16px 0 0 16px',overflow:'hidden',border:`1px solid ${BD}`,borderRight:'none',boxShadow:'-8px 0 40px rgba(79,70,229,0.1)',width:'100%'}}>
+                <div style={{backgroundColor:'#f8fafc',padding:'11px 16px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',gap:'6px'}}>
+                  {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'10px',height:'10px',borderRadius:'50%',backgroundColor:c}}/>)}
+                  <span style={{color:T4,fontSize:'11px',fontFamily:'monospace',marginLeft:'10px'}}>socblast — session active</span>
+                </div>
+                <div style={{backgroundColor:'#0f172a',padding:'28px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:2.2}}>
+                  <p style={{color:'#f87171'}}>⚠  CRITICAL   Brute force on Active Directory</p>
+                  <p style={{color:'#fb923c'}}>   →  src_ip: 185.220.101.45   rate: 94/min</p>
+                  <p style={{color:'#818cf8'}}>   →  target: CORP-DC01   port: 445/SMB</p>
+                  <p style={{color:'#34d399'}}>   →  account: administrator   LOCKED</p>
+                  <p style={{color:'#475569'}}>   $  correlating SIEM events...</p>
+                  <p style={{color:'#fb923c'}}>   →  lateral movement   host: WKS-012</p>
+                  <p style={{color:'#a5b4fc'}}>   →  T1078 Valid Accounts detected</p>
+                  <p style={{color:'#475569'}}>   $  awaiting analyst response...</p>
+                  <p style={{color:ACC}}>   ▌</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* LABS — sección nueva */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backgroundColor:'rgba(248,250,252,0.85)',borderTop:`1px solid ${BD}`,borderBottom:`1px solid ${BD}`,backdropFilter:'blur(8px)'}}>
-          <div style={{maxWidth:'1140px',margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:'80px'}}>
-            {/* Mockup SIEM */}
-            <div style={{borderRadius:'16px',overflow:'hidden',border:`1px solid ${BD}`,boxShadow:'0 16px 48px rgba(16,185,129,0.1)'}}>
-              <div style={{backgroundColor:'#f8fafc',padding:'11px 16px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <div style={{display:'flex',gap:'5px'}}>
-                  {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'9px',height:'9px',borderRadius:'50%',backgroundColor:c}}/>)}
+        {/* ── LABS — mockup izq pegado borde, texto dch ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(248,250,252,0.88)',backdropFilter:'blur(12px)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
+            {/* SIEM mockup izquierda — pegado al borde izq */}
+            <div style={{display:'flex',alignItems:'center',padding:'60px 40px 60px 0px'}}>
+              <div style={{borderRadius:'0 16px 16px 0',overflow:'hidden',border:`1px solid ${BD}`,borderLeft:'none',boxShadow:'8px 0 40px rgba(16,185,129,0.1)',width:'100%'}}>
+                <div style={{backgroundColor:'#f8fafc',padding:'11px 16px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div style={{display:'flex',gap:'5px'}}>
+                    {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'9px',height:'9px',borderRadius:'50%',backgroundColor:c}}/>)}
+                  </div>
+                  <span style={{fontSize:'11px',color:'#10b981',letterSpacing:'1.5px',fontWeight:700}}>SIEM — Operación NightHawk</span>
+                  <span style={{fontSize:'11px',color:T4}}>🔬 LAB</span>
                 </div>
-                <span style={{fontSize:'11px',color:'#10b981',letterSpacing:'1.5px',fontWeight:700}}>SIEM — Operación NightHawk</span>
-                <span style={{fontSize:'11px',color:T4}}>🔬 LAB</span>
-              </div>
-              <div style={{backgroundColor:'#0f172a',padding:'22px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:1.9}}>
-                <p style={{color:'#475569',marginBottom:'4px'}}>siem&gt; index=windows EventID=4688</p>
-                <div style={{backgroundColor:'rgba(255,255,255,0.03)',borderRadius:'8px',padding:'12px',marginBottom:'12px',border:'1px solid rgba(255,255,255,0.05)'}}>
-                  <p style={{color:'#94a3b8',marginBottom:'4px'}}>02:32:01 host=SRV-DC01 process=<span style={{color:'#fb923c'}}>powershell.exe</span></p>
-                  <p style={{color:'#f87171',fontWeight:700}}>02:32:15 host=SRV-DC01 process=<span style={{color:'#f87171'}}>mimikatz.exe</span> ⚠</p>
-                </div>
-                <p style={{color:'#475569',marginBottom:'4px'}}>siem&gt; index=dns</p>
-                <div style={{backgroundColor:'rgba(255,255,255,0.03)',borderRadius:'8px',padding:'12px',border:'1px solid rgba(255,255,255,0.05)'}}>
-                  <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru → 185.220.101.45 ⚠</p>
-                </div>
-                <div style={{marginTop:'12px',padding:'10px 12px',borderRadius:'8px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.15)'}}>
-                  <p style={{color:'#34d399',fontSize:'11px'}}>📝 IOC detectado: mimikatz + C2 activo</p>
+                <div style={{backgroundColor:'#0f172a',padding:'28px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:1.9}}>
+                  <p style={{color:'#475569',marginBottom:'4px'}}>siem&gt; index=windows EventID=4688</p>
+                  <div style={{backgroundColor:'rgba(255,255,255,0.03)',borderRadius:'8px',padding:'14px',marginBottom:'12px',border:'1px solid rgba(255,255,255,0.05)'}}>
+                    <p style={{color:'#94a3b8',marginBottom:'4px'}}>02:32:01 host=SRV-DC01 process=<span style={{color:'#fb923c'}}>powershell.exe</span></p>
+                    <p style={{color:'#f87171',fontWeight:700}}>02:32:15 host=SRV-DC01 process=<span style={{color:'#f87171'}}>mimikatz.exe</span> ⚠</p>
+                  </div>
+                  <p style={{color:'#475569',marginBottom:'4px'}}>siem&gt; index=dns</p>
+                  <div style={{backgroundColor:'rgba(255,255,255,0.03)',borderRadius:'8px',padding:'14px',border:'1px solid rgba(255,255,255,0.05)'}}>
+                    <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru → 185.220.101.45 ⚠</p>
+                    <p style={{color:'#f87171',marginTop:'4px'}}>exfil.nighthawk-ops.ru → 185.220.101.45 ⚠</p>
+                  </div>
+                  <div style={{marginTop:'14px',padding:'10px 12px',borderRadius:'8px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.15)'}}>
+                    <p style={{color:'#34d399',fontSize:'11px'}}>📝 IOC detectado: mimikatz + C2 activo</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div>
+            {/* Texto derecha */}
+            <div style={{padding:'100px 80px 100px 60px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
               <p style={{fontSize:'11px',color:'#10b981',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>LABS</p>
-              <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
+              <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
                 {es?'Investigación forense libre y evaluada.':'Free forensic investigation. Evaluated.'}
               </h2>
-              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'28px'}}>
+              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'22px',maxWidth:'440px'}}>
                 {es?'Sin tiempo límite. Explora el SIEM, investiga logs, mapea la red y entrega tu informe. La IA evalúa la profundidad de tu análisis, no la velocidad.':'No time limit. Explore the SIEM, investigate logs, map the network and submit your report. AI evaluates depth, not speed.'}
               </p>
-              <div style={{padding:'14px 18px',borderRadius:'12px',backgroundColor:'#f0fdf4',border:'1px solid #bbf7d0',marginBottom:'24px'}}>
+              <div style={{padding:'14px 18px',borderRadius:'12px',backgroundColor:'#f0fdf4',border:'1px solid #bbf7d0',marginBottom:'22px'}}>
                 <p style={{fontSize:'13px',color:'#15803d',lineHeight:1.6}}>
                   💡 <strong>{es?'Diferencia clave:':'Key difference:'}</strong> {es?'Las sesiones puntúan velocidad. Los labs puntúan profundidad.':'Sessions score speed. Labs score depth.'}
                 </p>
@@ -312,22 +285,23 @@ const LandingPage = () => {
                   </div>
                 ))}
               </div>
-              <button className="btn-primary" onClick={()=>navigate('/register')} style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#fff',fontWeight:600,fontSize:'14px',cursor:'pointer',boxShadow:'0 4px 16px rgba(16,185,129,0.3)'}}>
+              <button className="btn-primary" onClick={()=>navigate('/register')} style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#fff',fontWeight:600,fontSize:'14px',cursor:'pointer',boxShadow:'0 4px 16px rgba(16,185,129,0.3)',alignSelf:'flex-start'}}>
                 {es?'Acceder al laboratorio →':'Access the lab →'}
               </button>
             </div>
           </div>
         </div>
 
-        {/* TRAINING */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backdropFilter:'blur(8px)'}}>
-          <div style={{maxWidth:'1140px',margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:'80px'}}>
-            <div>
+        {/* ── TRAINING — texto izq, mockup dch pegado borde ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(240,244,255,0.8)',backdropFilter:'blur(12px)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
+            {/* Texto izquierda */}
+            <div style={{padding:'100px 60px 100px 80px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
               <p style={{fontSize:'11px',color:'#818cf8',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>TRAINING</p>
-              <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
+              <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
                 {es?'Un curso SOC completo\ny estructurado.':'A complete, structured\nSOC course.'}
               </h2>
-              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px'}}>
+              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px',maxWidth:'440px'}}>
                 {es?'12 módulos progresivos divididos en 3 cursos. Con teoría visual, casos prácticos y XP real que sube tu tier.':'12 progressive modules in 3 courses. Visual theory, practical cases and real XP that raises your tier.'}
               </p>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
@@ -339,34 +313,36 @@ const LandingPage = () => {
                 ))}
               </div>
             </div>
-            {/* Mockup training */}
-            <div style={{borderRadius:'16px',overflow:'hidden',border:`1px solid ${BD}`,boxShadow:'0 16px 48px rgba(0,0,0,0.07)'}}>
-              <div style={{backgroundColor:'#f8fafc',padding:'13px 18px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:'11px',color:'#818cf8',letterSpacing:'2px',fontWeight:700}}>MÓDULO 3 — Detección de Amenazas</span>
-                <span style={{fontSize:'11px',color:T4}}>50%</span>
-              </div>
-              <div style={{backgroundColor:CARD,padding:'24px'}}>
-                {[
-                  {title:es?'Indicadores de compromiso IOC':'Indicators of Compromise',done:true,xp:50},
-                  {title:'MITRE ATT&CK Framework',done:true,xp:70},
-                  {title:es?'Detección de movimiento lateral':'Lateral movement detection',done:false,xp:70,active:true},
-                  {title:es?'Gestión de falsas alertas':'False alerts management',done:false,xp:60},
-                ].map((l,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',padding:'11px 14px',borderRadius:'10px',backgroundColor:l.active?`${ACC}06`:'#f8fafc',border:l.active?`1px solid ${ACC}20`:`1px solid ${BD}`,marginBottom:'7px'}}>
-                    <div style={{width:'22px',height:'22px',borderRadius:'50%',backgroundColor:l.done?'rgba(34,197,94,0.1)':l.active?`${ACC}12`:'#f1f5f9',border:`1px solid ${l.done?'rgba(34,197,94,0.4)':l.active?ACC+'40':BD}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'10px',color:l.done?'#22c55e':l.active?ACC:T4}}>
-                      {l.done?'✓':l.active?'▶':'○'}
+            {/* Mockup training derecha — pegado al borde dch */}
+            <div style={{display:'flex',alignItems:'center',padding:'60px 0px 60px 40px'}}>
+              <div style={{borderRadius:'16px 0 0 16px',overflow:'hidden',border:`1px solid ${BD}`,borderRight:'none',boxShadow:'-8px 0 40px rgba(129,140,248,0.1)',width:'100%'}}>
+                <div style={{backgroundColor:'#f8fafc',padding:'13px 18px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:'11px',color:'#818cf8',letterSpacing:'2px',fontWeight:700}}>MÓDULO 3 — Detección de Amenazas</span>
+                  <span style={{fontSize:'11px',color:T4}}>50%</span>
+                </div>
+                <div style={{backgroundColor:CARD,padding:'28px'}}>
+                  {[
+                    {title:es?'Indicadores de compromiso IOC':'Indicators of Compromise',done:true,xp:50},
+                    {title:'MITRE ATT&CK Framework',done:true,xp:70},
+                    {title:es?'Detección de movimiento lateral':'Lateral movement detection',done:false,xp:70,active:true},
+                    {title:es?'Gestión de falsas alertas':'False alerts management',done:false,xp:60},
+                  ].map((l,i)=>(
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 14px',borderRadius:'10px',backgroundColor:l.active?`${ACC}06`:'#f8fafc',border:l.active?`1px solid ${ACC}20`:`1px solid ${BD}`,marginBottom:'8px'}}>
+                      <div style={{width:'22px',height:'22px',borderRadius:'50%',backgroundColor:l.done?'rgba(34,197,94,0.1)':l.active?`${ACC}12`:'#f1f5f9',border:`1px solid ${l.done?'rgba(34,197,94,0.4)':l.active?ACC+'40':BD}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'10px',color:l.done?'#22c55e':l.active?ACC:T4}}>
+                        {l.done?'✓':l.active?'▶':'○'}
+                      </div>
+                      <span style={{fontSize:'13px',color:l.done?T4:l.active?T1:T3,flex:1,fontWeight:l.active?600:400}}>{l.title}</span>
+                      <span style={{fontSize:'11px',color:l.done?'#22c55e':T4,fontWeight:600}}>+{l.xp} XP</span>
                     </div>
-                    <span style={{fontSize:'13px',color:l.done?T4:l.active?T1:T3,flex:1,fontWeight:l.active?600:400}}>{l.title}</span>
-                    <span style={{fontSize:'11px',color:l.done?'#22c55e':T4,fontWeight:600}}>+{l.xp} XP</span>
-                  </div>
-                ))}
-                <div style={{marginTop:'14px',padding:'12px 14px',borderRadius:'10px',backgroundColor:'#f8fafc',border:`1px solid ${BD}`}}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
-                    <span style={{fontSize:'11px',color:T4}}>{es?'Progreso':'Progress'}</span>
-                    <span style={{fontSize:'11px',color:ACC,fontWeight:600}}>50%</span>
-                  </div>
-                  <div style={{height:'3px',borderRadius:'2px',backgroundColor:'#e2e8f0'}}>
-                    <div style={{width:'50%',height:'100%',borderRadius:'2px',background:`linear-gradient(90deg,${ACC},#818cf8)`}}/>
+                  ))}
+                  <div style={{marginTop:'16px',padding:'12px 14px',borderRadius:'10px',backgroundColor:'#f8fafc',border:`1px solid ${BD}`}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+                      <span style={{fontSize:'11px',color:T4}}>{es?'Progreso':'Progress'}</span>
+                      <span style={{fontSize:'11px',color:ACC,fontWeight:600}}>50%</span>
+                    </div>
+                    <div style={{height:'3px',borderRadius:'2px',backgroundColor:'#e2e8f0'}}>
+                      <div style={{width:'50%',height:'100%',borderRadius:'2px',background:`linear-gradient(90deg,${ACC},#818cf8)`}}/>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -374,15 +350,39 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* TIERS */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backgroundColor:'rgba(248,250,252,0.85)',borderTop:`1px solid ${BD}`,backdropFilter:'blur(8px)'}}>
-          <div style={{maxWidth:'1140px',margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:'80px'}}>
-            <div>
+        {/* ── TIERS — tier list izq pegado borde, texto dch ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(248,250,252,0.88)',backdropFilter:'blur(12px)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
+            {/* Tier list izquierda — pegada al borde izq */}
+            <div style={{display:'flex',alignItems:'center',padding:'60px 40px 60px 0px'}}>
+              <div style={{borderRadius:'0 16px 16px 0',overflow:'hidden',border:`1px solid ${BD}`,borderLeft:'none',boxShadow:'8px 0 40px rgba(16,185,129,0.08)',width:'100%',backgroundColor:CARD}}>
+                <div style={{padding:'14px 18px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:'11px',color:'#10B981',letterSpacing:'2px',fontWeight:700}}>TIER SYSTEM</span>
+                  <span style={{fontSize:'11px',color:T4}}>8 niveles</span>
+                </div>
+                <div style={{padding:'10px 12px'}}>
+                  {tiers.map((t,i)=>(
+                    <div key={i} className="tier-row" style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 14px',borderRadius:'9px',marginBottom:'2px',cursor:'default'}}>
+                      <div style={{width:'30px',height:'30px',borderRadius:'9px',backgroundColor:`${t.color}12`,border:`1px solid ${t.color}30`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <span style={{fontSize:'12px',fontWeight:800,color:t.color}}>{t.tier}</span>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'13px',fontWeight:600,color:T1}}>{t.name}</div>
+                      </div>
+                      <div style={{fontSize:'11px',color:T4,fontFamily:'monospace'}}>{t.xp} XP</div>
+                      <div style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:t.color,flexShrink:0,boxShadow:`0 0 8px ${t.color}`}}/>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Texto derecha */}
+            <div style={{padding:'100px 80px 100px 60px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
               <p style={{fontSize:'11px',color:'#10B981',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>XP & TIERS</p>
-              <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
+              <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
                 {es?'Tu progreso.\nTu identidad.':'Your progress.\nYour identity.'}
               </h2>
-              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px'}}>
+              <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px',maxWidth:'440px'}}>
                 {es?'Cada sesión y lección te da XP. El XP sube tu Tier. Desde SOC Rookie hasta SOC Legend.':'Every session and lesson gives you XP. XP raises your Tier. From SOC Rookie to SOC Legend.'}
               </p>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
@@ -399,32 +399,11 @@ const LandingPage = () => {
                 ))}
               </div>
             </div>
-            {/* Tier list clara */}
-            <div style={{borderRadius:'16px',overflow:'hidden',border:`1px solid ${BD}`,backgroundColor:CARD,boxShadow:'0 8px 32px rgba(0,0,0,0.06)'}}>
-              <div style={{padding:'14px 18px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:'11px',color:'#10B981',letterSpacing:'2px',fontWeight:700}}>TIER SYSTEM</span>
-                <span style={{fontSize:'11px',color:T4}}>8 niveles</span>
-              </div>
-              <div style={{padding:'8px'}}>
-                {tiers.map((t,i)=>(
-                  <div key={i} className="tier-row" style={{display:'flex',alignItems:'center',gap:'14px',padding:'11px 14px',borderRadius:'9px',marginBottom:'2px',cursor:'default'}}>
-                    <div style={{width:'28px',height:'28px',borderRadius:'8px',backgroundColor:`${t.color}12`,border:`1px solid ${t.color}30`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <span style={{fontSize:'11px',fontWeight:800,color:t.color}}>{t.tier}</span>
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:'13px',fontWeight:600,color:T1}}>{t.name}</div>
-                    </div>
-                    <div style={{fontSize:'11px',color:T4,fontFamily:'monospace'}}>{t.xp} XP</div>
-                    <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:t.color,flexShrink:0,boxShadow:`0 0 6px ${t.color}`}}/>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* FOR EVERYONE */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backdropFilter:'blur(8px)'}}>
+        {/* ── FOR EVERYONE — centrado con maxWidth ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(240,244,255,0.8)',backdropFilter:'blur(12px)',padding:'100px 80px'}}>
           <div style={{maxWidth:'1140px',margin:'0 auto'}}>
             <div style={{marginBottom:'56px'}}>
               <p style={{fontSize:'11px',color:ACC,letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>FOR EVERYONE</p>
@@ -437,7 +416,6 @@ const LandingPage = () => {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:'20px'}}>
               <div className="card-hover" style={{padding:'48px',borderRadius:'22px',background:`linear-gradient(145deg,${ACC}06 0%,transparent 100%)`,border:`1px solid ${ACC}18`,position:'relative',overflow:'hidden',boxShadow:'0 4px 20px rgba(79,70,229,0.06)'}}>
-                <div style={{position:'absolute',top:'-80px',right:'-80px',width:'280px',height:'280px',borderRadius:'50%',background:`radial-gradient(circle,${ACC}06,transparent)`,pointerEvents:'none'}}/>
                 <p style={{fontSize:'11px',color:ACC,letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>FOR ANALYSTS</p>
                 <h3 style={{fontSize:'28px',fontWeight:800,letterSpacing:'-1px',color:T1,marginBottom:'12px'}}>{es?'Analistas SOC':'SOC Analysts'}</h3>
                 <p style={{color:T3,fontSize:'15px',lineHeight:1.8,marginBottom:'24px',maxWidth:'480px'}}>
@@ -455,7 +433,7 @@ const LandingPage = () => {
                   {es?'Iniciar Training →':'Start Training →'}
                 </button>
               </div>
-              <div className="card-hover" style={{padding:'40px',borderRadius:'22px',background:'linear-gradient(145deg,rgba(124,58,237,0.05) 0%,transparent 100%)',border:'1px solid rgba(124,58,237,0.15)',position:'relative',overflow:'hidden',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'0 4px 20px rgba(124,58,237,0.05)'}}>
+              <div className="card-hover" style={{padding:'40px',borderRadius:'22px',background:'linear-gradient(145deg,rgba(124,58,237,0.05) 0%,transparent 100%)',border:'1px solid rgba(124,58,237,0.15)',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'0 4px 20px rgba(124,58,237,0.05)'}}>
                 <div>
                   <p style={{fontSize:'11px',color:'#7C3AED',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>FOR COMPANIES</p>
                   <h3 style={{fontSize:'24px',fontWeight:800,letterSpacing:'-0.8px',color:T1,marginBottom:'12px'}}>{es?'Empresas':'Companies'}</h3>
@@ -479,8 +457,8 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* ARENAS */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backgroundColor:'rgba(248,250,252,0.85)',borderTop:`1px solid ${BD}`,backdropFilter:'blur(8px)'}}>
+        {/* ── ARENAS — centrado ── */}
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(248,250,252,0.88)',backdropFilter:'blur(12px)',padding:'100px 80px'}}>
           <div style={{maxWidth:'1140px',margin:'0 auto'}}>
             <div style={{marginBottom:'56px'}}>
               <p style={{fontSize:'11px',color:'#F59E0B',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>ARENA SYSTEM</p>
@@ -493,8 +471,8 @@ const LandingPage = () => {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'20px'}}>
               {arenas.map((a,i)=>(
-                <div key={i} className="arena-card" style={{padding:'32px 22px',borderRadius:'20px',backgroundColor:CARD,border:`1px solid ${a.color}20`,textAlign:'center',cursor:'pointer',boxShadow:`0 4px 20px rgba(0,0,0,0.06)`,position:'relative',overflow:'hidden'}}>
-                  <div style={{position:'absolute',top:'-40px',right:'-40px',width:'120px',height:'120px',borderRadius:'50%',background:`radial-gradient(circle,${a.color}08,transparent)`,pointerEvents:'none'}}/>
+                <div key={i} className="arena-card" style={{padding:'32px 22px',borderRadius:'20px',backgroundColor:CARD,border:`1px solid ${a.color}25`,textAlign:'center',cursor:'pointer',boxShadow:`0 4px 24px rgba(0,0,0,0.07)`,position:'relative',overflow:'hidden'}}>
+                  <div style={{position:'absolute',top:'-40px',right:'-40px',width:'120px',height:'120px',borderRadius:'50%',background:`radial-gradient(circle,${a.color}10,transparent)`,pointerEvents:'none'}}/>
                   <div className="planet-float" style={{display:'flex',justifyContent:'center',marginBottom:'20px',animationDelay:`${i*.8}s`}}>
                     <Planet type={a.planet} size={100}/>
                   </div>
@@ -520,7 +498,7 @@ const LandingPage = () => {
         </div>
 
         {/* CTA FINAL */}
-        <div style={{position:'relative',zIndex:1,padding:'110px 60px',backdropFilter:'blur(8px)'}}>
+        <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(240,244,255,0.8)',backdropFilter:'blur(12px)',padding:'100px 80px'}}>
           <div style={{maxWidth:'1140px',margin:'0 auto'}}>
             <div style={{borderRadius:'28px',padding:'72px',background:`linear-gradient(145deg,${ACC}08 0%,rgba(124,58,237,0.05) 100%)`,border:`1px solid ${ACC}18`,display:'grid',gridTemplateColumns:'1fr auto',gap:'60px',alignItems:'center',position:'relative',overflow:'hidden',boxShadow:`0 8px 40px rgba(79,70,229,0.08)`}}>
               <div style={{position:'absolute',top:'-100px',right:'200px',width:'400px',height:'400px',borderRadius:'50%',background:`radial-gradient(circle,${ACC}06,transparent)`,pointerEvents:'none'}}/>
@@ -549,13 +527,13 @@ const LandingPage = () => {
         </div>
 
         {/* FOOTER */}
-        <div style={{position:'relative',zIndex:1,backgroundColor:'rgba(248,250,252,0.9)',borderTop:`1px solid ${BD}`,padding:'36px 60px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'16px',backdropFilter:'blur(8px)'}}>
+        <div style={{position:'relative',zIndex:1,backgroundColor:'rgba(248,250,252,0.95)',borderTop:`1px solid ${BD}`,padding:'36px 80px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'16px',backdropFilter:'blur(12px)'}}>
           <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
             <img src="/logosoc.png" alt="SocBlast" style={{height:'32px'}}/>
             <span style={{fontSize:'16px',fontWeight:800,letterSpacing:'-0.5px',color:T1}}>Soc<span style={{color:ACC}}>Blast</span></span>
             <div style={{width:'1px',height:'20px',backgroundColor:BD,marginLeft:'8px'}}/>
             <div style={{display:'flex',alignItems:'center',gap:'6px',marginLeft:'8px'}}>
-              <img src="/logozorion.png" alt="Zorion" style={{height:'14px',opacity:.4}}/>
+              <img src="/logozorion.png" alt="Zorion" style={{height:'14px',opacity:.45}}/>
               <span style={{fontSize:'10px',color:T4,letterSpacing:'1.5px'}}>POWERED BY ZORION</span>
             </div>
           </div>
