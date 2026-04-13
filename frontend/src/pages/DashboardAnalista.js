@@ -227,7 +227,8 @@ export default function DashboardAnalista() {
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-    @keyframes skillUp{0%{opacity:0;transform:translateX(-6px);}100%{opacity:1;transform:translateX(0);}}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(79,70,229,0.3);}50%{box-shadow:0 0 40px rgba(79,70,229,0.6);}}
+    @keyframes glowGreen{0%,100%{box-shadow:0 0 20px rgba(16,185,129,0.3);}50%{box-shadow:0 0 40px rgba(16,185,129,0.6);}}
     .arena-slide{animation:slideIn 0.3s ease forwards;}
     .planet-anim{animation:float 5s ease-in-out infinite;}
     .nav-btn:hover{background:#f1f5f9!important;color:#0f172a!important;}
@@ -242,8 +243,9 @@ export default function DashboardAnalista() {
     .cert-row:hover{background:#f8faff!important;}
     .reto-row:hover{background:#f0fdf4!important;}
     .bootcamp-row:hover{background:#faf5ff!important;}
-    .carr-btn:hover{background:#f0f4ff!important;border-color:#c7d2fe!important;}
     .play-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
+    .hero-btn-ses:hover{transform:translateY(-3px)!important;box-shadow:0 12px 40px rgba(79,70,229,0.5)!important;}
+    .hero-btn-lab:hover{transform:translateY(-3px)!important;box-shadow:0 12px 40px rgba(16,185,129,0.5)!important;}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
   `;
 
@@ -270,13 +272,13 @@ export default function DashboardAnalista() {
           </div>
           <div style={{display:'flex',gap:'2px'}}>
             {[
-              {label:'Training',   path:'/training'},
-              {label:'Sesiones',   path:'/sesion'},
-              {label:'🔬 Labs',    path:'/lab',   green:true},
-              {label:'Ranking',    path:'/ranking'},
-              {label:'Certificado',path:'/certificado'},
-              {label:'Perfil',     path:'/perfil'},
-              {label:'Empleo',     path:'#empleo'},
+              {label:'Training',    path:'/training'},
+              {label:'Sesiones',    path:'/sesion'},
+              {label:'🔬 Labs',     path:'/lab',   green:true},
+              {label:'Ranking',     path:'/ranking'},
+              {label:'Certificado', path:'/certificado'},
+              {label:'Perfil',      path:'/perfil'},
+              {label:'Empleo',      path:'#empleo'},
             ].map((item,i)=>(
               <button key={i} className="nav-btn"
                 onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
@@ -324,7 +326,7 @@ export default function DashboardAnalista() {
             )}
           </div>
 
-          {/* FILA 1: ARENA + COLUMNA DERECHA */}
+          {/* FILA 1: ARENA + TERMINAL */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:'14px',marginBottom:'14px'}}>
             <div>
               <div style={{display:'flex',gap:'12px',marginBottom:'10px',alignItems:'center'}}>
@@ -381,8 +383,8 @@ export default function DashboardAnalista() {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA — terminal */}
-            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            {/* TERMINAL */}
+            <div style={{display:'flex',flexDirection:'column'}}>
               <div style={{flex:1,borderRadius:'14px',overflow:'hidden',border:'1px solid #e2e8f0',backgroundColor:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
                 <div style={{backgroundColor:'#f8fafc',padding:'7px 14px',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:'5px'}}>
                   {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:c}}/>)}
@@ -399,7 +401,7 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* STATS — 4 cards modernas */}
+          {/* STATS */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
             {[
               {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:'🏆', onClick:()=>navigate('/arenas')},
@@ -424,7 +426,7 @@ export default function DashboardAnalista() {
           </div>
 
           {/* XP BAR */}
-          <div style={{padding:'16px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',marginBottom:'20px',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
+          <div style={{padding:'16px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',marginBottom:'24px',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
                 <span style={{fontSize:'13px',fontWeight:700,color:tierColor}}>{TIERS[tier]}</span>
@@ -438,20 +440,104 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* ═══ CARRUSEL SESIONES + LABS ═══ */}
+          {/* ═══ HERO BUTTONS — SESIONES + LABS LLAMATIVOS ═══ */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
+
+            {/* SESIONES HERO BUTTON */}
+            <div className="hero-btn-ses" onClick={()=>navigate('/sesion')}
+              style={{borderRadius:'18px',padding:'28px 32px',background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 55%,#1e3a8a 100%)',border:'1px solid rgba(99,102,241,0.3)',cursor:'pointer',position:'relative',overflow:'hidden',boxShadow:'0 6px 28px rgba(79,70,229,0.25)'}}>
+              <div style={{position:'absolute',top:'-60px',right:'-40px',width:'220px',height:'220px',borderRadius:'50%',background:'radial-gradient(circle,rgba(129,140,248,0.2),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'absolute',bottom:'-40px',left:'-20px',width:'160px',height:'160px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.15),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'relative',zIndex:1,display:'flex',alignItems:'center',gap:'20px'}}>
+                <div style={{fontSize:'52px',lineHeight:1,filter:'drop-shadow(0 4px 16px rgba(79,70,229,0.7))',flexShrink:0}}>🏆</div>
+                <div style={{flex:1}}>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'3px 10px',borderRadius:'100px',border:'1px solid rgba(165,180,252,0.3)',backgroundColor:'rgba(79,70,229,0.25)',marginBottom:'8px'}}>
+                    <div style={{width:'5px',height:'5px',borderRadius:'50%',backgroundColor:'#a5b4fc',animation:'pulse 2s infinite'}}/>
+                    <span style={{fontSize:'9px',color:'#a5b4fc',fontWeight:700,letterSpacing:'2px'}}>SESIONES COMPETITIVAS</span>
+                  </div>
+                  <h3 style={{fontSize:'20px',fontWeight:900,color:'#fff',letterSpacing:'-0.5px',marginBottom:'6px',lineHeight:1.1}}>
+                    Gana copas.<br/><span style={{color:'#a5b4fc'}}>Sube de arena.</span>
+                  </h3>
+                  <p style={{fontSize:'12px',color:'rgba(255,255,255,0.45)',marginBottom:'14px',lineHeight:1.5}}>
+                    Escenarios IA · Tiempo límite · Ranking global
+                  </p>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 20px',borderRadius:'100px',background:'linear-gradient(135deg,#4f46e5,#818cf8)',boxShadow:'0 4px 20px rgba(79,70,229,0.5)',cursor:'pointer'}}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>Jugar ahora →</span>
+                  </div>
+                </div>
+                {/* Mini stats */}
+                <div style={{display:'flex',flexDirection:'column',gap:'6px',flexShrink:0}}>
+                  {[
+                    {label:'Copas',   value:copas.toLocaleString(), color:'#fbbf24'},
+                    {label:'Arena',   value:arenaActual.name,       color:'#a5b4fc'},
+                    {label:'Sesiones',value:sesiones,               color:'#34d399'},
+                  ].map((s,i)=>(
+                    <div key={i} style={{padding:'8px 12px',borderRadius:'9px',backgroundColor:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.08)',textAlign:'center',minWidth:'80px'}}>
+                      <div style={{fontSize:'14px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'2px'}}>{s.value}</div>
+                      <div style={{fontSize:'9px',color:'rgba(255,255,255,0.35)',fontFamily:'monospace'}}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* LABS HERO BUTTON */}
+            <div className="hero-btn-lab" onClick={()=>navigate('/lab')}
+              style={{borderRadius:'18px',padding:'28px 32px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 55%,#047857 100%)',border:'1px solid rgba(52,211,153,0.3)',cursor:'pointer',position:'relative',overflow:'hidden',boxShadow:'0 6px 28px rgba(16,185,129,0.22)'}}>
+              <div style={{position:'absolute',top:'-60px',right:'-40px',width:'220px',height:'220px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.2),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'absolute',bottom:'-40px',left:'-20px',width:'160px',height:'160px',borderRadius:'50%',background:'radial-gradient(circle,rgba(16,185,129,0.15),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'relative',zIndex:1,display:'flex',alignItems:'center',gap:'20px'}}>
+                <div style={{fontSize:'52px',lineHeight:1,filter:'drop-shadow(0 4px 16px rgba(16,185,129,0.7))',flexShrink:0}}>🔬</div>
+                <div style={{flex:1}}>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'3px 10px',borderRadius:'100px',border:'1px solid rgba(110,231,183,0.3)',backgroundColor:'rgba(16,185,129,0.25)',marginBottom:'8px'}}>
+                    <div style={{width:'5px',height:'5px',borderRadius:'50%',backgroundColor:'#6ee7b7',animation:'pulse 2s infinite'}}/>
+                    <span style={{fontSize:'9px',color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>LABORATORIO SOC</span>
+                    <span style={{fontSize:'8px',padding:'1px 5px',borderRadius:'3px',backgroundColor:'rgba(52,211,153,0.3)',color:'#6ee7b7',fontWeight:700}}>NUEVO</span>
+                  </div>
+                  <h3 style={{fontSize:'20px',fontWeight:900,color:'#fff',letterSpacing:'-0.5px',marginBottom:'6px',lineHeight:1.1}}>
+                    Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span>
+                  </h3>
+                  <p style={{fontSize:'12px',color:'rgba(255,255,255,0.45)',marginBottom:'14px',lineHeight:1.5}}>
+                    SIEM completo · Evaluación IA · XP garantizada
+                  </p>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 20px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',boxShadow:'0 4px 20px rgba(16,185,129,0.5)',cursor:'pointer'}}>
+                    <span style={{fontSize:'14px'}}>🔬</span>
+                    <span style={{fontSize:'13px',fontWeight:700,color:'#fff'}}>Entrar al Lab →</span>
+                  </div>
+                </div>
+                {/* Mini features */}
+                <div style={{display:'flex',flexDirection:'column',gap:'6px',flexShrink:0}}>
+                  {[
+                    {icon:'🖥️', label:'SIEM'},
+                    {icon:'📋', label:'Logs'},
+                    {icon:'🌐', label:'Network'},
+                    {icon:'🤖', label:'IA eval'},
+                  ].map((f,i)=>(
+                    <div key={i} style={{padding:'6px 10px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.08)',display:'flex',alignItems:'center',gap:'6px',minWidth:'80px'}}>
+                      <span style={{fontSize:'12px'}}>{f.icon}</span>
+                      <span style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',fontWeight:500}}>{f.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ CARRUSEL — mismo tamaño ambas cards ═══ */}
           <div style={{marginBottom:'24px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div>
-                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'2px'}}>EMPIEZA A JUGAR</p>
-                <p style={{fontSize:'12px',color:'#64748b'}}>Elige entre sesiones competitivas o laboratorio de investigación</p>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'2px'}}>MÁS DETALLES</p>
+                <p style={{fontSize:'12px',color:'#64748b'}}>Explora todo lo que ofrecen las sesiones y el laboratorio</p>
               </div>
               <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
-                <button onClick={()=>setCarruselIdx(0)} className="carr-btn"
-                  style={{padding:'5px 12px',borderRadius:'7px',border:'1px solid #e2e8f0',backgroundColor:carruselIdx===0?ACC:'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer'}}>
+                <button onClick={()=>setCarruselIdx(0)}
+                  style={{padding:'5px 12px',borderRadius:'7px',border:`1px solid ${carruselIdx===0?ACC:'#e2e8f0'}`,backgroundColor:carruselIdx===0?ACC:'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer'}}>
                   🏆 Sesiones
                 </button>
-                <button onClick={()=>setCarruselIdx(1)} className="carr-btn"
-                  style={{padding:'5px 12px',borderRadius:'7px',border:'1px solid #e2e8f0',backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer'}}>
+                <button onClick={()=>setCarruselIdx(1)}
+                  style={{padding:'5px 12px',borderRadius:'7px',border:`1px solid ${carruselIdx===1?'#059669':'#e2e8f0'}`,backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer'}}>
                   🔬 Labs
                 </button>
               </div>
@@ -461,145 +547,103 @@ export default function DashboardAnalista() {
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
 
                 {/* CARD SESIONES */}
-                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(99,102,241,0.25)',boxShadow:'0 8px 32px rgba(79,70,229,0.15)'}}>
-                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a8a 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
-                    <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(129,140,248,0.18),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'absolute',bottom:'-60px',left:'30px',width:'200px',height:'200px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.12),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'relative',zIndex:1}}>
-                      <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(165,180,252,0.25)',backgroundColor:'rgba(79,70,229,0.2)',marginBottom:'16px'}}>
-                        <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#a5b4fc',animation:'pulse 2s infinite'}}/>
-                        <span style={{fontSize:'10px',color:'#a5b4fc',fontWeight:700,letterSpacing:'2px'}}>SESIONES COMPETITIVAS</span>
+                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(99,102,241,0.2)',boxShadow:'0 4px 20px rgba(79,70,229,0.1)'}}>
+                  <div style={{padding:'32px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a8a 100%)',position:'relative',overflow:'hidden'}}>
+                    <div style={{position:'absolute',top:'-80px',right:'-60px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(129,140,248,0.15),transparent)',pointerEvents:'none'}}/>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px',position:'relative',zIndex:1}}>
+                      <div>
+                        <h2 style={{fontSize:'24px',fontWeight:900,color:'#fff',letterSpacing:'-0.5px',marginBottom:'10px',lineHeight:1.2}}>
+                          Sesiones SOC Competitivas
+                        </h2>
+                        <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'500px',marginBottom:'20px'}}>
+                          Escenarios únicos generados por IA con tiempo límite. La velocidad y precisión determinan tus copas. Compite en ranking global contra otros analistas.
+                        </p>
+                        <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'22px'}}>
+                          {[{icon:'⚡',l:'Tiempo limitado'},{icon:'🏅',l:'Copas y arenas'},{icon:'🤖',l:'IA evalúa'},{icon:'📈',l:'Ranking global'},{icon:'🎯',l:'5 etapas por incidente'}].map((f,i)=>(
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.12)'}}>
+                              <span style={{fontSize:'12px'}}>{f.icon}</span>
+                              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.75)',fontWeight:500}}>{f.l}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <button className="play-btn" onClick={()=>navigate('/sesion')}
+                          style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#4f46e5,#818cf8)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(79,70,229,0.45)',display:'inline-flex',alignItems:'center',gap:'8px'}}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                          Jugar ahora →
+                        </button>
                       </div>
-                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>
-                        Demuestra tu nivel.<br/><span style={{color:'#a5b4fc'}}>Gana copas. Sube de arena.</span>
-                      </h2>
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan. Cada victoria te acerca a la siguiente arena.
-                      </p>
-                      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:'⚡',l:'Tiempo limitado'},{icon:'🏅',l:'Copas y arenas'},{icon:'🤖',l:'IA evalúa decisiones'},{icon:'📈',l:'Ranking global'}].map((f,i)=>(
-                          <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            <span style={{fontSize:'12px'}}>{f.icon}</span>
-                            <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button className="play-btn" onClick={()=>navigate('/sesion')}
-                        style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#4f46e5,#818cf8)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(79,70,229,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        Jugar ahora →
-                      </button>
-                    </div>
-                    {/* Visual derecha */}
-                    <div style={{flexShrink:0,position:'relative',zIndex:1}}>
-                      <div style={{textAlign:'center',marginBottom:'16px'}}>
-                        <div style={{fontSize:'72px',lineHeight:1,filter:'drop-shadow(0 8px 24px rgba(79,70,229,0.6))'}}>🏆</div>
-                      </div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',width:'200px'}}>
-                        {[
-                          {label:'Copas',   value:copas.toLocaleString(), color:'#fbbf24'},
-                          {label:'Arena',   value:arenaActual.name,       color:'#a5b4fc'},
-                          {label:'Sesiones',value:sesiones,               color:'#34d399'},
-                          {label:'Tier',    value:`T${tier}`,             color:'#818cf8'},
-                        ].map((s,i)=>(
-                          <div key={i} style={{padding:'10px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.08)',textAlign:'center'}}>
-                            <div style={{fontSize:'16px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'3px'}}>{s.value}</div>
-                            <div style={{fontSize:'9px',color:'rgba(255,255,255,0.35)',fontFamily:'monospace'}}>{s.label}</div>
-                          </div>
-                        ))}
+                      <div style={{flexShrink:0,textAlign:'center'}}>
+                        <div style={{fontSize:'64px',lineHeight:1,filter:'drop-shadow(0 6px 20px rgba(79,70,229,0.6))',marginBottom:'14px'}}>🏆</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',width:'160px'}}>
+                          {[{label:'Copas',value:copas.toLocaleString(),color:'#fbbf24'},{label:'Arena',value:arenaActual.name,color:'#a5b4fc'},{label:'Sesiones',value:sesiones,color:'#34d399'},{label:'Tier',value:`T${tier}`,color:'#818cf8'}].map((s,i)=>(
+                            <div key={i} style={{padding:'8px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
+                              <div style={{fontSize:'13px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'2px'}}>{s.value}</div>
+                              <div style={{fontSize:'8px',color:'rgba(255,255,255,0.3)',fontFamily:'monospace'}}>{s.label}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  {/* Footer dots */}
-                  <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
-                    {[0,1].map(i=>(
-                      <div key={i} onClick={()=>setCarruselIdx(i)}
-                        style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?ACC:'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>
-                    ))}
+                  <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'10px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
+                    {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?ACC:'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
 
-                {/* CARD LABORATORIO */}
-                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.15)'}}>
-                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
-                    <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'absolute',bottom:'-60px',left:'30px',width:'200px',height:'200px',borderRadius:'50%',background:'radial-gradient(circle,rgba(16,185,129,0.12),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'relative',zIndex:1}}>
-                      <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(110,231,183,0.25)',backgroundColor:'rgba(16,185,129,0.2)',marginBottom:'16px'}}>
-                        <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#6ee7b7',animation:'pulse 2s infinite'}}/>
-                        <span style={{fontSize:'10px',color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>LABORATORIO SOC — BETA</span>
-                        <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'rgba(52,211,153,0.25)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.3)',fontWeight:700}}>NUEVO</span>
-                      </div>
-                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>
-                        Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span>
-                      </h2>
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        SIEM completo, Log Explorer, Network Map y evaluación IA del informe. La profundidad de tu análisis es lo que puntúa — no la velocidad.
-                      </p>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',maxWidth:'380px',marginBottom:'26px'}}>
-                        {[
-                          {icon:'⚡',title:'Sesiones SOC',   desc:'Velocidad · Copas · Ranking',      color:'#818cf8'},
-                          {icon:'🔬',title:'Laboratorio SOC',desc:'Profundidad · XP · Badge especial', color:'#6ee7b7'},
-                        ].map((d,i)=>(
-                          <div key={i} style={{padding:'11px 13px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.22)',border:`1px solid ${d.color}28`}}>
-                            <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'4px'}}>
-                              <span style={{fontSize:'13px'}}>{d.icon}</span>
-                              <span style={{fontSize:'11px',fontWeight:700,color:d.color}}>{d.title}</span>
+                {/* CARD LABORATORIO — mismo padding/altura que sesiones */}
+                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.2)',boxShadow:'0 4px 20px rgba(16,185,129,0.1)'}}>
+                  <div style={{padding:'32px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden'}}>
+                    <div style={{position:'absolute',top:'-80px',right:'-60px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.15),transparent)',pointerEvents:'none'}}/>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px',position:'relative',zIndex:1}}>
+                      <div>
+                        <h2 style={{fontSize:'24px',fontWeight:900,color:'#fff',letterSpacing:'-0.5px',marginBottom:'10px',lineHeight:1.2}}>
+                          Laboratorio SOC — Investigación
+                        </h2>
+                        <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'500px',marginBottom:'20px'}}>
+                          Sin tiempo límite. Accede al SIEM completo, explora logs, mapea la red y entrega tu informe. La IA evalúa la profundidad de tu análisis, no la velocidad.
+                        </p>
+                        <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'22px'}}>
+                          {[{icon:'🖥️',l:'SIEM con queries'},{icon:'📋',l:'Log Explorer'},{icon:'🌐',l:'Network Map'},{icon:'📝',l:'Ticket system'},{icon:'🤖',l:'Evaluación IA'}].map((f,i)=>(
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.12)'}}>
+                              <span style={{fontSize:'12px'}}>{f.icon}</span>
+                              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.75)',fontWeight:500}}>{f.l}</span>
                             </div>
-                            <p style={{fontSize:'10px',color:'rgba(255,255,255,0.38)',lineHeight:1.4}}>{d.desc}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:'🖥️',l:'SIEM con queries'},{icon:'📋',l:'Log Explorer'},{icon:'🌐',l:'Network Map'},{icon:'📝',l:'Ticket system'},{icon:'🤖',l:'Evaluación IA'}].map((f,i)=>(
-                          <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            <span style={{fontSize:'12px'}}>{f.icon}</span>
-                            <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button className="play-btn" onClick={()=>navigate('/lab')}
-                        style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(16,185,129,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <span style={{fontSize:'16px'}}>🔬</span>
-                        Entrar al Lab →
-                      </button>
-                    </div>
-                    {/* Visual derecha */}
-                    <div style={{flexShrink:0,position:'relative',zIndex:1}}>
-                      <div style={{textAlign:'center',marginBottom:'12px'}}>
-                        <div style={{fontSize:'72px',lineHeight:1,filter:'drop-shadow(0 8px 24px rgba(16,185,129,0.6))'}}>🔬</div>
-                      </div>
-                      <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',width:'200px'}}>
-                        <div style={{backgroundColor:'#0f172a',padding:'7px 10px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'4px'}}>
-                          {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:c}}/>)}
-                          <span style={{fontSize:'8px',color:'#475569',fontFamily:'monospace',marginLeft:'5px'}}>siem — nighthawk</span>
+                          ))}
                         </div>
-                        <div style={{backgroundColor:'#020817',padding:'10px',fontFamily:'monospace',fontSize:'9px',lineHeight:1.9}}>
-                          <p style={{color:'#475569'}}>siem&gt; index=windows</p>
-                          <p style={{color:'#f87171',fontWeight:700}}>mimikatz.exe ⚠</p>
-                          <p style={{color:'#475569',marginTop:'4px'}}>siem&gt; index=dns</p>
-                          <p style={{color:'#f87171'}}>c2.nighthawk.ru ⚠</p>
-                          <div style={{marginTop:'6px',padding:'5px 7px',borderRadius:'5px',backgroundColor:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
-                            <p style={{color:'#34d399',fontSize:'8px'}}>📝 IOC detectado</p>
+                        <button className="play-btn" onClick={()=>navigate('/lab')}
+                          style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(16,185,129,0.45)',display:'inline-flex',alignItems:'center',gap:'8px'}}>
+                          <span>🔬</span>
+                          Entrar al Lab →
+                        </button>
+                      </div>
+                      <div style={{flexShrink:0,textAlign:'center'}}>
+                        <div style={{fontSize:'64px',lineHeight:1,filter:'drop-shadow(0 6px 20px rgba(16,185,129,0.6))',marginBottom:'14px'}}>🔬</div>
+                        <div style={{borderRadius:'10px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',width:'160px'}}>
+                          <div style={{backgroundColor:'#0f172a',padding:'6px 8px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'4px'}}>
+                            {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:c}}/>)}
+                          </div>
+                          <div style={{backgroundColor:'#020817',padding:'8px',fontFamily:'monospace',fontSize:'9px',lineHeight:1.9}}>
+                            <p style={{color:'#475569'}}>siem&gt; index=windows</p>
+                            <p style={{color:'#f87171',fontWeight:700}}>mimikatz.exe ⚠</p>
+                            <p style={{color:'#f87171'}}>c2.nighthawk.ru ⚠</p>
+                            <div style={{marginTop:'5px',padding:'4px 6px',borderRadius:'4px',backgroundColor:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
+                              <p style={{color:'#34d399',fontSize:'8px'}}>📝 IOC detectado</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div style={{marginTop:'8px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'5px'}}>
-                        {[{label:'Queries',value:'0/5',color:'#6ee7b7'},{label:'IOCs',value:'0',color:'#fbbf24'},{label:'Informe',value:'0%',color:'#818cf8'}].map((s,i)=>(
-                          <div key={i} style={{padding:'7px 5px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
-                            <div style={{fontSize:'12px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
-                            <div style={{fontSize:'8px',color:'rgba(255,255,255,0.3)',marginTop:'2px'}}>{s.label}</div>
-                          </div>
-                        ))}
+                        <div style={{marginTop:'7px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'4px'}}>
+                          {[{label:'Queries',value:'0/5',color:'#6ee7b7'},{label:'IOCs',value:'0',color:'#fbbf24'},{label:'Informe',value:'0%',color:'#818cf8'}].map((s,i)=>(
+                            <div key={i} style={{padding:'6px 4px',borderRadius:'7px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
+                              <div style={{fontSize:'11px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
+                              <div style={{fontSize:'7px',color:'rgba(255,255,255,0.3)',marginTop:'2px'}}>{s.label}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  {/* Footer dots */}
-                  <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
-                    {[0,1].map(i=>(
-                      <div key={i} onClick={()=>setCarruselIdx(i)}
-                        style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#10b981':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>
-                    ))}
+                  <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'10px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
+                    {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#10b981':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
 
