@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import GuestModal from '../components/GuestModal';
 
 const API = 'https://socblast-production.up.railway.app';
 
@@ -147,8 +146,6 @@ export default function DashboardAnalista() {
   const [historial, setHistorial] = useState([]);
   const [empleoTab, setEmpleoTab] = useState('ofertas');
   const [ranking, setRanking] = useState([]);
-  const [showGuestModal, setShowGuestModal] = useState(false);
-  const [guestMsg, setGuestMsg] = useState('');
   const sliderRef = useRef(null);
   const startX = useRef(null);
 
@@ -188,11 +185,6 @@ export default function DashboardAnalista() {
         setRanking((rk.data?.jugadores || []).slice(0, 3));
       } catch {}
     } catch { logout(); navigate('/login'); }
-  };
-
-  const handleGuestAction = (msg) => {
-    if (user?.isGuest) { setGuestMsg(msg); setShowGuestModal(true); return true; }
-    return false;
   };
 
   const handleTouchStart = e => { startX.current = e.touches[0].clientX; };
@@ -249,6 +241,7 @@ export default function DashboardAnalista() {
     .cert-row:hover{background:#f8faff!important;}
     .reto-row:hover{background:#f0fdf4!important;}
     .bootcamp-row:hover{background:#faf5ff!important;}
+    .lab-section-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
   `;
 
@@ -262,7 +255,6 @@ export default function DashboardAnalista() {
   return (
     <>
       <style>{css}</style>
-      {showGuestModal && <GuestModal onClose={()=>setShowGuestModal(false)} mensaje={guestMsg}/>}
       <div style={{position:'fixed',inset:0,background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',zIndex:-1}}/>
       <ParticleCanvas/>
 
@@ -276,23 +268,18 @@ export default function DashboardAnalista() {
           </div>
           <div style={{display:'flex',gap:'2px'}}>
             {[
-              {label:'Training',path:'/training'},
-              {label:'Sesiones',path:'/sesion'},
-              {label:'Labs',path:'/lab'},
-              {label:'Ranking',path:'/ranking'},
+              {label:'Training',  path:'/training'},
+              {label:'Sesiones',  path:'/sesion'},
+              {label:'🔬 Labs',   path:'/lab',    green:true},
+              {label:'Ranking',   path:'/ranking'},
               {label:'Certificado',path:'/certificado'},
-              {label:'Perfil',path:'/perfil'},
-              {label:'Empleo',path:'#empleo'},
+              {label:'Perfil',    path:'/perfil'},
+              {label:'Empleo',    path:'#empleo'},
             ].map((item,i)=>(
               <button key={i} className="nav-btn"
-                onClick={()=>{
-                  if(item.path==='#empleo') document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'});
-                  else if(item.path==='/lab'&&handleGuestAction('El laboratorio SOC requiere cuenta. ¡Es gratis!')) return;
-                  else if(item.path==='/sesion'&&handleGuestAction('Las sesiones competitivas requieren cuenta.')) return;
-                  else navigate(item.path);
-                }}
-                style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:item.path==='/lab'?'#059669':'#64748b',fontSize:'13px',fontWeight:item.path==='/lab'?700:500,cursor:'pointer'}}>
-                {item.path==='/lab'?'🔬 Labs':item.label}
+                onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
+                style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:item.green?'#059669':'#64748b',fontSize:'13px',fontWeight:item.green?700:500,cursor:'pointer'}}>
+                {item.label}
               </button>
             ))}
           </div>
@@ -300,52 +287,31 @@ export default function DashboardAnalista() {
             <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'5px 12px',borderRadius:'8px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0'}}>
               <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#22c55e',animation:'pulse 2s infinite'}}/>
               <span style={{fontSize:'13px',color:'#374151',fontWeight:500}}>{user?.nombre}</span>
-              {user?.isGuest && <span style={{fontSize:'10px',color:'#64748b',padding:'1px 6px',borderRadius:'4px',background:'#f1f5f9'}}>invitado</span>}
               <span onClick={()=>navigate('/arenas')} style={{fontSize:'11px',fontWeight:700,color:arenaActual.color,background:arenaActual.colorLight,padding:'2px 8px',borderRadius:'5px',cursor:'pointer'}}>{arenaActual.name}</span>
             </div>
-            {streak > 0 && !user?.isGuest && (
+            {streak > 0 && (
               <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'5px 10px',borderRadius:'8px',background:'linear-gradient(135deg,#fef3c7,#fffbeb)',border:'1px solid #fcd34d'}}>
                 <span style={{fontSize:'14px'}}>🔥</span>
                 <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
               </div>
             )}
-            {user?.isGuest ? (
-              <button onClick={()=>navigate('/register')} style={{background:'linear-gradient(135deg,#4f46e5,#6366f1)',border:'none',color:'#fff',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer',fontWeight:600}}>Crear cuenta →</button>
-            ) : (
-              <button onClick={()=>{logout();navigate('/');}} style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer'}}>Salir</button>
-            )}
+            <button onClick={()=>{logout();navigate('/');}} style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer'}}>Salir</button>
           </div>
         </nav>
 
         <div style={{maxWidth:'1160px',margin:'0 auto',padding:'24px 40px 72px'}}>
 
-          {/* BANNER INVITADO */}
-          {user?.isGuest && (
-            <div style={{marginBottom:'20px',padding:'14px 20px',borderRadius:'12px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-                <span style={{fontSize:'20px'}}>👁</span>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:700,color:'#3730a3'}}>Estás explorando como invitado</div>
-                  <div style={{fontSize:'12px',color:'#6366f1'}}>Los datos son de ejemplo. Crea una cuenta gratis para competir de verdad.</div>
-                </div>
-              </div>
-              <button onClick={()=>navigate('/register')} style={{padding:'9px 18px',borderRadius:'9px',background:'#4f46e5',border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',flexShrink:0}}>
-                Crear cuenta gratis →
-              </button>
-            </div>
-          )}
-
           {/* BIENVENIDA */}
           <div style={{marginBottom:'20px',display:'flex',alignItems:'flex-start',justifyContent:'space-between'}}>
             <div>
               <h1 style={{fontSize:'22px',fontWeight:800,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:'2px'}}>
-                Bienvenido{user?.isGuest?'':', '}<span style={{color:ACC}}>{user?.isGuest?' al modo invitado':user?.nombre}</span>
+                Bienvenido de nuevo, <span style={{color:ACC}}>{user?.nombre}</span>
               </h1>
               <p style={{fontSize:'13px',color:'#94a3b8',fontFamily:'monospace'}}>
                 {arenaActual.name} · Tier {tier} — {TIERS[tier]} · {sesiones} sesiones completadas
               </p>
             </div>
-            {streak > 1 && !user?.isGuest && (
+            {streak > 1 && (
               <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#fffbeb,#fef3c7)',border:'1px solid #fcd34d',boxShadow:'0 2px 8px rgba(251,191,36,0.2)'}}>
                 <span style={{fontSize:'24px'}}>🔥</span>
                 <div>
@@ -356,7 +322,7 @@ export default function DashboardAnalista() {
             )}
           </div>
 
-          {/* FILA 1: ARENA + SESIÓN + LAB + TERMINAL */}
+          {/* FILA 1: ARENA + COLUMNA DERECHA */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:'14px',marginBottom:'14px'}}>
 
             {/* ARENA CARD */}
@@ -388,14 +354,14 @@ export default function DashboardAnalista() {
                         {arena.id===arenaActual.id?'TU ARENA ACTUAL':'ARENA'}
                       </span>
                     </div>
-                    <h1 style={{fontSize:'clamp(38px,4.5vw,60px)',fontWeight:900,color:'#fff',letterSpacing:'-2px',lineHeight:1,marginBottom:'4px',textShadow:'0 2px 12px rgba(0,0,0,0.2)'}}>{arena.name}</h1>
+                    <h1 style={{fontSize:'clamp(38px,4.5vw,60px)',fontWeight:900,color:'#fff',letterSpacing:'-2px',lineHeight:1,marginBottom:'4px'}}>{arena.name}</h1>
                     <p style={{fontSize:'11px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace',marginBottom:'18px'}}>{arena.min} — {arena.max===99999?'∞':arena.max} copas · División {arena.div}</p>
                     {arena.id===arenaActual.id ? (
                       <>
                         <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'10px'}}>
                           <span style={{fontSize:'36px',fontWeight:900,color:'#fff',letterSpacing:'-1px'}}>{copas.toLocaleString()}</span>
                           <span style={{fontSize:'13px',color:'rgba(255,255,255,0.65)'}}>copas</span>
-                          {siguienteArena && <span style={{fontSize:'10px',color:'rgba(255,255,255,0.8)',padding:'2px 8px',borderRadius:'5px',background:'rgba(255,255,255,0.18)',fontFamily:'monospace'}}>{siguienteArena.min - copas} → {siguienteArena.name}</span>}
+                          {siguienteArena && <span style={{fontSize:'10px',color:'rgba(255,255,255,0.8)',padding:'2px 8px',borderRadius:'5px',background:'rgba(255,255,255,0.18)',fontFamily:'monospace'}}>{siguienteArena.min-copas} → {siguienteArena.name}</span>}
                         </div>
                         <div style={{height:'5px',borderRadius:'3px',backgroundColor:'rgba(255,255,255,0.22)',maxWidth:'300px',marginBottom:'6px'}}>
                           <div style={{width:`${pctCopas}%`,height:'100%',borderRadius:'3px',backgroundColor:'#fff',opacity:.9}}/>
@@ -403,7 +369,7 @@ export default function DashboardAnalista() {
                         <p style={{fontSize:'10px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace'}}>{Math.round(pctCopas)}% hacia {siguienteArena?.name||'máximo'}</p>
                       </>
                     ) : (
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>{arena.min > copas ? `Faltan ${(arena.min-copas).toLocaleString()} copas` : '✓ Arena superada'}</p>
+                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>{arena.min>copas?`Faltan ${(arena.min-copas).toLocaleString()} copas`:'✓ Arena superada'}</p>
                     )}
                   </div>
                   <div className="planet-anim" style={{flexShrink:0,filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.3))'}}>
@@ -418,36 +384,40 @@ export default function DashboardAnalista() {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: SESIÓN + LAB + TERMINAL */}
+            {/* COLUMNA DERECHA */}
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-              <button className="session-btn" onClick={()=>{ if(handleGuestAction('Las sesiones competitivas requieren cuenta gratis.'))return; navigate('/sesion'); }}
+
+              {/* Botón Sesión */}
+              <button className="session-btn" onClick={()=>navigate('/sesion')}
                 style={{width:'100%',padding:'16px 20px',borderRadius:'14px',background:'linear-gradient(135deg,#4f46e5,#6366f1)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',gap:'12px',textAlign:'left',boxShadow:'0 4px 20px rgba(79,70,229,.35)'}}>
                 <div style={{width:'40px',height:'40px',borderRadius:'11px',backgroundColor:'rgba(255,255,255,0.18)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:'13px',fontWeight:800,marginBottom:'2px'}}>INICIAR SESIÓN SOC</div>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',fontFamily:'monospace'}}>{arenaActual.name} · {arenaActual.tier==='bronce'?'20':arenaActual.tier==='plata'?'15':arenaActual.tier==='oro'?'10':'7'} min</div>
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',fontFamily:'monospace'}}>{arenaActual.name} · {arenaActual.tier==='bronce'?'20':arenaActual.tier==='plata'?'15':arenaActual.tier==='oro'?'10':'7'} min · copas</div>
                 </div>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
 
-              <button className="lab-btn" onClick={()=>{ if(handleGuestAction('El laboratorio SOC requiere una cuenta gratis.'))return; navigate('/lab'); }}
+              {/* Botón Lab */}
+              <button className="lab-btn" onClick={()=>navigate('/lab')}
                 style={{width:'100%',padding:'16px 20px',borderRadius:'14px',background:'linear-gradient(135deg,#065f46,#059669)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',gap:'12px',textAlign:'left',boxShadow:'0 4px 20px rgba(5,150,105,.3)'}}>
                 <div style={{width:'40px',height:'40px',borderRadius:'11px',backgroundColor:'rgba(255,255,255,0.18)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'18px'}}>🔬</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:'13px',fontWeight:800,marginBottom:'2px'}}>LABORATORIO SOC</div>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',fontFamily:'monospace'}}>Investigación libre · Sin límite de tiempo</div>
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',fontFamily:'monospace'}}>Investigación libre · XP</div>
                 </div>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
 
+              {/* Terminal */}
               <div style={{flex:1,borderRadius:'14px',overflow:'hidden',border:'1px solid #e2e8f0',backgroundColor:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
                 <div style={{backgroundColor:'#f8fafc',padding:'7px 14px',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:'5px'}}>
                   {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:c}}/>)}
                   <span style={{color:'#94a3b8',fontSize:'10px',fontFamily:'monospace',marginLeft:'8px'}}>soc-terminal</span>
                 </div>
-                <div style={{backgroundColor:'#0f172a',padding:'12px 16px',fontFamily:"'Fira Code',monospace",fontSize:'10px',lineHeight:1.9,minHeight:'140px'}}>
+                <div style={{backgroundColor:'#0f172a',padding:'12px 16px',fontFamily:"'Fira Code',monospace",fontSize:'10px',lineHeight:1.9,minHeight:'130px'}}>
                   {termLines.map((l,i)=>(
                     <p key={i} style={{color:l.color,margin:0,animation:'fadeIn .25s ease'}}>
                       {l.text==='▌'?<span style={{animation:'blink 1s infinite',display:'inline-block'}}>{l.text}</span>:l.text}
@@ -458,13 +428,13 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* FILA 2: STATS */}
+          {/* STATS */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
             {[
               {label:'COPAS',value:copas.toLocaleString(),sub:arenaActual.name,color:tierColors[arenaActual.tier]||'#d97706',light:arenaActual.colorLight,onClick:()=>navigate('/arenas')},
-              {label:'XP TOTAL',value:xp.toLocaleString(),sub:`${Math.round(pctXP)}% al siguiente`,color:'#4f46e5',light:'#eef2ff',onClick:()=>{ if(!handleGuestAction('Ver tu perfil completo requiere cuenta.')) navigate('/perfil'); }},
+              {label:'XP TOTAL',value:xp.toLocaleString(),sub:`${Math.round(pctXP)}% al siguiente`,color:'#4f46e5',light:'#eef2ff',onClick:()=>navigate('/perfil')},
               {label:'SESIONES',value:sesiones.toString(),sub:'completadas',color:'#059669',light:'#ecfdf5',onClick:null},
-              {label:'TIER',value:`T${tier}`,sub:TIERS[tier],color:tierColor,light:'#f8fafc',onClick:()=>{ if(!handleGuestAction('Ver tiers requiere cuenta.')) navigate('/perfil'); }},
+              {label:'TIER',value:`T${tier}`,sub:TIERS[tier],color:tierColor,light:'#f8fafc',onClick:()=>navigate('/perfil')},
             ].map((s,i)=>(
               <div key={i} className="stat-card" onClick={s.onClick||undefined}
                 style={{padding:'20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',cursor:s.onClick?'pointer':'default',boxShadow:'0 2px 8px rgba(0,0,0,.05)',position:'relative',overflow:'hidden'}}>
@@ -475,6 +445,7 @@ export default function DashboardAnalista() {
                 <div style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'5px',fontFamily:'monospace'}}>{s.label}</div>
                 <div style={{fontSize:'28px',fontWeight:900,color:s.color,letterSpacing:'-0.8px',lineHeight:1,marginBottom:'4px'}}>{s.value}</div>
                 <div style={{fontSize:'12px',color:'#64748b'}}>{s.sub}</div>
+                {s.onClick&&<div style={{display:'flex',alignItems:'center',gap:'4px',marginTop:'8px',color:ACC,fontSize:'11px',fontWeight:600}}><span>Ver más</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>}
               </div>
             ))}
           </div>
@@ -494,60 +465,108 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* SECCIÓN LABORATORIO */}
-          <div style={{marginBottom:'28px',borderRadius:'20px',overflow:'hidden',border:'1px solid #a7f3d0',boxShadow:'0 4px 20px rgba(16,185,129,0.1)'}}>
-            <div style={{padding:'32px 40px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 40%,#047857 100%)',position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',top:'-60px',right:'-40px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.15),transparent)',pointerEvents:'none'}}/>
-              <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'32px'}}>
+          {/* ═══════════ SECCIÓN LABORATORIO ═══════════ */}
+          <div style={{marginBottom:'28px',borderRadius:'20px',overflow:'hidden',border:'1px solid #6ee7b7',boxShadow:'0 4px 24px rgba(16,185,129,0.15)'}}>
+            <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden'}}>
+              {/* Decoraciones */}
+              <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.15),transparent)',pointerEvents:'none'}}/>
+              <div style={{position:'absolute',bottom:'-60px',left:'50px',width:'200px',height:'200px',borderRadius:'50%',background:'radial-gradient(circle,rgba(16,185,129,0.1),transparent)',pointerEvents:'none'}}/>
+
+              <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
+
+                {/* Texto izquierda */}
                 <div>
-                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
                     <span style={{fontSize:'10px',color:'#6ee7b7',letterSpacing:'3px',fontWeight:700,fontFamily:'monospace'}}>SOCBLAST LABS — BETA</span>
-                    <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'5px',backgroundColor:'rgba(52,211,153,0.2)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.3)',fontWeight:700}}>NUEVO</span>
+                    <span style={{fontSize:'10px',padding:'2px 9px',borderRadius:'5px',backgroundColor:'rgba(52,211,153,0.2)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.35)',fontWeight:700}}>NUEVO</span>
                   </div>
-                  <h2 style={{fontSize:'26px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>
-                    Investiga. Analiza.<br/><span style={{color:'#6ee7b7'}}>A tu propio ritmo.</span>
+                  <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>
+                    Investiga. Analiza.<br/>
+                    <span style={{color:'#6ee7b7'}}>A tu propio ritmo.</span>
                   </h2>
-                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',lineHeight:1.7,maxWidth:'500px',marginBottom:'18px'}}>
-                    Acceso completo al SIEM, logs, tráfico de red y eventos de un escenario comprometido. La IA evalúa la profundidad de tu análisis.
+                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',lineHeight:1.75,maxWidth:'480px',marginBottom:'20px'}}>
+                    Sin tiempo límite. Accede al SIEM completo, explora logs, mapea la red y entrega tu informe de investigación. La IA evalúa la <strong style={{color:'rgba(255,255,255,0.8)'}}>profundidad de tu análisis</strong>, no la velocidad.
                   </p>
-                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
-                    {[{icon:'🖥️',label:'SIEM con queries'},{icon:'📋',label:'Log Explorer'},{icon:'🌐',label:'Network Map'},{icon:'📝',label:'Ticket system'},{icon:'🤖',label:'Evaluación IA'}].map((f,i)=>(
-                      <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.12)'}}>
+
+                  {/* Diferencia sesiones vs lab */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',maxWidth:'420px',marginBottom:'22px'}}>
+                    {[
+                      {icon:'⚡',title:'Sesiones SOC',   desc:'Velocidad · Copas · Ranking',       color:'#818cf8'},
+                      {icon:'🔬',title:'Laboratorio SOC',desc:'Profundidad · XP · Badge especial',  color:'#6ee7b7'},
+                    ].map((d,i)=>(
+                      <div key={i} style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.22)',border:`1px solid ${d.color}30`}}>
+                        <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'5px'}}>
+                          <span style={{fontSize:'15px'}}>{d.icon}</span>
+                          <span style={{fontSize:'12px',fontWeight:700,color:d.color}}>{d.title}</span>
+                        </div>
+                        <p style={{fontSize:'11px',color:'rgba(255,255,255,0.4)',lineHeight:1.4}}>{d.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Feature pills */}
+                  <div style={{display:'flex',gap:'7px',flexWrap:'wrap',marginBottom:'24px'}}>
+                    {[
+                      {icon:'🖥️',label:'SIEM con queries'},
+                      {icon:'📋',label:'Log Explorer'},
+                      {icon:'🌐',label:'Network Map'},
+                      {icon:'📝',label:'Ticket system'},
+                      {icon:'🤖',label:'Evaluación IA'},
+                    ].map((f,i)=>(
+                      <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.14)'}}>
                         <span style={{fontSize:'12px'}}>{f.icon}</span>
                         <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.label}</span>
                       </div>
                     ))}
                   </div>
-                  <button onClick={()=>{ if(handleGuestAction('El laboratorio SOC requiere una cuenta gratis.'))return; navigate('/lab'); }}
-                    style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(16,185,129,0.4)'}}>
-                    🔬 Entrar al Laboratorio →
+
+                  <button className="lab-section-btn" onClick={()=>navigate('/lab')}
+                    style={{padding:'13px 32px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(16,185,129,0.45)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
+                    <span style={{fontSize:'16px'}}>🔬</span>
+                    Entrar al Laboratorio →
                   </button>
                 </div>
+
                 {/* Mini SIEM mockup */}
-                <div style={{width:'280px',flexShrink:0}}>
-                  <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 16px 40px rgba(0,0,0,0.4)'}}>
-                    <div style={{backgroundColor:'#0f172a',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',gap:'4px'}}>
-                      {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:c}}/>)}
-                      <span style={{fontSize:'9px',color:'#475569',fontFamily:'monospace',marginLeft:'6px'}}>siem — nighthawk</span>
+                <div style={{width:'290px',flexShrink:0}}>
+                  <div style={{borderRadius:'13px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 20px 48px rgba(0,0,0,0.45)'}}>
+                    <div style={{backgroundColor:'#0f172a',padding:'9px 13px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',gap:'5px'}}>
+                      {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:c}}/>)}
+                      <span style={{fontSize:'9px',color:'#475569',fontFamily:'monospace',marginLeft:'7px'}}>siem — operación nighthawk</span>
                     </div>
-                    <div style={{backgroundColor:'#020817',padding:'14px',fontFamily:'monospace',fontSize:'10px',lineHeight:1.9}}>
-                      <p style={{color:'#334155'}}>siem&gt; index=windows EventID=4688</p>
-                      <p style={{color:'#94a3b8'}}>02:32:01 <span style={{color:'#fb923c'}}>powershell.exe</span></p>
-                      <p style={{color:'#f87171',fontWeight:700}}>02:32:15 <span>mimikatz.exe</span> ⚠</p>
-                      <p style={{color:'#334155',marginTop:'6px'}}>siem&gt; index=dns</p>
-                      <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru ⚠</p>
-                      <div style={{marginTop:'8px',padding:'6px 8px',borderRadius:'6px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.15)'}}>
-                        <p style={{color:'#34d399',fontSize:'9px'}}>📝 IOC: mimikatz + C2 detectados</p>
+                    <div style={{backgroundColor:'#020817',padding:'16px',fontFamily:'monospace',fontSize:'11px',lineHeight:1.9}}>
+                      <p style={{color:'#334155',marginBottom:'2px'}}>siem&gt; index=windows EventID=4688</p>
+                      <p style={{color:'#94a3b8'}}>02:32:01 <span style={{color:'#fb923c'}}>powershell.exe</span> ← cmd.exe</p>
+                      <p style={{color:'#f87171',fontWeight:700}}>02:32:15 <span>mimikatz.exe</span> ← powershell ⚠</p>
+                      <p style={{color:'#334155',marginTop:'8px',marginBottom:'2px'}}>siem&gt; index=dns</p>
+                      <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru → 185.220.101.45 ⚠</p>
+                      <p style={{color:'#f87171'}}>exfil.nighthawk-ops.ru → 185.220.101.45 ⚠</p>
+                      <div style={{marginTop:'10px',padding:'7px 10px',borderRadius:'7px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.18)'}}>
+                        <p style={{color:'#34d399',fontSize:'10px'}}>📝 IOC detectado: mimikatz + C2 activo</p>
                       </div>
                     </div>
+                  </div>
+                  <div style={{marginTop:'9px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px'}}>
+                    {[
+                      {label:'Queries', value:'0/5', color:'#6ee7b7'},
+                      {label:'IOCs',    value:'0',   color:'#fbbf24'},
+                      {label:'Informe', value:'0%',  color:'#818cf8'},
+                    ].map((s,i)=>(
+                      <div key={i} style={{padding:'9px',borderRadius:'9px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
+                        <div style={{fontSize:'14px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
+                        <div style={{fontSize:'9px',color:'rgba(255,255,255,0.3)',marginTop:'3px'}}>{s.label}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </div>
+          {/* FIN SECCIÓN LABORATORIO */}
 
-          {/* FILA 3: SKILLS + ACTIVIDAD + MINI RANKING */}
+          {/* FILA: SKILLS + ACTIVIDAD + MINI RANKING */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'14px'}}>
+
             {/* SKILLS */}
             <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
@@ -596,13 +615,15 @@ export default function DashboardAnalista() {
               <div style={{padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',flex:1}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
                   <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>TOP RANKING</p>
-                  <button onClick={()=>{ if(!handleGuestAction('El ranking completo requiere cuenta.')) navigate('/ranking'); }} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo →</button>
+                  <button onClick={()=>navigate('/ranking')} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo →</button>
                 </div>
-                {ranking.length === 0 ? (
-                  <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Sin datos</p>
+                {ranking.length===0 ? (
+                  <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Cargando...</p>
                 ) : ranking.map((j,i)=>(
                   <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:i<ranking.length-1?'1px solid #f1f5f9':'none'}}>
-                    <div style={{width:'22px',height:'22px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:800,color:i===0?'#d97706':i===1?'#475569':'#7c3aed',flexShrink:0}}>{i===0?'🥇':i===1?'🥈':'🥉'}</div>
+                    <div style={{width:'22px',height:'22px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:800,flexShrink:0}}>
+                      {i===0?'🥇':i===1?'🥈':'🥉'}
+                    </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'12px',fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.nombre}</div>
                       <div style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{j.arena}</div>
@@ -617,37 +638,35 @@ export default function DashboardAnalista() {
                   <span style={{fontSize:'10px',color:ACC,fontWeight:700,letterSpacing:'1.5px',fontFamily:'monospace'}}>SIGUIENTE MISIÓN</span>
                 </div>
                 <p style={{fontSize:'12px',color:'#3730a3',fontWeight:600,marginBottom:'4px',lineHeight:1.4}}>Skill débil: <strong>{weakestSkill.label}</strong></p>
-                <p style={{fontSize:'11px',color:'#6366f1',lineHeight:1.5,marginBottom:'10px'}}>Completa sesiones en {arenaActual.name} para subirla.</p>
-                <button onClick={()=>{ if(handleGuestAction('Las sesiones requieren cuenta gratis.'))return; navigate('/sesion'); }} style={{width:'100%',padding:'8px',borderRadius:'8px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>
-                  Entrenar ahora →
-                </button>
+                <p style={{fontSize:'11px',color:'#6366f1',lineHeight:1.5,marginBottom:'10px'}}>Entrena en {arenaActual.name} para subirla.</p>
+                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'8px',borderRadius:'8px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>Entrenar ahora →</button>
               </div>
             </div>
           </div>
 
-          {/* FILA 4: HISTORIAL + ACCESOS */}
+          {/* HISTORIAL + ACCESOS */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'28px'}}>
             <div style={{padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>ÚLTIMAS SESIONES</p>
-                <button onClick={()=>{ if(handleGuestAction('Las sesiones requieren cuenta.'))return; navigate('/sesion'); }} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Nueva →</button>
+                <button onClick={()=>navigate('/sesion')} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Nueva →</button>
               </div>
-              {historial.length === 0 ? (
+              {historial.length===0 ? (
                 <div style={{textAlign:'center',padding:'20px 0'}}>
                   <div style={{fontSize:'28px',marginBottom:'8px'}}>🎯</div>
-                  <p style={{fontSize:'12px',color:'#94a3b8'}}>{user?.isGuest?'Crea una cuenta para ver tu historial':'Sin sesiones aún'}</p>
-                  <button onClick={()=>{ if(handleGuestAction('Las sesiones requieren cuenta.'))return; navigate('/sesion'); }} style={{marginTop:'10px',padding:'8px 16px',borderRadius:'8px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>
-                    {user?.isGuest?'Crear cuenta':'Empezar'}
-                  </button>
+                  <p style={{fontSize:'12px',color:'#94a3b8'}}>Sin sesiones aún</p>
+                  <button onClick={()=>navigate('/sesion')} style={{marginTop:'10px',padding:'8px 16px',borderRadius:'8px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>Empezar</button>
                 </div>
               ) : historial.slice(0,5).map((s,i)=>{
                 const res = s.resultado;
-                const copasGan = res?.copas_ganadas || 0;
-                const media = res?.media_puntuacion || 0;
-                const positive = copasGan >= 0;
+                const copasGan = res?.copas_ganadas||0;
+                const media = res?.media_puntuacion||0;
+                const positive = copasGan>=0;
                 return (
                   <div key={i} className="hist-row" style={{display:'flex',alignItems:'center',gap:'10px',padding:'9px 11px',borderRadius:'9px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9',marginBottom:'6px'}}>
-                    <div style={{width:'28px',height:'28px',borderRadius:'7px',backgroundColor:positive?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><span style={{fontSize:'13px'}}>{positive?'⬆':'⬇'}</span></div>
+                    <div style={{width:'28px',height:'28px',borderRadius:'7px',backgroundColor:positive?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <span style={{fontSize:'13px'}}>{positive?'⬆':'⬇'}</span>
+                    </div>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontSize:'11px',color:'#0f172a',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.titulo||'Sesión SOC'}</p>
                       <p style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{media}/20 pts</p>
@@ -662,14 +681,14 @@ export default function DashboardAnalista() {
               <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 {[
-                  {label:'Laboratorio SOC', desc:'SIEM · Forense · Evaluado', path:'/lab', color:'#059669', light:'#ecfdf5', guest:true},
-                  {label:'Training SOC', desc:'12 módulos · 3 cursos', path:'/training', color:'#7c3aed', light:'#f5f3ff', guest:false},
-                  {label:'Ranking Global', desc:'Tu posición actual', path:'/ranking', color:'#d97706', light:'#fffbeb', guest:true},
-                  {label:'Arenas', desc:'Ver todas las divisiones', path:'/arenas', color:'#0891b2', light:'#ecfeff', guest:false},
-                  {label:'Mi Certificado', desc:'QR verificable', path:'/certificado', color:'#059669', light:'#ecfdf5', guest:true},
-                  {label:'Perfil & Tiers', desc:'Stats y progresión', path:'/perfil', color:'#2563eb', light:'#eff6ff', guest:true},
+                  {label:'Laboratorio SOC',  desc:'SIEM · Forense · XP',         path:'/lab',          color:'#059669', light:'#ecfdf5'},
+                  {label:'Training SOC',     desc:'12 módulos · 3 cursos',        path:'/training',     color:'#7c3aed', light:'#f5f3ff'},
+                  {label:'Ranking Global',   desc:'Tu posición actual',           path:'/ranking',      color:'#d97706', light:'#fffbeb'},
+                  {label:'Arenas',           desc:'Ver todas las divisiones',     path:'/arenas',       color:'#0891b2', light:'#ecfeff'},
+                  {label:'Mi Certificado',   desc:'QR verificable',               path:'/certificado',  color:'#059669', light:'#ecfdf5'},
+                  {label:'Perfil & Tiers',   desc:'Stats y progresión',           path:'/perfil',       color:'#2563eb', light:'#eff6ff'},
                 ].map((item,i)=>(
-                  <div key={i} className="quick-btn" onClick={()=>{ if(item.guest&&handleGuestAction(`${item.label} requiere cuenta gratis.`))return; navigate(item.path); }}
+                  <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
                     style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
                     <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}18`}}>
                       <div style={{width:'8px',height:'8px',borderRadius:'50%',backgroundColor:item.color}}/>
@@ -678,89 +697,14 @@ export default function DashboardAnalista() {
                       <span style={{fontSize:'12px',color:'#0f172a',fontWeight:600}}>{item.label}</span>
                       <span style={{fontSize:'10px',color:'#94a3b8',marginLeft:'6px'}}>{item.desc}</span>
                     </div>
-                    {item.guest&&user?.isGuest?<span style={{fontSize:'10px',color:'#94a3b8'}}>🔒</span>:<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>}
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          {/* SECCIÓN LABORATORIO */}
-<div style={{marginBottom:'28px',borderRadius:'20px',overflow:'hidden',border:'1px solid #a7f3d0',boxShadow:'0 4px 20px rgba(16,185,129,0.1)'}}>
-  <div style={{padding:'32px 40px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 40%,#047857 100%)',position:'relative',overflow:'hidden'}}>
-    <div style={{position:'absolute',top:'-60px',right:'-40px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.15),transparent)',pointerEvents:'none'}}/>
-    <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'32px'}}>
-      <div>
-        <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
-          <span style={{fontSize:'10px',color:'#6ee7b7',letterSpacing:'3px',fontWeight:700,fontFamily:'monospace'}}>SOCBLAST LABS — BETA</span>
-          <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'5px',backgroundColor:'rgba(52,211,153,0.2)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.3)',fontWeight:700}}>NUEVO</span>
-        </div>
-        <h2 style={{fontSize:'26px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>
-          Investiga. Analiza.<br/><span style={{color:'#6ee7b7'}}>A tu propio ritmo.</span>
-        </h2>
-        <p style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',lineHeight:1.7,maxWidth:'500px',marginBottom:'18px'}}>
-          Acceso completo al SIEM, logs, tráfico de red y eventos de un escenario comprometido. Sin límite de tiempo. La IA evalúa la profundidad de tu análisis, no la velocidad.
-        </p>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',maxWidth:'400px',marginBottom:'20px'}}>
-          {[
-            {title:'Sesiones SOC',    desc:'Velocidad · Copas · Ranking',      icon:'⚡', color:'#818cf8'},
-            {title:'Laboratorio SOC', desc:'Profundidad · XP · Badge especial', icon:'🔬', color:'#6ee7b7'},
-          ].map((d,i)=>(
-            <div key={i} style={{padding:'12px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.2)',border:`1px solid ${d.color}30`}}>
-              <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'5px'}}>
-                <span style={{fontSize:'14px'}}>{d.icon}</span>
-                <span style={{fontSize:'12px',fontWeight:700,color:d.color}}>{d.title}</span>
-              </div>
-              <p style={{fontSize:'11px',color:'rgba(255,255,255,0.4)',lineHeight:1.4}}>{d.desc}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
-          {[{icon:'🖥️',label:'SIEM con queries'},{icon:'📋',label:'Log Explorer'},{icon:'🌐',label:'Network Map'},{icon:'📝',label:'Ticket system'},{icon:'🤖',label:'Evaluación IA'}].map((f,i)=>(
-            <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.12)'}}>
-              <span style={{fontSize:'12px'}}>{f.icon}</span>
-              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.label}</span>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={()=>{ if(handleGuestAction('El laboratorio SOC requiere una cuenta gratis.'))return; navigate('/lab'); }}
-          style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(16,185,129,0.4)',display:'inline-flex',alignItems:'center',gap:'8px'}}>
-          <span>🔬</span> Entrar al Laboratorio →
-        </button>
-      </div>
 
-      {/* Mini SIEM mockup */}
-      <div style={{width:'280px',flexShrink:0}}>
-        <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 16px 40px rgba(0,0,0,0.4)'}}>
-          <div style={{backgroundColor:'#0f172a',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',gap:'4px'}}>
-            {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:c}}/>)}
-            <span style={{fontSize:'9px',color:'#475569',fontFamily:'monospace',marginLeft:'6px'}}>siem — nighthawk</span>
-          </div>
-          <div style={{backgroundColor:'#020817',padding:'14px',fontFamily:'monospace',fontSize:'10px',lineHeight:1.9}}>
-            <p style={{color:'#334155'}}>siem&gt; index=windows EventID=4688</p>
-            <p style={{color:'#94a3b8'}}>02:32:01 <span style={{color:'#fb923c'}}>powershell.exe</span></p>
-            <p style={{color:'#f87171',fontWeight:700}}>02:32:15 mimikatz.exe ⚠</p>
-            <p style={{color:'#334155',marginTop:'6px'}}>siem&gt; index=dns</p>
-            <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru ⚠</p>
-            <div style={{marginTop:'8px',padding:'6px 8px',borderRadius:'6px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.15)'}}>
-              <p style={{color:'#34d399',fontSize:'9px'}}>📝 IOC: mimikatz + C2 detectados</p>
-            </div>
-          </div>
-        </div>
-        <div style={{marginTop:'8px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px'}}>
-          {[{label:'Queries',value:'0/5',color:'#6ee7b7'},{label:'IOCs',value:'0',color:'#fbbf24'},{label:'Informe',value:'0%',color:'#818cf8'}].map((s,i)=>(
-            <div key={i} style={{padding:'8px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
-              <div style={{fontSize:'13px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
-              <div style={{fontSize:'9px',color:'rgba(255,255,255,0.3)',marginTop:'2px'}}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
           {/* SECCIÓN EMPLEO */}
-          {!user?.isGuest && (
           <div id="empleo-section">
             <div style={{position:'relative',borderRadius:'20px',overflow:'hidden',marginBottom:'20px',padding:'36px 48px',background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%)'}}>
               <div style={{position:'absolute',top:'-60px',right:'-60px',width:'300px',height:'300px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.2),transparent)',pointerEvents:'none'}}/>
@@ -773,11 +717,9 @@ export default function DashboardAnalista() {
                   <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>Tu próximo paso<br/><span style={{color:'#818cf8'}}>en ciberseguridad.</span></h2>
                   <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:'520px'}}>Ofertas reales, certificaciones recomendadas, bootcamps y retos gratuitos.</p>
                 </div>
-                <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
-                  <div style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(79,70,229,0.15)',border:'1px solid rgba(99,102,241,0.25)',textAlign:'center'}}>
-                    <div style={{fontSize:'24px',fontWeight:900,color:'#a5b4fc'}}>{OFERTAS_MOCK.length}</div>
-                    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>ofertas activas</div>
-                  </div>
+                <div style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(79,70,229,0.15)',border:'1px solid rgba(99,102,241,0.25)',textAlign:'center',flexShrink:0}}>
+                  <div style={{fontSize:'24px',fontWeight:900,color:'#a5b4fc'}}>{OFERTAS_MOCK.length}</div>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>ofertas activas</div>
                 </div>
               </div>
               <div style={{position:'relative',zIndex:1,display:'flex',gap:'6px',marginTop:'24px'}}>
@@ -883,7 +825,6 @@ export default function DashboardAnalista() {
               </div>
             )}
           </div>
-          )}
 
         </div>
       </div>
