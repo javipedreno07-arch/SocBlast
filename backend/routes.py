@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
@@ -9,11 +8,10 @@ from auth import get_password_hash, verify_password, create_access_token, get_cu
 from datetime import datetime
 import time
 import os
-import secrets
 
 router = APIRouter()
 
-# ── ARENA SYSTEM (12 divisiones, 300 copas cada una) ──
+# ── ARENA SYSTEM ──────────────────────────────────────────────────────────────
 ARENAS_CONFIG = [
     {"nombre": "Bronce 3", "grupo": "Bronce", "min": 0,    "max": 299},
     {"nombre": "Bronce 2", "grupo": "Bronce", "min": 300,  "max": 599},
@@ -29,13 +27,33 @@ ARENAS_CONFIG = [
     {"nombre": "Diamante 1","grupo": "Diamante","min": 3300,"max": 99999},
 ]
 
+SKILLS_MAX = 10  # Máximo valor de cualquier skill
+
 def get_arena_por_copas(copas: int) -> str:
     for a in ARENAS_CONFIG:
         if copas <= a["max"]:
             return a["nombre"]
     return "Diamante 1"
 
-# ── OAUTH GOOGLE ──
+def calcular_tier(xp: int) -> int:
+    if xp < 500:   return 1
+    if xp < 1500:  return 2
+    if xp < 3000:  return 3
+    if xp < 5000:  return 4
+    if xp < 8000:  return 5
+    if xp < 12000: return 6
+    if xp < 18000: return 7
+    return 8
+
+def aplicar_skills(skills_actuales: dict, skills_mejora: dict) -> dict:
+    """Aplica mejoras de skills con cap en SKILLS_MAX."""
+    nuevas = dict(skills_actuales)
+    for key, delta in skills_mejora.items():
+        if key in nuevas and delta > 0:
+            nuevas[key] = min(SKILLS_MAX, nuevas[key] + delta)
+    return nuevas
+
+# ── OAUTH GOOGLE ──────────────────────────────────────────────────────────────
 oauth = OAuth()
 oauth.register(
     name='google',
@@ -56,7 +74,7 @@ async def google_callback(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get('userinfo')
-        email = user_info['email']
+        email  = user_info['email']
         nombre = user_info.get('name', email.split('@')[0])
         db = get_db()
         existing = await db.users.find_one({"email": email})
@@ -64,8 +82,11 @@ async def google_callback(request: Request):
             await db.users.insert_one({
                 "email": email, "password": "", "nombre": nombre, "rol": "analista",
                 "copas": 0, "xp": 0, "tier": 1, "arena": "Bronce 3",
-                "skills": {"analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
-                           "threat_hunting": 0, "forense_digital": 0, "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0},
+                "skills": {
+                    "analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
+                    "threat_hunting": 0, "forense_digital": 0,
+                    "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0
+                },
                 "sesiones_completadas": 0, "training_progreso": {},
                 "fecha_registro": datetime.now().isoformat(),
                 "oauth_provider": "google", "email_verificado": True
@@ -79,23 +100,28 @@ async def google_callback(request: Request):
         print(f"Error Google OAuth: {e}")
         return RedirectResponse(url=f"{frontend_url}/login?error=google_failed")
 
-# ── AUTH ──
+# ── AUTH ──────────────────────────────────────────────────────────────────────
 @router.post("/register")
 async def register(user: UserRegister):
     db = get_db()
     existing = await db.users.find_one({"email": user.email})
     if existing:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
-    new_user = {
-        "email": user.email, "password": get_password_hash(user.password),
-        "nombre": user.nombre, "rol": user.rol,
+    await db.users.insert_one({
+        "email": user.email,
+        "password": get_password_hash(user.password),
+        "nombre": user.nombre,
+        "rol": user.rol,
         "copas": 0, "xp": 0, "tier": 1, "arena": "Bronce 3",
-        "skills": {"analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
-                   "threat_hunting": 0, "forense_digital": 0, "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0},
+        "skills": {
+            "analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
+            "threat_hunting": 0, "forense_digital": 0,
+            "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0
+        },
         "sesiones_completadas": 0, "training_progreso": {},
-        "fecha_registro": datetime.now().isoformat(), "email_verificado": True,
-    }
-    await db.users.insert_one(new_user)
+        "fecha_registro": datetime.now().isoformat(),
+        "email_verificado": True,
+    })
     return {"mensaje": "Registro exitoso. Ya puedes iniciar sesión."}
 
 @router.post("/login", response_model=Token)
@@ -117,7 +143,10 @@ async def verificar_email(token: str):
     usuario = await db.users.find_one({"token_verificacion": token})
     if not usuario:
         raise HTTPException(400, "Token inválido o expirado")
-    await db.users.update_one({"token_verificacion": token}, {"$set": {"email_verificado": True, "token_verificacion": None}})
+    await db.users.update_one(
+        {"token_verificacion": token},
+        {"$set": {"email_verificado": True, "token_verificacion": None}}
+    )
     return {"mensaje": "Email verificado correctamente. Ya puedes iniciar sesión."}
 
 @router.get("/me")
@@ -129,7 +158,7 @@ async def get_me(email: str = Depends(get_current_user)):
     user["_id"] = str(user["_id"])
     return user
 
-# ── STATS ──
+# ── STATS ─────────────────────────────────────────────────────────────────────
 @router.put("/me/copas")
 async def update_copas(copas_delta: int, email: str = Depends(get_current_user)):
     db = get_db()
@@ -144,33 +173,26 @@ async def update_xp(xp_delta: int, email: str = Depends(get_current_user)):
     db = get_db()
     user = await db.users.find_one({"email": email})
     nueva_xp = user["xp"] + xp_delta
-    if nueva_xp < 500: tier = 1
-    elif nueva_xp < 1500: tier = 2
-    elif nueva_xp < 3000: tier = 3
-    elif nueva_xp < 5000: tier = 4
-    elif nueva_xp < 8000: tier = 5
-    elif nueva_xp < 12000: tier = 6
-    elif nueva_xp < 18000: tier = 7
-    else: tier = 8
+    tier = calcular_tier(nueva_xp)
     await db.users.update_one({"email": email}, {"$set": {"xp": nueva_xp, "tier": tier}})
     return {"xp": nueva_xp, "tier": tier}
 
-# ── SESIONES ──
+# ── SESIONES ──────────────────────────────────────────────────────────────────
 from sessions import generar_sesion, evaluar_respuesta
 
 @router.post("/sesiones/generar")
 async def crear_sesion(email: str = Depends(get_current_user)):
     db = get_db()
-    user = await db.users.find_one({"email": email})
+    user  = await db.users.find_one({"email": email})
     arena = user.get("arena", "Bronce 3")
     grupo = arena.split(" ")[0] if " " in arena else arena
     try:
         sesion = await generar_sesion(grupo)
-        sesion["arena"] = arena
+        sesion["arena"]         = arena
         sesion["email_usuario"] = email
-        sesion["estado"] = "activa"
-        sesion["inicio"] = time.time()
-        sesion["respuestas"] = []
+        sesion["estado"]        = "activa"
+        sesion["inicio"]        = time.time()
+        sesion["respuestas"]    = []
         result = await db.sesiones.insert_one(sesion)
         sesion["_id"] = str(result.inserted_id)
         return sesion
@@ -178,80 +200,144 @@ async def crear_sesion(email: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Error generando sesión: {str(e)}")
 
 @router.post("/sesiones/{sesion_id}/responder")
-async def responder_incidente(sesion_id: str, incidente_id: int, respuesta: str,
-    tiempo_usado: int, pistas_usadas: int = 0, email: str = Depends(get_current_user)):
+async def responder_incidente(
+    sesion_id: str,
+    incidente_id: int,
+    respuesta: str,
+    tiempo_usado: int,
+    pistas_usadas: int = 0,
+    email: str = Depends(get_current_user)
+):
     from bson import ObjectId
     db = get_db()
+
     sesion = await db.sesiones.find_one({"_id": ObjectId(sesion_id)})
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    incidente = sesion["incidentes"][incidente_id - 1]
-    arena = sesion.get("arena", "Bronce 3")
-    grupo = arena.split(" ")[0] if " " in arena else arena
-    tiempos = {"Bronce": 20, "Plata": 15, "Oro": 10, "Diamante": 7}
+
+    incidente   = sesion["incidentes"][incidente_id - 1]
+    arena       = sesion.get("arena", "Bronce 3")
+    grupo       = arena.split(" ")[0] if " " in arena else arena
+    tiempos     = {"Bronce": 20, "Plata": 15, "Oro": 10, "Diamante": 7}
     tiempo_limite = tiempos.get(grupo, 20)
-    evaluacion = await evaluar_respuesta(incidente, respuesta, tiempo_usado, tiempo_limite, pistas_usadas)
-    await db.sesiones.update_one({"_id": ObjectId(sesion_id)}, {"$push": {"respuestas": {"incidente_id": incidente_id, "evaluacion": evaluacion}}})
+
+    evaluacion = await evaluar_respuesta(
+        incidente, respuesta, tiempo_usado, tiempo_limite, pistas_usadas
+    )
+
+    # ── APLICAR SKILLS MEJORADAS A LA BASE DE DATOS ───────────────────────────
+    skills_mejora = evaluacion.get("skills_mejoradas", {})
+    if skills_mejora:
+        user = await db.users.find_one({"email": email})
+        skills_actuales = user.get("skills", {})
+        skills_nuevas   = aplicar_skills(skills_actuales, skills_mejora)
+        await db.users.update_one(
+            {"email": email},
+            {"$set": {"skills": skills_nuevas}}
+        )
+        # Incluir las nuevas skills en la respuesta para el frontend
+        evaluacion["skills_nuevas"] = skills_nuevas
+
+    # Guardar respuesta en la sesión
+    await db.sesiones.update_one(
+        {"_id": ObjectId(sesion_id)},
+        {"$push": {"respuestas": {
+            "incidente_id": incidente_id,
+            "evaluacion": evaluacion
+        }}}
+    )
+
     return evaluacion
 
 @router.post("/sesiones/{sesion_id}/finalizar")
 async def finalizar_sesion(sesion_id: str, email: str = Depends(get_current_user)):
     from bson import ObjectId
     db = get_db()
+
     sesion = await db.sesiones.find_one({"_id": ObjectId(sesion_id)})
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
     respuestas = sesion.get("respuestas", [])
     if not respuestas:
         raise HTTPException(status_code=400, detail="No hay respuestas")
-    total_copas = sum(r["evaluacion"]["copas_delta"] for r in respuestas)
+
+    total_copas      = sum(r["evaluacion"]["copas_delta"] for r in respuestas)
     media_puntuacion = sum(r["evaluacion"]["total"] for r in respuestas) / len(respuestas)
-    total_xp = sum(r["evaluacion"]["total"] * 3 for r in respuestas)
-    user = await db.users.find_one({"email": email})
+    total_xp         = sum(r["evaluacion"]["total"] * 3 for r in respuestas)
+
+    user         = await db.users.find_one({"email": email})
     nuevas_copas = max(0, user["copas"] + total_copas)
-    nueva_xp = user["xp"] + total_xp
-    arena = get_arena_por_copas(nuevas_copas)
-    if nueva_xp < 500: tier = 1
-    elif nueva_xp < 1500: tier = 2
-    elif nueva_xp < 3000: tier = 3
-    elif nueva_xp < 5000: tier = 4
-    elif nueva_xp < 8000: tier = 5
-    elif nueva_xp < 12000: tier = 6
-    elif nueva_xp < 18000: tier = 7
-    else: tier = 8
+    nueva_xp     = user["xp"] + total_xp
+    arena        = get_arena_por_copas(nuevas_copas)
+    tier         = calcular_tier(nueva_xp)
+
     await db.users.update_one({"email": email}, {"$set": {
-        "copas": nuevas_copas, "arena": arena, "xp": nueva_xp, "tier": tier,
-        "sesiones_completadas": user.get("sesiones_completadas", 0) + 1
+        "copas":               nuevas_copas,
+        "arena":               arena,
+        "xp":                  nueva_xp,
+        "tier":                tier,
+        "sesiones_completadas": user.get("sesiones_completadas", 0) + 1,
     }})
-    await db.sesiones.update_one({"_id": ObjectId(sesion_id)}, {"$set": {"estado": "completada", "resultado": {
-        "copas_ganadas": total_copas, "media_puntuacion": media_puntuacion, "xp_ganada": total_xp
-    }}})
-    return {"copas_ganadas": total_copas, "nuevas_copas": nuevas_copas, "arena": arena,
-            "xp_ganada": total_xp, "media_puntuacion": round(media_puntuacion, 1), "tier": tier}
+
+    await db.sesiones.update_one(
+        {"_id": ObjectId(sesion_id)},
+        {"$set": {
+            "estado": "completada",
+            "resultado": {
+                "copas_ganadas":    total_copas,
+                "media_puntuacion": media_puntuacion,
+                "xp_ganada":        total_xp,
+            }
+        }}
+    )
+
+    return {
+        "copas_ganadas":    total_copas,
+        "nuevas_copas":     nuevas_copas,
+        "arena":            arena,
+        "xp_ganada":        total_xp,
+        "media_puntuacion": round(media_puntuacion, 1),
+        "tier":             tier,
+    }
 
 @router.get("/sesiones/historial")
 async def historial_sesiones(email: str = Depends(get_current_user)):
     db = get_db()
-    sesiones = await db.sesiones.find({"email_usuario": email}, {"incidentes": 0}).sort("inicio", -1).limit(10).to_list(10)
+    sesiones = await db.sesiones.find(
+        {"email_usuario": email}, {"incidentes": 0}
+    ).sort("inicio", -1).limit(10).to_list(10)
     for s in sesiones:
         s["_id"] = str(s["_id"])
     return sesiones
 
-# ── RANKING ──
+# ── RANKING ───────────────────────────────────────────────────────────────────
 @router.get("/ranking")
 async def get_ranking(email: str = Depends(get_current_user)):
     db = get_db()
-    jugadores = await db.users.find({"rol": "analista"}, {"nombre": 1, "copas": 1, "arena": 1, "tier": 1, "xp": 1}).sort("copas", -1).limit(100).to_list(100)
+    jugadores = await db.users.find(
+        {"rol": "analista"},
+        {"nombre": 1, "copas": 1, "arena": 1, "tier": 1, "xp": 1}
+    ).sort("copas", -1).limit(100).to_list(100)
     for j in jugadores:
         j["_id"] = str(j["_id"])
     user = await db.users.find_one({"email": email}, {"nombre": 1, "copas": 1, "arena": 1, "tier": 1})
     mi_posicion = None
     if user:
-        posicion = next((i + 1 for i, j in enumerate(jugadores) if j.get("nombre") == user["nombre"]), len(jugadores) + 1)
-        mi_posicion = {"nombre": user["nombre"], "copas": user["copas"], "arena": user["arena"], "tier": user["tier"], "posicion": posicion}
+        posicion = next(
+            (i + 1 for i, j in enumerate(jugadores) if j.get("nombre") == user["nombre"]),
+            len(jugadores) + 1
+        )
+        mi_posicion = {
+            "nombre":   user["nombre"],
+            "copas":    user["copas"],
+            "arena":    user["arena"],
+            "tier":     user["tier"],
+            "posicion": posicion,
+        }
     return {"jugadores": jugadores, "mi_posicion": mi_posicion}
 
-# ── EMPRESA ──
+# ── EMPRESA ───────────────────────────────────────────────────────────────────
 @router.get("/talent-pool")
 async def get_talent_pool(email: str = Depends(get_current_user)):
     db = get_db()
@@ -264,10 +350,10 @@ async def get_talent_pool(email: str = Depends(get_current_user)):
 async def crear_oferta(oferta: dict, email: str = Depends(get_current_user)):
     db = get_db()
     user = await db.users.find_one({"email": email})
-    oferta["empresa"] = user.get("nombre", "Empresa")
+    oferta["empresa"]       = user.get("nombre", "Empresa")
     oferta["email_empresa"] = email
-    oferta["fecha"] = datetime.now().isoformat()
-    oferta["estado"] = "activa"
+    oferta["fecha"]         = datetime.now().isoformat()
+    oferta["estado"]        = "activa"
     result = await db.ofertas.insert_one(oferta)
     return {"id": str(result.inserted_id), "mensaje": "Oferta publicada correctamente"}
 
@@ -275,8 +361,73 @@ async def crear_oferta(oferta: dict, email: str = Depends(get_current_user)):
 async def crear_simulacion_empresa(simulacion: dict, email: str = Depends(get_current_user)):
     db = get_db()
     user = await db.users.find_one({"email": email})
-    simulacion["empresa"] = user.get("nombre", "Empresa")
+    simulacion["empresa"]       = user.get("nombre", "Empresa")
     simulacion["email_empresa"] = email
-    simulacion["fecha"] = datetime.now().isoformat()
+    simulacion["fecha"]         = datetime.now().isoformat()
     result = await db.simulaciones_empresa.insert_one(simulacion)
     return {"id": str(result.inserted_id), "mensaje": "Simulación creada correctamente"}
+
+# ── LAB ───────────────────────────────────────────────────────────────────────
+@router.post("/lab/evaluar")
+async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
+    """Evaluación local del laboratorio — sin IA para no gastar tokens."""
+    informe  = payload.get("informe", "").lower()
+    queries  = payload.get("queries_usadas", [])
+    notas    = payload.get("notas", [])
+
+    puntos   = 0
+    hallazgos = []
+    perdidos  = []
+
+    checks = [
+        (["185.220.101.45", "brute force", "fuerza bruta"], 25,
+         "✓ Vector de entrada identificado (IP 185.220.101.45)",
+         "✗ No identificaste el vector de entrada (brute force desde 185.220.101.45)"),
+        (["mimikatz"], 20,
+         "✓ Herramienta de credential dumping detectada (mimikatz)",
+         "✗ No mencionaste mimikatz — herramienta clave del ataque"),
+        (["movimiento lateral", "lateral", "srv-file", "fin-01"], 20,
+         "✓ Movimiento lateral documentado",
+         "✗ No documentaste el movimiento lateral a SRV-FILE01 y DESKTOP-FIN-01"),
+        (["persistencia", "windowsupdatehelper", "tarea programada", "windowsupdatetask"], 15,
+         "✓ Mecanismos de persistencia identificados",
+         "✗ No identificaste la persistencia (servicio + tarea programada)"),
+        (["exfil", "nighthawk", "c2", "4444", "command and control"], 20,
+         "✓ Canal C2 y exfiltración documentados",
+         "✗ No documentaste el canal C2 (nighthawk-ops.ru / puerto 4444)"),
+    ]
+
+    for keywords, pts, ok_msg, fail_msg in checks:
+        if any(k in informe for k in keywords):
+            puntos += pts
+            hallazgos.append(ok_msg)
+        else:
+            perdidos.append(fail_msg)
+
+    if len(queries) >= 5:
+        puntos = min(puntos + 5, 100)
+        hallazgos.append("✓ Investigación exhaustiva (5+ queries ejecutadas)")
+
+    if puntos >= 80:
+        feedback = "Excelente investigación forense. Has identificado la cadena completa del ataque."
+    elif puntos >= 60:
+        feedback = "Buena investigación. Encontraste los puntos principales pero faltaron detalles."
+    else:
+        feedback = "Investigación incompleta. Revisa los logs de procesos y el tráfico DNS."
+
+    xp_ganada = round(puntos * 1.5)
+
+    # Aplicar XP al usuario
+    db = get_db()
+    user = await db.users.find_one({"email": email})
+    nueva_xp = user["xp"] + xp_ganada
+    tier     = calcular_tier(nueva_xp)
+    await db.users.update_one({"email": email}, {"$set": {"xp": nueva_xp, "tier": tier}})
+
+    return {
+        "puntuacion": puntos,
+        "hallazgos":  hallazgos,
+        "perdidos":   perdidos,
+        "feedback":   feedback,
+        "xp_ganada":  xp_ganada,
+    }
