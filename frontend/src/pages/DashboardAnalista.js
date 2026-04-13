@@ -684,7 +684,81 @@ export default function DashboardAnalista() {
               </div>
             </div>
           </div>
+          {/* SECCIÓN LABORATORIO */}
+<div style={{marginBottom:'28px',borderRadius:'20px',overflow:'hidden',border:'1px solid #a7f3d0',boxShadow:'0 4px 20px rgba(16,185,129,0.1)'}}>
+  <div style={{padding:'32px 40px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 40%,#047857 100%)',position:'relative',overflow:'hidden'}}>
+    <div style={{position:'absolute',top:'-60px',right:'-40px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.15),transparent)',pointerEvents:'none'}}/>
+    <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'32px'}}>
+      <div>
+        <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}>
+          <span style={{fontSize:'10px',color:'#6ee7b7',letterSpacing:'3px',fontWeight:700,fontFamily:'monospace'}}>SOCBLAST LABS — BETA</span>
+          <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'5px',backgroundColor:'rgba(52,211,153,0.2)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.3)',fontWeight:700}}>NUEVO</span>
+        </div>
+        <h2 style={{fontSize:'26px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>
+          Investiga. Analiza.<br/><span style={{color:'#6ee7b7'}}>A tu propio ritmo.</span>
+        </h2>
+        <p style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',lineHeight:1.7,maxWidth:'500px',marginBottom:'18px'}}>
+          Acceso completo al SIEM, logs, tráfico de red y eventos de un escenario comprometido. Sin límite de tiempo. La IA evalúa la profundidad de tu análisis, no la velocidad.
+        </p>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',maxWidth:'400px',marginBottom:'20px'}}>
+          {[
+            {title:'Sesiones SOC',    desc:'Velocidad · Copas · Ranking',      icon:'⚡', color:'#818cf8'},
+            {title:'Laboratorio SOC', desc:'Profundidad · XP · Badge especial', icon:'🔬', color:'#6ee7b7'},
+          ].map((d,i)=>(
+            <div key={i} style={{padding:'12px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.2)',border:`1px solid ${d.color}30`}}>
+              <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'5px'}}>
+                <span style={{fontSize:'14px'}}>{d.icon}</span>
+                <span style={{fontSize:'12px',fontWeight:700,color:d.color}}>{d.title}</span>
+              </div>
+              <p style={{fontSize:'11px',color:'rgba(255,255,255,0.4)',lineHeight:1.4}}>{d.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
+          {[{icon:'🖥️',label:'SIEM con queries'},{icon:'📋',label:'Log Explorer'},{icon:'🌐',label:'Network Map'},{icon:'📝',label:'Ticket system'},{icon:'🤖',label:'Evaluación IA'}].map((f,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.12)'}}>
+              <span style={{fontSize:'12px'}}>{f.icon}</span>
+              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.label}</span>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={()=>{ if(handleGuestAction('El laboratorio SOC requiere una cuenta gratis.'))return; navigate('/lab'); }}
+          style={{padding:'12px 28px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(16,185,129,0.4)',display:'inline-flex',alignItems:'center',gap:'8px'}}>
+          <span>🔬</span> Entrar al Laboratorio →
+        </button>
+      </div>
 
+      {/* Mini SIEM mockup */}
+      <div style={{width:'280px',flexShrink:0}}>
+        <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 16px 40px rgba(0,0,0,0.4)'}}>
+          <div style={{backgroundColor:'#0f172a',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',gap:'4px'}}>
+            {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'7px',height:'7px',borderRadius:'50%',backgroundColor:c}}/>)}
+            <span style={{fontSize:'9px',color:'#475569',fontFamily:'monospace',marginLeft:'6px'}}>siem — nighthawk</span>
+          </div>
+          <div style={{backgroundColor:'#020817',padding:'14px',fontFamily:'monospace',fontSize:'10px',lineHeight:1.9}}>
+            <p style={{color:'#334155'}}>siem&gt; index=windows EventID=4688</p>
+            <p style={{color:'#94a3b8'}}>02:32:01 <span style={{color:'#fb923c'}}>powershell.exe</span></p>
+            <p style={{color:'#f87171',fontWeight:700}}>02:32:15 mimikatz.exe ⚠</p>
+            <p style={{color:'#334155',marginTop:'6px'}}>siem&gt; index=dns</p>
+            <p style={{color:'#f87171'}}>c2.nighthawk-ops.ru ⚠</p>
+            <div style={{marginTop:'8px',padding:'6px 8px',borderRadius:'6px',backgroundColor:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.15)'}}>
+              <p style={{color:'#34d399',fontSize:'9px'}}>📝 IOC: mimikatz + C2 detectados</p>
+            </div>
+          </div>
+        </div>
+        <div style={{marginTop:'8px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px'}}>
+          {[{label:'Queries',value:'0/5',color:'#6ee7b7'},{label:'IOCs',value:'0',color:'#fbbf24'},{label:'Informe',value:'0%',color:'#818cf8'}].map((s,i)=>(
+            <div key={i} style={{padding:'8px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
+              <div style={{fontSize:'13px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
+              <div style={{fontSize:'9px',color:'rgba(255,255,255,0.3)',marginTop:'2px'}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
           {/* SECCIÓN EMPLEO */}
           {!user?.isGuest && (
           <div id="empleo-section">
