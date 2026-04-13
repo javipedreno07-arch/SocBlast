@@ -90,7 +90,7 @@ const LoginPage = ({ onGuestLogin }) => {
             Continuar con Google
           </button>
 
-          <button className="guestbtn" onClick={onGuestLogin} style={{ width: '100%', padding: '10px 16px', borderRadius: 10, background: '#fff', border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 20 }}>
+          onClick={() => navigate('/guest')} style={{ width: '100%', padding: '10px 16px', borderRadius: 10, background: '#fff', border: '1.5px solid #e2e8f0', color: '#64748b', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 20 }}>
             👁 Explorar como invitado
           </button>
 

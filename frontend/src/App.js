@@ -19,6 +19,7 @@ import OAuthCallback from './pages/OAuthCallback';
 import RegistroExitoso from './pages/RegistroExitoso';
 import VerificarEmail from './pages/VerificarEmail';
 import ArenasPage from './pages/ArenasPage';
+import DashboardGuest from './pages/DashboardGuest';
 
 const GUEST_USER = {
   nombre: 'Invitado',
@@ -68,6 +69,7 @@ const AppRoutes = ({ onGuestLogin }) => {
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/registro-exitoso" element={<RegistroExitoso />} />
       <Route path="/verificar-email" element={<VerificarEmail />} />
+      <Route path="/guest" element={<DashboardGuest />} />
     </Routes>
   );
 };
