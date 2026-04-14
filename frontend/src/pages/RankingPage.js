@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { createAvatar } from '@dicebear/core';
-import { adventurer } from '@dicebear/collection';
 
 const API = 'https://socblast-production.up.railway.app';
 const ACC = '#4f46e5';
@@ -18,35 +16,87 @@ const ARENAS_COLORS = {
 };
 const getArenaColor = a => ARENAS_COLORS[a] || '#4f46e5';
 
-const defaultAv = { seed:'felix', bg:'b6e3f4', hairColor:'0e0e0e', skinColor:'fdbcb4' };
+const GRADIENTS = [
+  ['#4f46e5','#818cf8'],
+  ['#059669','#34d399'],
+  ['#0891b2','#22d3ee'],
+  ['#7c3aed','#a78bfa'],
+  ['#dc2626','#f87171'],
+  ['#d97706','#fbbf24'],
+  ['#db2777','#f472b6'],
+  ['#0369a1','#38bdf8'],
+  ['#65a30d','#a3e635'],
+  ['#9333ea','#c084fc'],
+];
 
-// Seeds para avatares genéricos de otros jugadores
-const GENERIC_SEEDS = ['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima'];
+const defaultAvatar = { gradientIdx: null, borderStyle: 'solid', iconOverlay: 'none' };
 
-const MiniAvatar = ({ avatarData, size=36, seed=null }) => {
-  const av = { ...defaultAv, ...(avatarData||{}) };
-  if (seed) av.seed = seed;
-  const svgStr = useMemo(() => {
-    try {
-      return createAvatar(adventurer, {
-        seed:            av.seed,
-        backgroundColor: [av.bg],
-        hairColor:       [av.hairColor],
-        skinColor:       [av.skinColor],
-        radius:          50,
-        size:            128,
-      }).toString();
-    } catch { return ''; }
-  }, [av.seed, av.bg, av.hairColor, av.skinColor]);
+const ICON_OVERLAYS = [
+  {id:'none',   symbol:''},
+  {id:'shield', symbol:'⬡'},
+  {id:'star',   symbol:'★'},
+  {id:'bolt',   symbol:'⚡'},
+  {id:'crown',  symbol:'♛'},
+  {id:'skull',  symbol:'☠'},
+  {id:'dragon', symbol:'◈'},
+  {id:'legend', symbol:'∞'},
+];
 
-  if (!svgStr) return (
-    <div style={{width:size,height:size,borderRadius:'50%',backgroundColor:'#eef2ff',flexShrink:0}}/>
-  );
+function getInitials(name = '') {
+  return name.trim().split(' ').map(w => w[0]?.toUpperCase() || '').slice(0, 2).join('');
+}
+
+function getGradientFromName(name = '') {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return Math.abs(hash) % GRADIENTS.length;
+}
+
+const Avatar = ({ name = '', avatar = {}, size = 36 }) => {
+  const av      = { ...defaultAvatar, ...avatar };
+  const gradIdx = av.gradientIdx ?? getGradientFromName(name);
+  const [from, to] = GRADIENTS[gradIdx] || GRADIENTS[0];
+  const initials   = getInitials(name);
+  const fontSize   = size * 0.34;
+  const overlay    = ICON_OVERLAYS.find(i => i.id === av.iconOverlay);
+
+  const borderStyles = {
+    none:   {},
+    solid:  { border: `${Math.max(2, size * 0.035)}px solid ${from}60` },
+    glow:   { border: `${Math.max(2, size * 0.035)}px solid ${from}80`, boxShadow: `0 0 ${size * 0.15}px ${from}50` },
+    double: { border: `${Math.max(2, size * 0.035)}px solid ${from}60`, outline: `${Math.max(1, size * 0.02)}px solid ${from}25`, outlineOffset: `${Math.max(2, size * 0.03)}px` },
+  };
+
   return (
-    <div
-      style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0}}
-      dangerouslySetInnerHTML={{__html:svgStr}}
-    />
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: `linear-gradient(135deg,${from},${to})`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative', flexShrink: 0,
+      ...borderStyles[av.borderStyle || 'none'],
+    }}>
+      <span style={{
+        fontSize, fontWeight: 800, color: '#fff',
+        letterSpacing: '-0.5px', lineHeight: 1,
+        fontFamily: "'Inter',-apple-system,sans-serif",
+        textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        userSelect: 'none',
+      }}>
+        {initials || '?'}
+      </span>
+      {overlay?.symbol && (
+        <div style={{
+          position: 'absolute', bottom: -2, right: -2,
+          width: size * 0.32, height: size * 0.32, borderRadius: '50%',
+          backgroundColor: '#fff', border: `1.5px solid ${from}40`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: size * 0.16, lineHeight: 1,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+        }}>
+          {overlay.symbol}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -57,27 +107,27 @@ export default function RankingPage() {
   const [loading,    setLoading]    = useState(true);
   const [filtro,     setFiltro]     = useState('Todos');
   const [miPosicion, setMiPosicion] = useState(null);
-  const [myAvatar,   setMyAvatar]   = useState(defaultAv);
+  const [myAvatar,   setMyAvatar]   = useState(defaultAvatar);
 
   useEffect(() => {
     fetchRanking();
     try {
       const s = localStorage.getItem(LS_AVATAR);
-      if (s) setMyAvatar({ ...defaultAv, ...JSON.parse(s) });
+      if (s) setMyAvatar({ ...defaultAvatar, ...JSON.parse(s) });
     } catch {}
   }, []);
 
   const fetchRanking = async () => {
     try {
-      const r = await axios.get(`${API}/api/ranking`, { headers:{ Authorization:`Bearer ${token}` } });
+      const r = await axios.get(`${API}/api/ranking`, { headers: { Authorization: `Bearer ${token}` } });
       setJugadores(r.data.jugadores);
       setMiPosicion(r.data.mi_posicion);
     } catch {}
     setLoading(false);
   };
 
-  const filtros  = ['Todos','Bronce','Plata','Oro','Diamante'];
-  const filtrados = filtro==='Todos' ? jugadores : jugadores.filter(j => j.arena?.includes(filtro));
+  const filtros   = ['Todos','Bronce','Plata','Oro','Diamante'];
+  const filtrados = filtro === 'Todos' ? jugadores : jugadores.filter(j => j.arena?.includes(filtro));
 
   const css = `
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -103,10 +153,10 @@ export default function RankingPage() {
           </div>
           <div style={{display:'flex',gap:'2px'}}>
             {[
-              {label:'← Dashboard', path:'/dashboard'},
-              {label:'Training',     path:'/training'},
-              {label:'Perfil',       path:'/perfil'},
-              {label:'Certificado',  path:'/certificado'},
+              {label:'← Dashboard',path:'/dashboard'},
+              {label:'Training',    path:'/training'},
+              {label:'Perfil',      path:'/perfil'},
+              {label:'Certificado', path:'/certificado'},
             ].map((item,i)=>(
               <button key={i} className="nav-btn" onClick={()=>navigate(item.path)}
                 style={{padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',cursor:'pointer'}}>
@@ -115,7 +165,7 @@ export default function RankingPage() {
             ))}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-            <MiniAvatar avatarData={myAvatar} size={32}/>
+            {miPosicion && <Avatar name={miPosicion.nombre} avatar={myAvatar} size={32}/>}
             <span style={{fontSize:'12px',color:'#94a3b8'}}>{jugadores.length} analistas</span>
           </div>
         </nav>
@@ -130,7 +180,7 @@ export default function RankingPage() {
 
           {/* Mi posición */}
           {miPosicion && (
-            <div className="fade-up" style={{padding:'20px 24px',borderRadius:'16px',backgroundColor:'#fff',border:`2px solid ${ACC}20`,marginBottom:'20px',boxShadow:`0 4px 20px ${ACC}10`,position:'relative',overflow:'hidden'}}>
+            <div className="fade-up" style={{padding:'20px 24px',borderRadius:'16px',backgroundColor:'#fff',border:`2px solid ${ACC}20`,marginBottom:'20px',boxShadow:`0 4px 20px ${ACC}10`}}>
               <div style={{height:'3px',background:`linear-gradient(90deg,${ACC},#818cf8)`,borderRadius:'4px',marginBottom:'18px'}}/>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
@@ -139,7 +189,7 @@ export default function RankingPage() {
                     <span style={{fontSize:'32px',fontWeight:900,color:ACC,letterSpacing:'-1px'}}>#{miPosicion.posicion}</span>
                   </div>
                   <div style={{width:'1px',height:'40px',backgroundColor:'#e2e8f0'}}/>
-                  <MiniAvatar avatarData={myAvatar} size={52}/>
+                  <Avatar name={miPosicion.nombre} avatar={myAvatar} size={52}/>
                   <div>
                     <p style={{fontSize:'15px',color:'#0f172a',fontWeight:700,marginBottom:'3px'}}>{miPosicion.nombre}</p>
                     <p style={{fontSize:'12px',color:'#94a3b8'}}>{TIERS[miPosicion.tier-1]} · {miPosicion.arena}</p>
@@ -158,8 +208,8 @@ export default function RankingPage() {
           {/* Filtros */}
           <div style={{display:'flex',gap:'6px',marginBottom:'20px',flexWrap:'wrap'}}>
             {filtros.map(f => {
-              const active = filtro===f;
-              const color  = f==='Todos' ? ACC : getArenaColor(`${f} I`);
+              const active = filtro === f;
+              const color  = f === 'Todos' ? ACC : getArenaColor(`${f} I`);
               return (
                 <button key={f} className="filter-btn" onClick={()=>setFiltro(f)}
                   style={{padding:'6px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:600,cursor:'pointer',backgroundColor:active?`${color}10`:'#fff',color:active?color:'#64748b',border:active?`1.5px solid ${color}30`:'1px solid #e2e8f0',boxShadow:active?`0 2px 8px ${color}15`:'none'}}>
@@ -193,15 +243,14 @@ export default function RankingPage() {
                 const esTop3   = i < 3;
                 const posColors= ['#f59e0b','#94a3b8','#d97706'];
                 const esMio    = j.nombre === miPosicion?.nombre;
-                // El jugador propio usa su avatar real, los demás usan seed basada en su nombre
-                const genericSeed = GENERIC_SEEDS[i % GENERIC_SEEDS.length];
+                // Avatar propio con customización, otros con gradiente basado en nombre
+                const avatarData = esMio ? myAvatar : defaultAvatar;
                 return (
                   <div key={i} className="row"
                     style={{display:'grid',gridTemplateColumns:'52px 44px 1fr 140px 110px',alignItems:'center',padding:'12px 16px',borderRadius:'12px',backgroundColor:esMio?`${ACC}06`:'#fff',border:esMio?`1.5px solid ${ACC}20`:'1px solid #e8eaf0',boxShadow:'0 1px 4px rgba(0,0,0,0.04)',position:'relative',overflow:'hidden',gap:'8px'}}>
                     {esMio && (
                       <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',background:`linear-gradient(180deg,${ACC},#818cf8)`}}/>
                     )}
-
                     {/* Posición */}
                     <div>
                       {esTop3
@@ -209,16 +258,11 @@ export default function RankingPage() {
                         : <span style={{fontSize:'12px',color:'#94a3b8',fontWeight:700}}>#{i+1}</span>
                       }
                     </div>
-
                     {/* Avatar */}
                     <div>
-                      {esMio
-                        ? <MiniAvatar avatarData={myAvatar} size={34}/>
-                        : <MiniAvatar seed={genericSeed} size={34}/>
-                      }
+                      <Avatar name={j.nombre} avatar={avatarData} size={34}/>
                     </div>
-
-                    {/* Nombre + tier */}
+                    {/* Nombre */}
                     <div style={{minWidth:0}}>
                       <p style={{fontSize:'13px',color:esMio?ACC:'#0f172a',fontWeight:esMio?700:500,marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                         {j.nombre}
@@ -228,14 +272,12 @@ export default function RankingPage() {
                       </p>
                       <p style={{fontSize:'11px',color:'#94a3b8'}}>{TIERS[j.tier-1]}</p>
                     </div>
-
-                    {/* Arena badge */}
+                    {/* Arena */}
                     <div style={{textAlign:'right'}}>
                       <span style={{fontSize:'11px',fontWeight:700,color,padding:'3px 8px',borderRadius:'6px',backgroundColor:`${color}10`,border:`1px solid ${color}20`}}>
                         {j.arena}
                       </span>
                     </div>
-
                     {/* Copas */}
                     <div style={{textAlign:'right'}}>
                       <span style={{fontSize:'15px',fontWeight:900,color:esTop3?posColors[i]:'#0f172a',letterSpacing:'-0.5px'}}>
