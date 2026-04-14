@@ -80,7 +80,7 @@ const ActivityHeatmap = ({ historial }) => {
         <div key={wi} style={{display:'flex',flexDirection:'column',gap:'3px'}}>
           {week.map((day, di) => (
             <div key={di} title={`${day.date.toLocaleDateString('es-ES')} · ${day.count} sesiones`}
-              style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:getColor(day.count),cursor:'default',transition:'transform .15s'}}
+              style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:getColor(day.count),cursor:'default'}}
               onMouseEnter={e=>e.target.style.transform='scale(1.4)'}
               onMouseLeave={e=>e.target.style.transform='scale(1)'}
             />
@@ -103,6 +103,100 @@ const calcStreak = (historial) => {
   }
   return streak;
 };
+
+// ── SVG ICONS ────────────────────────────────────────────────────────────────
+const IconCup = ({ size=14, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+    <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+  </svg>
+);
+
+const IconMicroscope = ({ size=14, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/>
+    <path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/>
+    <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+  </svg>
+);
+
+const IconShield = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+
+const IconBolt = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+);
+
+const IconTarget = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+  </svg>
+);
+
+const IconTrend = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
+const IconUsers = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const IconBook = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+);
+
+const IconAward = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+  </svg>
+);
+
+const IconUser = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const IconPlanet = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="7"/>
+    <path d="M3 12c0 0 5-8 18 0"/>
+    <path d="M3 12c0 0 5 8 18 0"/>
+  </svg>
+);
+
+const IconFire = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+  </svg>
+);
+
+const IconSword = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
+    <line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>
+  </svg>
+);
+
+const IconChart = ({ size=16, color='currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
 
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
@@ -242,6 +336,7 @@ export default function DashboardAnalista() {
     .reto-row:hover{background:#f0fdf4!important;}
     .bootcamp-row:hover{background:#faf5ff!important;}
     .play-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
+    .action-btn:hover{filter:brightness(1.06);transform:translateY(-2px)!important;}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
   `;
 
@@ -251,17 +346,6 @@ export default function DashboardAnalista() {
       <div style={{width:40,height:40,border:'3px solid #e2e8f0',borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
-
-  // Definición de nav items — Sesiones azul con copa, Labs verde con microscopio
-  const NAV_ITEMS = [
-    {label:'Training',     path:'/training'},
-    {label:'🏆 Sesiones',  path:'/sesion',  blue:true},
-    {label:'🔬 Labs',      path:'/lab',     green:true},
-    {label:'Ranking',      path:'/ranking'},
-    {label:'Certificado',  path:'/certificado'},
-    {label:'Perfil',       path:'/perfil'},
-    {label:'Empleo',       path:'#empleo'},
-  ];
 
   return (
     <>
@@ -277,23 +361,31 @@ export default function DashboardAnalista() {
             <img src="/logosoc.png" alt="SocBlast" style={{height:'28px'}}/>
             <span style={{fontSize:'15px',fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
           </div>
-          <div style={{display:'flex',gap:'2px'}}>
-            {NAV_ITEMS.map((item,i)=>(
-              <button key={i} className="nav-btn"
-                onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
-                style={{
-                  padding:'5px 14px',
-                  borderRadius:'7px',
-                  background:'none',
-                  border:'none',
-                  color: item.green ? '#059669' : item.blue ? '#2563eb' : '#64748b',
-                  fontSize:'13px',
-                  fontWeight: (item.green || item.blue) ? 700 : 500,
-                  cursor:'pointer',
-                }}>
-                {item.label}
-              </button>
-            ))}
+          <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
+            {/* Training */}
+            <button className="nav-btn" onClick={()=>navigate('/training')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconBook size={13} color="#64748b"/> Training
+            </button>
+            {/* Sesiones — azul con copa */}
+            <button className="nav-btn" onClick={()=>navigate('/sesion')} style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(37,99,235,0.06)',border:'1px solid rgba(37,99,235,0.15)',color:'#2563eb',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconCup size={13} color="#2563eb"/> Sesiones
+            </button>
+            {/* Labs — verde con microscopio */}
+            <button className="nav-btn" onClick={()=>navigate('/lab')} style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(5,150,105,0.06)',border:'1px solid rgba(5,150,105,0.15)',color:'#059669',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconMicroscope size={13} color="#059669"/> Labs
+            </button>
+            <button className="nav-btn" onClick={()=>navigate('/ranking')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconChart size={13} color="#64748b"/> Ranking
+            </button>
+            <button className="nav-btn" onClick={()=>navigate('/certificado')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconAward size={13} color="#64748b"/> Certificado
+            </button>
+            <button className="nav-btn" onClick={()=>navigate('/perfil')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconUser size={13} color="#64748b"/> Perfil
+            </button>
+            <button className="nav-btn" onClick={()=>document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'})} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <IconUsers size={13} color="#64748b"/> Empleo
+            </button>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'5px 12px',borderRadius:'8px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0'}}>
@@ -303,7 +395,7 @@ export default function DashboardAnalista() {
             </div>
             {streak > 0 && (
               <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'5px 10px',borderRadius:'8px',background:'linear-gradient(135deg,#fef3c7,#fffbeb)',border:'1px solid #fcd34d'}}>
-                <span style={{fontSize:'14px'}}>🔥</span>
+                <IconFire size={13} color="#92400e"/>
                 <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
               </div>
             )}
@@ -325,7 +417,7 @@ export default function DashboardAnalista() {
             </div>
             {streak > 1 && (
               <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#fffbeb,#fef3c7)',border:'1px solid #fcd34d',boxShadow:'0 2px 8px rgba(251,191,36,0.2)'}}>
-                <span style={{fontSize:'24px'}}>🔥</span>
+                <IconFire size={20} color="#92400e"/>
                 <div>
                   <div style={{fontSize:'18px',fontWeight:900,color:'#92400e',letterSpacing:'-0.5px',lineHeight:1}}>{streak} días</div>
                   <div style={{fontSize:'11px',color:'#b45309',fontWeight:600}}>racha activa</div>
@@ -337,6 +429,7 @@ export default function DashboardAnalista() {
           {/* FILA 1: ARENA + TERMINAL */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:'14px',marginBottom:'14px'}}>
             <div>
+              {/* Navigation dots */}
               <div style={{display:'flex',gap:'12px',marginBottom:'10px',alignItems:'center'}}>
                 {tierGroups.map(t=>(
                   <div key={t} style={{display:'flex',alignItems:'center',gap:'4px'}}>
@@ -350,44 +443,62 @@ export default function DashboardAnalista() {
                   </div>
                 ))}
               </div>
-              <div ref={sliderRef} className="arena-slide" key={arenaIdx}
-                onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
-                onClick={()=>navigate('/arenas')}
-                style={{borderRadius:'18px',padding:'30px 38px',background:`linear-gradient(135deg,${arena.gradFrom} 0%,${arena.gradTo} 100%)`,position:'relative',overflow:'hidden',boxShadow:`0 8px 40px rgba(${arena.colorRgb},.35)`,cursor:'pointer'}}>
-                <div style={{position:'absolute',top:'-50px',right:'-30px',width:'280px',height:'280px',borderRadius:'50%',background:'rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
-                <div style={{display:'flex',alignItems:'center',gap:'32px',position:'relative',zIndex:1}}>
-                  <div style={{flex:1}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
-                      {arena.id===arenaActual.id && <div style={{width:'5px',height:'5px',borderRadius:'50%',backgroundColor:'#fff',animation:'pulse 2s infinite'}}/>}
-                      <span style={{fontSize:'10px',color:'rgba(255,255,255,0.75)',letterSpacing:'2.5px',fontWeight:700,fontFamily:'monospace'}}>{arena.id===arenaActual.id?'TU ARENA ACTUAL':'ARENA'}</span>
+
+              {/* ARENA CARD con botones de acción arriba a la derecha */}
+              <div style={{position:'relative'}}>
+                {/* Botones de acción flotantes arriba a la derecha */}
+                <div style={{position:'absolute',top:'16px',right:'16px',zIndex:10,display:'flex',gap:'8px'}}>
+                  <button className="action-btn" onClick={(e)=>{ e.stopPropagation(); navigate('/sesion'); }}
+                    style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',borderRadius:'9px',background:'rgba(37,99,235,0.85)',backdropFilter:'blur(8px)',border:'1px solid rgba(147,197,253,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(37,99,235,0.4)'}}>
+                    <IconCup size={13} color="#fff"/>
+                    Sesión
+                  </button>
+                  <button className="action-btn" onClick={(e)=>{ e.stopPropagation(); navigate('/lab'); }}
+                    style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',borderRadius:'9px',background:'rgba(5,150,105,0.85)',backdropFilter:'blur(8px)',border:'1px solid rgba(110,231,183,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(16,185,129,0.4)'}}>
+                    <IconMicroscope size={13} color="#fff"/>
+                    Lab
+                  </button>
+                </div>
+
+                <div ref={sliderRef} className="arena-slide" key={arenaIdx}
+                  onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+                  onClick={()=>navigate('/arenas')}
+                  style={{borderRadius:'18px',padding:'30px 38px',background:`linear-gradient(135deg,${arena.gradFrom} 0%,${arena.gradTo} 100%)`,position:'relative',overflow:'hidden',boxShadow:`0 8px 40px rgba(${arena.colorRgb},.35)`,cursor:'pointer'}}>
+                  <div style={{position:'absolute',top:'-50px',right:'-30px',width:'280px',height:'280px',borderRadius:'50%',background:'rgba(255,255,255,0.08)',pointerEvents:'none'}}/>
+                  <div style={{display:'flex',alignItems:'center',gap:'32px',position:'relative',zIndex:1}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
+                        {arena.id===arenaActual.id && <div style={{width:'5px',height:'5px',borderRadius:'50%',backgroundColor:'#fff',animation:'pulse 2s infinite'}}/>}
+                        <span style={{fontSize:'10px',color:'rgba(255,255,255,0.75)',letterSpacing:'2.5px',fontWeight:700,fontFamily:'monospace'}}>{arena.id===arenaActual.id?'TU ARENA ACTUAL':'ARENA'}</span>
+                      </div>
+                      <h1 style={{fontSize:'clamp(38px,4.5vw,60px)',fontWeight:900,color:'#fff',letterSpacing:'-2px',lineHeight:1,marginBottom:'4px'}}>{arena.name}</h1>
+                      <p style={{fontSize:'11px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace',marginBottom:'18px'}}>{arena.min} — {arena.max===99999?'∞':arena.max} copas · División {arena.div}</p>
+                      {arena.id===arenaActual.id ? (
+                        <>
+                          <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'10px'}}>
+                            <span style={{fontSize:'36px',fontWeight:900,color:'#fff',letterSpacing:'-1px'}}>{copas.toLocaleString()}</span>
+                            <span style={{fontSize:'13px',color:'rgba(255,255,255,0.65)'}}>copas</span>
+                            {siguienteArena && <span style={{fontSize:'10px',color:'rgba(255,255,255,0.8)',padding:'2px 8px',borderRadius:'5px',background:'rgba(255,255,255,0.18)',fontFamily:'monospace'}}>{siguienteArena.min-copas} → {siguienteArena.name}</span>}
+                          </div>
+                          <div style={{height:'5px',borderRadius:'3px',backgroundColor:'rgba(255,255,255,0.22)',maxWidth:'300px',marginBottom:'6px'}}>
+                            <div style={{width:`${pctCopas}%`,height:'100%',borderRadius:'3px',backgroundColor:'#fff',opacity:.9}}/>
+                          </div>
+                          <p style={{fontSize:'10px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace'}}>{Math.round(pctCopas)}% hacia {siguienteArena?.name||'máximo'}</p>
+                        </>
+                      ) : (
+                        <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>{arena.min>copas?`Faltan ${(arena.min-copas).toLocaleString()} copas`:'✓ Arena superada'}</p>
+                      )}
                     </div>
-                    <h1 style={{fontSize:'clamp(38px,4.5vw,60px)',fontWeight:900,color:'#fff',letterSpacing:'-2px',lineHeight:1,marginBottom:'4px'}}>{arena.name}</h1>
-                    <p style={{fontSize:'11px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace',marginBottom:'18px'}}>{arena.min} — {arena.max===99999?'∞':arena.max} copas · División {arena.div}</p>
-                    {arena.id===arenaActual.id ? (
-                      <>
-                        <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'10px'}}>
-                          <span style={{fontSize:'36px',fontWeight:900,color:'#fff',letterSpacing:'-1px'}}>{copas.toLocaleString()}</span>
-                          <span style={{fontSize:'13px',color:'rgba(255,255,255,0.65)'}}>copas</span>
-                          {siguienteArena && <span style={{fontSize:'10px',color:'rgba(255,255,255,0.8)',padding:'2px 8px',borderRadius:'5px',background:'rgba(255,255,255,0.18)',fontFamily:'monospace'}}>{siguienteArena.min-copas} → {siguienteArena.name}</span>}
-                        </div>
-                        <div style={{height:'5px',borderRadius:'3px',backgroundColor:'rgba(255,255,255,0.22)',maxWidth:'300px',marginBottom:'6px'}}>
-                          <div style={{width:`${pctCopas}%`,height:'100%',borderRadius:'3px',backgroundColor:'#fff',opacity:.9}}/>
-                        </div>
-                        <p style={{fontSize:'10px',color:'rgba(255,255,255,0.55)',fontFamily:'monospace'}}>{Math.round(pctCopas)}% hacia {siguienteArena?.name||'máximo'}</p>
-                      </>
-                    ) : (
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>{arena.min>copas?`Faltan ${(arena.min-copas).toLocaleString()} copas`:'✓ Arena superada'}</p>
-                    )}
+                    <div className="planet-anim" style={{flexShrink:0,filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.3))'}}>
+                      <Planet tier={arena.tier} size={150}/>
+                    </div>
                   </div>
-                  <div className="planet-anim" style={{flexShrink:0,filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.3))'}}>
-                    <Planet tier={arena.tier} size={150}/>
+                  <div style={{display:'flex',justifyContent:'space-between',marginTop:'14px',position:'relative',zIndex:1}}>
+                    <button onClick={e=>{e.stopPropagation();arenaIdx>0&&setArenaIdx(i=>i-1);}} style={{background:'none',border:'none',color:arenaIdx>0?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx>0?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>← {arenaIdx>0?ARENAS[arenaIdx-1].name:''}</button>
+                    <button onClick={e=>{e.stopPropagation();arenaIdx<ARENAS.length-1&&setArenaIdx(i=>i+1);}} style={{background:'none',border:'none',color:arenaIdx<ARENAS.length-1?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx<ARENAS.length-1?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>{arenaIdx<ARENAS.length-1?ARENAS[arenaIdx+1].name:''} →</button>
                   </div>
+                  <div style={{position:'absolute',bottom:'14px',left:'50%',transform:'translateX(-50%)',fontSize:'10px',color:'rgba(255,255,255,0.4)',fontFamily:'monospace',letterSpacing:'1px'}}>CLICK PARA VER TODAS LAS ARENAS</div>
                 </div>
-                <div style={{display:'flex',justifyContent:'space-between',marginTop:'14px',position:'relative',zIndex:1}}>
-                  <button onClick={e=>{e.stopPropagation();arenaIdx>0&&setArenaIdx(i=>i-1);}} style={{background:'none',border:'none',color:arenaIdx>0?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx>0?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>← {arenaIdx>0?ARENAS[arenaIdx-1].name:''}</button>
-                  <button onClick={e=>{e.stopPropagation();arenaIdx<ARENAS.length-1&&setArenaIdx(i=>i+1);}} style={{background:'none',border:'none',color:arenaIdx<ARENAS.length-1?'rgba(255,255,255,0.55)':'transparent',cursor:arenaIdx<ARENAS.length-1?'pointer':'default',fontSize:'11px',fontFamily:'monospace'}}>{arenaIdx<ARENAS.length-1?ARENAS[arenaIdx+1].name:''} →</button>
-                </div>
-                <div style={{position:'absolute',bottom:'14px',left:'50%',transform:'translateX(-50%)',fontSize:'10px',color:'rgba(255,255,255,0.4)',fontFamily:'monospace',letterSpacing:'1px'}}>CLICK PARA VER TODAS LAS ARENAS</div>
               </div>
             </div>
 
@@ -412,16 +523,16 @@ export default function DashboardAnalista() {
           {/* STATS */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
             {[
-              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:'🏆', onClick:()=>navigate('/arenas')},
-              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`, color:'#4f46e5', light:'#eef2ff', icon:'⚡', onClick:()=>navigate('/perfil')},
-              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                 color:'#059669', light:'#ecfdf5', icon:'🎯', onClick:null},
-              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                  color:tierColor,  light:'#f8fafc', icon:'🛡️', onClick:()=>navigate('/perfil')},
+              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:<IconCup size={16} color={tierColors[arenaActual.tier]||'#d97706'}/>, onClick:()=>navigate('/arenas')},
+              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`, color:'#4f46e5', light:'#eef2ff', icon:<IconBolt size={16} color="#4f46e5"/>, onClick:()=>navigate('/perfil')},
+              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                 color:'#059669', light:'#ecfdf5', icon:<IconTarget size={16} color="#059669"/>, onClick:null},
+              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                  color:tierColor,  light:'#f8fafc', icon:<IconShield size={16} color={tierColor}/>, onClick:()=>navigate('/perfil')},
             ].map((s,i)=>(
               <div key={i} className="stat-card" onClick={s.onClick||undefined}
                 style={{padding:'22px 20px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',cursor:s.onClick?'pointer':'default',boxShadow:'0 2px 10px rgba(0,0,0,.05)',position:'relative',overflow:'hidden'}}>
                 <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:`linear-gradient(90deg,${s.color},${s.color}80)`,borderRadius:'16px 16px 0 0'}}/>
                 <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'14px'}}>
-                  <div style={{width:'40px',height:'40px',borderRadius:'12px',backgroundColor:s.light,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${s.color}15`,fontSize:'18px'}}>{s.icon}</div>
+                  <div style={{width:'40px',height:'40px',borderRadius:'12px',backgroundColor:s.light,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${s.color}15`}}>{s.icon}</div>
                   {s.onClick && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>}
                 </div>
                 <div style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'6px',fontFamily:'monospace'}}>{s.label}</div>
@@ -446,22 +557,21 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* ═══ CARRUSEL SESIONES + LABS ═══ */}
+          {/* CARRUSEL SESIONES + LABS — sin cards encima */}
           <div style={{marginBottom:'24px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div>
-                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'2px'}}>EMPIEZA A JUGAR</p>
-                <p style={{fontSize:'12px',color:'#64748b'}}>Elige entre sesiones competitivas o laboratorio de investigación</p>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'2px'}}>MODOS DE JUEGO</p>
+                <p style={{fontSize:'12px',color:'#64748b'}}>Sesiones competitivas o laboratorio de investigación</p>
               </div>
-              {/* Botoncitos pequeños igual que antes */}
               <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
                 <button onClick={()=>setCarruselIdx(0)}
-                  style={{padding:'5px 12px',borderRadius:'7px',border:`1px solid ${carruselIdx===0?'#2563eb':'#e2e8f0'}`,backgroundColor:carruselIdx===0?'#2563eb':'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer',transition:'all .2s'}}>
-                  🏆 Sesiones
+                  style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===0?'#2563eb':'#e2e8f0'}`,backgroundColor:carruselIdx===0?'#2563eb':'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                  <IconCup size={12} color={carruselIdx===0?'#fff':'#64748b'}/> Sesiones
                 </button>
                 <button onClick={()=>setCarruselIdx(1)}
-                  style={{padding:'5px 12px',borderRadius:'7px',border:`1px solid ${carruselIdx===1?'#059669':'#e2e8f0'}`,backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'11px',fontWeight:600,cursor:'pointer',transition:'all .2s'}}>
-                  🔬 Labs
+                  style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===1?'#059669':'#e2e8f0'}`,backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                  <IconMicroscope size={12} color={carruselIdx===1?'#fff':'#64748b'}/> Labs
                 </button>
               </div>
             </div>
@@ -473,7 +583,6 @@ export default function DashboardAnalista() {
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.15)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.2),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'absolute',bottom:'-60px',left:'30px',width:'200px',height:'200px',borderRadius:'50%',background:'radial-gradient(circle,rgba(37,99,235,0.15),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
                       <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(147,197,253,0.3)',backgroundColor:'rgba(37,99,235,0.25)',marginBottom:'16px'}}>
                         <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#93c5fd',animation:'pulse 2s infinite'}}/>
@@ -483,34 +592,31 @@ export default function DashboardAnalista() {
                         Demuestra tu nivel.<br/><span style={{color:'#93c5fd'}}>Gana copas. Sube de arena.</span>
                       </h2>
                       <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan. Cada victoria te acerca a la siguiente arena.
+                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan.
                       </p>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:'⚡',l:'Tiempo limitado'},{icon:'🏅',l:'Copas y arenas'},{icon:'🤖',l:'IA evalúa decisiones'},{icon:'📈',l:'Ranking global'}].map((f,i)=>(
+                        {[{icon:<IconBolt size={12} color="#93c5fd"/>,l:'Tiempo limitado'},{icon:<IconCup size={12} color="#93c5fd"/>,l:'Copas y arenas'},{icon:<IconShield size={12} color="#93c5fd"/>,l:'IA evalúa decisiones'},{icon:<IconTrend size={12} color="#93c5fd"/>,l:'Ranking global'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            <span style={{fontSize:'12px'}}>{f.icon}</span>
+                            {f.icon}
                             <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
                           </div>
                         ))}
                       </div>
                       <button className="play-btn" onClick={()=>navigate('/sesion')}
                         style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#2563eb,#3b82f6)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(37,99,235,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <IconBolt size={16} color="#fff"/>
                         Jugar ahora →
                       </button>
                     </div>
                     <div style={{flexShrink:0,position:'relative',zIndex:1}}>
-                      <div style={{textAlign:'center',marginBottom:'16px'}}>
-                        <div style={{fontSize:'72px',lineHeight:1,filter:'drop-shadow(0 8px 24px rgba(37,99,235,0.6))'}}>🏆</div>
-                      </div>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',width:'200px'}}>
                         {[
-                          {label:'Copas',   value:copas.toLocaleString(), color:'#fbbf24'},
-                          {label:'Arena',   value:arenaActual.name,       color:'#93c5fd'},
-                          {label:'Sesiones',value:sesiones,               color:'#34d399'},
-                          {label:'Tier',    value:`T${tier}`,             color:'#60a5fa'},
+                          {label:'Copas',    value:copas.toLocaleString(), color:'#fbbf24'},
+                          {label:'Arena',    value:arenaActual.name,       color:'#93c5fd'},
+                          {label:'Sesiones', value:sesiones,               color:'#34d399'},
+                          {label:'Tier',     value:`T${tier}`,             color:'#60a5fa'},
                         ].map((s,i)=>(
-                          <div key={i} style={{padding:'10px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.08)',textAlign:'center'}}>
+                          <div key={i} style={{padding:'12px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.08)',textAlign:'center'}}>
                             <div style={{fontSize:'16px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'3px'}}>{s.value}</div>
                             <div style={{fontSize:'9px',color:'rgba(255,255,255,0.35)',fontFamily:'monospace'}}>{s.label}</div>
                           </div>
@@ -530,55 +636,37 @@ export default function DashboardAnalista() {
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.15)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
-                    <div style={{position:'absolute',bottom:'-60px',left:'30px',width:'200px',height:'200px',borderRadius:'50%',background:'radial-gradient(circle,rgba(16,185,129,0.12),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
                       <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(110,231,183,0.25)',backgroundColor:'rgba(16,185,129,0.2)',marginBottom:'16px'}}>
                         <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#6ee7b7',animation:'pulse 2s infinite'}}/>
                         <span style={{fontSize:'10px',color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>LABORATORIO SOC — BETA</span>
-                        <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'rgba(52,211,153,0.25)',color:'#6ee7b7',border:'1px solid rgba(52,211,153,0.3)',fontWeight:700}}>NUEVO</span>
+                        <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'rgba(52,211,153,0.25)',color:'#6ee7b7',fontWeight:700}}>NUEVO</span>
                       </div>
                       <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>
                         Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span>
                       </h2>
                       <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        SIEM completo, Log Explorer, Network Map y evaluación IA del informe. La profundidad de tu análisis es lo que puntúa — no la velocidad.
+                        SIEM completo, Log Explorer, Network Map y evaluación IA del informe. La profundidad de tu análisis es lo que puntúa.
                       </p>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',maxWidth:'380px',marginBottom:'26px'}}>
-                        {[
-                          {icon:'⚡',title:'Sesiones SOC',   desc:'Velocidad · Copas · Ranking',      color:'#60a5fa'},
-                          {icon:'🔬',title:'Laboratorio SOC',desc:'Profundidad · XP · Badge especial', color:'#6ee7b7'},
-                        ].map((d,i)=>(
-                          <div key={i} style={{padding:'11px 13px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.22)',border:`1px solid ${d.color}28`}}>
-                            <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'4px'}}>
-                              <span style={{fontSize:'13px'}}>{d.icon}</span>
-                              <span style={{fontSize:'11px',fontWeight:700,color:d.color}}>{d.title}</span>
-                            </div>
-                            <p style={{fontSize:'10px',color:'rgba(255,255,255,0.38)',lineHeight:1.4}}>{d.desc}</p>
-                          </div>
-                        ))}
-                      </div>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:'🖥️',l:'SIEM con queries'},{icon:'📋',l:'Log Explorer'},{icon:'🌐',l:'Network Map'},{icon:'📝',l:'Ticket system'},{icon:'🤖',l:'Evaluación IA'}].map((f,i)=>(
+                        {[{icon:<IconChart size={12} color="#6ee7b7"/>,l:'SIEM con queries'},{icon:<IconBook size={12} color="#6ee7b7"/>,l:'Log Explorer'},{icon:<IconPlanet size={12} color="#6ee7b7"/>,l:'Network Map'},{icon:<IconShield size={12} color="#6ee7b7"/>,l:'Ticket system'},{icon:<IconTarget size={12} color="#6ee7b7"/>,l:'Evaluación IA'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            <span style={{fontSize:'12px'}}>{f.icon}</span>
+                            {f.icon}
                             <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
                           </div>
                         ))}
                       </div>
                       <button className="play-btn" onClick={()=>navigate('/lab')}
                         style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(16,185,129,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <span style={{fontSize:'16px'}}>🔬</span>
+                        <IconMicroscope size={16} color="#fff"/>
                         Entrar al Lab →
                       </button>
                     </div>
                     <div style={{flexShrink:0,position:'relative',zIndex:1}}>
-                      <div style={{textAlign:'center',marginBottom:'12px'}}>
-                        <div style={{fontSize:'72px',lineHeight:1,filter:'drop-shadow(0 8px 24px rgba(16,185,129,0.6))'}}>🔬</div>
-                      </div>
                       <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',width:'200px'}}>
                         <div style={{backgroundColor:'#0f172a',padding:'7px 10px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'4px'}}>
                           {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:c}}/>)}
-                          <span style={{fontSize:'8px',color:'#475569',fontFamily:'monospace',marginLeft:'5px'}}>siem — nighthawk</span>
+                          <span style={{fontSize:'8px',color:'#475569',fontFamily:'monospace',marginLeft:'5px'}}>siem</span>
                         </div>
                         <div style={{backgroundColor:'#020817',padding:'10px',fontFamily:'monospace',fontSize:'9px',lineHeight:1.9}}>
                           <p style={{color:'#475569'}}>siem&gt; index=windows</p>
@@ -586,17 +674,9 @@ export default function DashboardAnalista() {
                           <p style={{color:'#475569',marginTop:'4px'}}>siem&gt; index=dns</p>
                           <p style={{color:'#f87171'}}>c2.nighthawk.ru ⚠</p>
                           <div style={{marginTop:'6px',padding:'5px 7px',borderRadius:'5px',backgroundColor:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
-                            <p style={{color:'#34d399',fontSize:'8px'}}>📝 IOC detectado</p>
+                            <p style={{color:'#34d399',fontSize:'8px'}}>IOC detectado</p>
                           </div>
                         </div>
-                      </div>
-                      <div style={{marginTop:'8px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'5px'}}>
-                        {[{label:'Queries',value:'0/5',color:'#6ee7b7'},{label:'IOCs',value:'0',color:'#fbbf24'},{label:'Informe',value:'0%',color:'#818cf8'}].map((s,i)=>(
-                          <div key={i} style={{padding:'7px 5px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.07)',textAlign:'center'}}>
-                            <div style={{fontSize:'12px',fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
-                            <div style={{fontSize:'8px',color:'rgba(255,255,255,0.3)',marginTop:'2px'}}>{s.label}</div>
-                          </div>
-                        ))}
                       </div>
                     </div>
                   </div>
@@ -650,20 +730,19 @@ export default function DashboardAnalista() {
               <div style={{overflowX:'auto'}}><ActivityHeatmap historial={historial}/></div>
               <div style={{marginTop:'14px',padding:'12px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9'}}>
                 <div style={{display:'flex',justifyContent:'space-around'}}>
-                  <div style={{textAlign:'center'}}>
-                    <div style={{fontSize:'18px',fontWeight:900,color:ACC}}>{sesiones}</div>
-                    <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>sesiones</div>
-                  </div>
-                  <div style={{width:'1px',backgroundColor:'#e2e8f0'}}/>
-                  <div style={{textAlign:'center'}}>
-                    <div style={{fontSize:'18px',fontWeight:900,color:'#f59e0b'}}>{streak}</div>
-                    <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>racha</div>
-                  </div>
-                  <div style={{width:'1px',backgroundColor:'#e2e8f0'}}/>
-                  <div style={{textAlign:'center'}}>
-                    <div style={{fontSize:'18px',fontWeight:900,color:'#059669'}}>{historial.filter(s=>s.resultado?.copas_ganadas>0).length}</div>
-                    <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>victorias</div>
-                  </div>
+                  {[
+                    {value:sesiones, label:'sesiones', color:ACC},
+                    {value:streak,   label:'racha',    color:'#f59e0b'},
+                    {value:historial.filter(s=>s.resultado?.copas_ganadas>0).length, label:'victorias', color:'#059669'},
+                  ].map((s,i)=>(
+                    <React.Fragment key={i}>
+                      {i>0&&<div style={{width:'1px',backgroundColor:'#e2e8f0'}}/>}
+                      <div style={{textAlign:'center'}}>
+                        <div style={{fontSize:'18px',fontWeight:900,color:s.color}}>{s.value}</div>
+                        <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>{s.label}</div>
+                      </div>
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </div>
@@ -679,25 +758,29 @@ export default function DashboardAnalista() {
                   <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Cargando...</p>
                 ) : ranking.map((j,i)=>(
                   <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:i<ranking.length-1?'1px solid #f1f5f9':'none'}}>
-                    <div style={{width:'22px',height:'22px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:800,flexShrink:0}}>
-                      {i===0?'🥇':i===1?'🥈':'🥉'}
+                    <div style={{width:'24px',height:'24px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <span style={{fontSize:'13px'}}>{i===0?'1':i===1?'2':'3'}</span>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'12px',fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.nombre}</div>
                       <div style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{j.arena}</div>
                     </div>
-                    <div style={{fontSize:'12px',fontWeight:700,color:'#d97706',fontFamily:'monospace'}}>{j.copas?.toLocaleString()}🏆</div>
+                    <div style={{fontSize:'12px',fontWeight:700,color:'#d97706',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'3px'}}>
+                      {j.copas?.toLocaleString()} <IconCup size={10} color="#d97706"/>
+                    </div>
                   </div>
                 ))}
               </div>
               <div style={{padding:'16px 18px',borderRadius:'16px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',boxShadow:'0 2px 10px rgba(79,70,229,.08)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px'}}>
-                  <span style={{fontSize:'14px'}}>🎯</span>
+                  <IconTarget size={14} color={ACC}/>
                   <span style={{fontSize:'10px',color:ACC,fontWeight:700,letterSpacing:'1.5px',fontFamily:'monospace'}}>SIGUIENTE MISIÓN</span>
                 </div>
                 <p style={{fontSize:'12px',color:'#3730a3',fontWeight:600,marginBottom:'4px',lineHeight:1.4}}>Skill débil: <strong>{weakestSkill.label}</strong></p>
                 <p style={{fontSize:'11px',color:'#6366f1',lineHeight:1.5,marginBottom:'10px'}}>Entrena en {arenaActual.name} para subirla.</p>
-                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'9px',borderRadius:'9px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>Entrenar ahora →</button>
+                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'9px',borderRadius:'9px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}>
+                  <IconBolt size={12} color="#fff"/> Entrenar ahora →
+                </button>
               </div>
             </div>
           </div>
@@ -711,15 +794,17 @@ export default function DashboardAnalista() {
               </div>
               {historial.length===0 ? (
                 <div style={{textAlign:'center',padding:'20px 0'}}>
-                  <div style={{fontSize:'28px',marginBottom:'8px'}}>🎯</div>
-                  <p style={{fontSize:'12px',color:'#94a3b8'}}>Sin sesiones aún</p>
+                  <IconTarget size={28} color="#cbd5e1"/>
+                  <p style={{fontSize:'12px',color:'#94a3b8',marginTop:'8px'}}>Sin sesiones aún</p>
                   <button onClick={()=>navigate('/sesion')} style={{marginTop:'10px',padding:'8px 16px',borderRadius:'8px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>Empezar</button>
                 </div>
               ) : historial.slice(0,5).map((s,i)=>{
                 const res=s.resultado, copasGan=res?.copas_ganadas||0, media=res?.media_puntuacion||0, positive=copasGan>=0;
                 return (
                   <div key={i} className="hist-row" style={{display:'flex',alignItems:'center',gap:'10px',padding:'9px 11px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9',marginBottom:'6px'}}>
-                    <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:positive?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'14px'}}>{positive?'⬆':'⬇'}</div>
+                    <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:positive?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <IconTrend size={14} color={positive?'#059669':'#ef4444'} style={{transform:positive?'none':'rotate(180deg)'}}/>
+                    </div>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontSize:'11px',color:'#0f172a',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.titulo||'Sesión SOC'}</p>
                       <p style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{media}/20 pts</p>
@@ -734,16 +819,16 @@ export default function DashboardAnalista() {
               <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 {[
-                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',    path:'/lab',         color:'#059669', light:'#ecfdf5', emoji:'🔬'},
-                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed', light:'#f5f3ff', emoji:'📚'},
-                  {label:'Ranking Global',  desc:'Tu posición actual',      path:'/ranking',     color:'#d97706', light:'#fffbeb', emoji:'🏆'},
-                  {label:'Arenas',          desc:'Ver todas las divisiones',path:'/arenas',      color:'#0891b2', light:'#ecfeff', emoji:'🪐'},
-                  {label:'Mi Certificado',  desc:'QR verificable',          path:'/certificado', color:'#059669', light:'#ecfdf5', emoji:'🎓'},
-                  {label:'Perfil & Tiers',  desc:'Stats y progresión',      path:'/perfil',      color:'#2563eb', light:'#eff6ff', emoji:'👤'},
+                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',    path:'/lab',         color:'#059669', light:'#ecfdf5', icon:<IconMicroscope size={15} color="#059669"/>},
+                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed', light:'#f5f3ff', icon:<IconBook size={15} color="#7c3aed"/>},
+                  {label:'Ranking Global',  desc:'Tu posición actual',      path:'/ranking',     color:'#d97706', light:'#fffbeb', icon:<IconChart size={15} color="#d97706"/>},
+                  {label:'Arenas',          desc:'Ver todas las divisiones',path:'/arenas',      color:'#0891b2', light:'#ecfeff', icon:<IconPlanet size={15} color="#0891b2"/>},
+                  {label:'Mi Certificado',  desc:'QR verificable',          path:'/certificado', color:'#059669', light:'#ecfdf5', icon:<IconAward size={15} color="#059669"/>},
+                  {label:'Perfil & Tiers',  desc:'Stats y progresión',      path:'/perfil',      color:'#2563eb', light:'#eff6ff', icon:<IconUser size={15} color="#2563eb"/>},
                 ].map((item,i)=>(
                   <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
                     style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'11px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
-                    <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}15`,fontSize:'16px'}}>{item.emoji}</div>
+                    <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}15`}}>{item.icon}</div>
                     <div style={{flex:1}}>
                       <span style={{fontSize:'12px',color:'#0f172a',fontWeight:600}}>{item.label}</span>
                       <span style={{fontSize:'10px',color:'#94a3b8',marginLeft:'6px'}}>{item.desc}</span>
@@ -774,7 +859,7 @@ export default function DashboardAnalista() {
                 </div>
               </div>
               <div style={{position:'relative',zIndex:1,display:'flex',gap:'6px',marginTop:'24px'}}>
-                {[{id:'ofertas',label:'💼 Ofertas'},{id:'certs',label:'🎓 Certificaciones'},{id:'bootcamps',label:'🚀 Bootcamps'},{id:'retos',label:'⚔️ Retos gratuitos'}].map(tab=>(
+                {[{id:'ofertas',label:'Ofertas'},{id:'certs',label:'Certificaciones'},{id:'bootcamps',label:'Bootcamps'},{id:'retos',label:'Retos gratuitos'}].map(tab=>(
                   <button key={tab.id} className="empleo-tab" onClick={()=>setEmpleoTab(tab.id)}
                     style={{padding:'8px 18px',borderRadius:'9px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:600,background:empleoTab===tab.id?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.06)',color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.45)',borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent'}}>
                     {tab.label}
@@ -790,12 +875,14 @@ export default function DashboardAnalista() {
                     <div key={i} className="oferta-card" style={{padding:'24px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',position:'relative',overflow:'hidden',cursor:'pointer'}}>
                       <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',backgroundColor:o.color}}/>
                       {o.badge&&<span style={{position:'absolute',top:'14px',right:'14px',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'5px',background:o.badge==='nueva'?'#ecfdf5':'#fef2f2',color:o.badge==='nueva'?'#059669':'#ef4444',border:`1px solid ${o.badge==='nueva'?'#a7f3d0':'#fecaca'}`}}>{o.badge.toUpperCase()}</span>}
-                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px',fontSize:'18px'}}>🏢</div>
+                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}>
+                        <IconUsers size={18} color={o.color}/>
+                      </div>
                       <div style={{fontSize:'11px',color:'#94a3b8',marginBottom:'4px'}}>{o.empresa}</div>
                       <div style={{fontSize:'16px',fontWeight:800,color:'#0f172a',marginBottom:'8px',lineHeight:1.2}}>{o.rol}</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'16px'}}>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>📍 {o.ubicacion}</div>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>💰 {o.salario}</div>
+                        <div style={{fontSize:'12px',color:'#64748b'}}>Ubicación: {o.ubicacion}</div>
+                        <div style={{fontSize:'12px',color:'#64748b'}}>Salario: {o.salario}</div>
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                         <span style={{fontSize:'10px',fontWeight:700,color:o.color,padding:'3px 8px',borderRadius:'5px',background:`${o.color}12`}}>Req: {o.arena}</span>
@@ -820,7 +907,9 @@ export default function DashboardAnalista() {
                   <div key={i} className="cert-row" onClick={()=>window.open(c.url,'_blank')}
                     style={{display:'flex',alignItems:'center',gap:'16px',padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',backgroundColor:c.color}}/>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'20px'}}>🎓</div>
+                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <IconAward size={20} color={c.color}/>
+                    </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'3px'}}>{c.nombre}</div>
                       <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
@@ -841,16 +930,18 @@ export default function DashboardAnalista() {
               <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
                 {BOOTCAMPS_MOCK.map((b,i)=>(
                   <div key={i} className="bootcamp-row" style={{display:'flex',alignItems:'center',gap:'16px',padding:'18px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'20px'}}>🚀</div>
+                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <IconBook size={20} color="#7c3aed"/>
+                    </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{b.nombre}</div>
                       <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
                         <span style={{fontSize:'11px',color:'#7c3aed',padding:'2px 7px',borderRadius:'4px',background:'#f5f3ff'}}>{b.tipo}</span>
-                        <span style={{fontSize:'11px',color:'#64748b'}}>⏱ {b.duracion}</span>
-                        <span style={{fontSize:'11px',color:'#059669',fontWeight:600}}>💰 {b.precio}</span>
+                        <span style={{fontSize:'11px',color:'#64748b'}}>{b.duracion}</span>
+                        <span style={{fontSize:'11px',color:'#059669',fontWeight:600}}>{b.precio}</span>
                       </div>
                     </div>
-                    <span style={{fontSize:'13px',fontWeight:700,color:'#f59e0b'}}>{b.stars} ⭐</span>
+                    <span style={{fontSize:'13px',fontWeight:700,color:'#f59e0b'}}>{b.stars} ★</span>
                     <button style={{padding:'8px 16px',borderRadius:'8px',background:'#f5f3ff',border:'1px solid #ddd6fe',color:'#7c3aed',fontSize:'12px',fontWeight:700,cursor:'pointer',flexShrink:0}}>Ver →</button>
                   </div>
                 ))}
@@ -862,12 +953,14 @@ export default function DashboardAnalista() {
                 {RETOS_MOCK.map((r,i)=>(
                   <div key={i} className="reto-row" onClick={()=>window.open(r.url,'_blank')}
                     style={{display:'flex',alignItems:'center',gap:'14px',padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'18px'}}>⚔️</div>
+                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <IconSword size={18} color="#059669"/>
+                    </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'13px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{r.nombre}</div>
                       <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
                         <span style={{fontSize:'10px',color:'#059669',padding:'2px 6px',borderRadius:'4px',background:'#ecfdf5'}}>{r.tipo}</span>
-                        {r.gratis&&<span style={{fontSize:'10px',color:'#059669',fontWeight:700}}>✓ GRATIS</span>}
+                        {r.gratis&&<span style={{fontSize:'10px',color:'#059669',fontWeight:700}}>Gratis</span>}
                       </div>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
