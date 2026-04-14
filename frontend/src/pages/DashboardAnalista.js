@@ -60,10 +60,7 @@ const ActivityHeatmap = ({ historial }) => {
     const d = new Date(today);
     d.setDate(today.getDate() - (days - 1 - i));
     const dateStr = d.toISOString().split('T')[0];
-    const count = historial.filter(s => {
-      const sDate = new Date(s.inicio * 1000).toISOString().split('T')[0];
-      return sDate === dateStr;
-    }).length;
+    const count = historial.filter(s => new Date(s.inicio * 1000).toISOString().split('T')[0] === dateStr).length;
     return { date: d, count };
   });
   const weeks = [];
@@ -94,119 +91,56 @@ const ActivityHeatmap = ({ historial }) => {
 const calcStreak = (historial) => {
   if (!historial.length) return 0;
   const dates = [...new Set(historial.map(s => new Date(s.inicio * 1000).toISOString().split('T')[0]))].sort().reverse();
-  let streak = 0;
-  let current = new Date();
+  let streak = 0, current = new Date();
   for (const d of dates) {
     const diff = Math.floor((current - new Date(d)) / 86400000);
-    if (diff <= 1) { streak++; current = new Date(d); }
-    else break;
+    if (diff <= 1) { streak++; current = new Date(d); } else break;
   }
   return streak;
 };
 
-// ── SVG ICONS ────────────────────────────────────────────────────────────────
-const IconCup = ({ size=14, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-    <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-  </svg>
-);
+// SVG Icons
+const IC = {
+  cup:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+  flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
+  bolt:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  shield: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  target: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  trend:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+  book:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  award:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
+  user:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  users:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  chart:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+  planet: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="7"/><path d="M3 12c0 0 5-8 18 0"/><path d="M3 12c0 0 5 8 18 0"/></svg>,
+  fire:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+  brain:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
+  eye:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+  network:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="6" height="6"/><rect x="16" y="2" width="6" height="6"/><rect x="9" y="16" width="6" height="6"/><path d="M5 8v4h14V8"/><path d="M12 12v4"/></svg>,
+  search: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  bug:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>,
+};
 
-const IconMicroscope = ({ size=14, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/>
-    <path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/>
-    <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
-  </svg>
-);
-
-const IconShield = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-  </svg>
-);
-
-const IconBolt = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-  </svg>
-);
-
-const IconTarget = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-  </svg>
-);
-
-const IconTrend = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-  </svg>
-);
-
-const IconUsers = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-  </svg>
-);
-
-const IconBook = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-  </svg>
-);
-
-const IconAward = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-  </svg>
-);
-
-const IconUser = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-  </svg>
-);
-
-const IconPlanet = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="7"/>
-    <path d="M3 12c0 0 5-8 18 0"/>
-    <path d="M3 12c0 0 5 8 18 0"/>
-  </svg>
-);
-
-const IconFire = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-  </svg>
-);
-
-const IconSword = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
-    <line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>
-  </svg>
-);
-
-const IconChart = ({ size=16, color='currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-  </svg>
+const Icon = ({name, size=15, color='currentColor'}) => (
+  <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',color,width:size,height:size,flexShrink:0}}>
+    {React.cloneElement(IC[name]||IC.target, {width:size,height:size})}
+  </span>
 );
 
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
-const SKILLS = [
-  {key:'analisis_logs',label:'Análisis de Logs'},{key:'deteccion_amenazas',label:'Detección Amenazas'},
-  {key:'respuesta_incidentes',label:'Respuesta Incidentes'},{key:'threat_hunting',label:'Threat Hunting'},
-  {key:'forense_digital',label:'Forense Digital'},{key:'gestion_vulnerabilidades',label:'Gestión Vulns'},
-  {key:'inteligencia_amenazas',label:'Intel. Amenazas'},
-];
 const ACC = '#4f46e5';
+
+const SKILLS = [
+  {key:'analisis_logs',         label:'Análisis de Logs',      icon:'search', color:'#3b82f6', desc:'Lectura e interpretación de logs del sistema'},
+  {key:'deteccion_amenazas',    label:'Detección de Amenazas', icon:'eye',    color:'#4f46e5', desc:'Identificación de IOCs y patrones maliciosos'},
+  {key:'respuesta_incidentes',  label:'Respuesta Incidentes',  icon:'bolt',   color:'#f59e0b', desc:'Contención, erradicación y recuperación'},
+  {key:'threat_hunting',        label:'Threat Hunting',        icon:'target', color:'#8b5cf6', desc:'Búsqueda proactiva de amenazas ocultas'},
+  {key:'forense_digital',       label:'Forense Digital',       icon:'bug',    color:'#ec4899', desc:'Análisis de evidencias y artefactos'},
+  {key:'gestion_vulnerabilidades',label:'Gestión de Vulns',    icon:'shield', color:'#f97316', desc:'Evaluación y priorización de vulnerabilidades'},
+  {key:'inteligencia_amenazas', label:'Intel. de Amenazas',    icon:'brain',  color:'#10b981', desc:'CTI, TTPs y fuentes de inteligencia'},
+  {key:'siem_queries',          label:'SIEM & Queries',        icon:'network',color:'#0891b2', desc:'Splunk, Elastic, reglas de correlación'},
+];
 
 const OFERTAS_MOCK = [
   { empresa:'CiberShield S.L.', rol:'Analista SOC L1', ubicacion:'Madrid · Híbrido', salario:'24K–30K', arena:'Bronce I+', badge:'nueva', color:'#059669' },
@@ -241,6 +175,7 @@ export default function DashboardAnalista() {
   const [empleoTab, setEmpleoTab] = useState('ofertas');
   const [ranking, setRanking] = useState([]);
   const [carruselIdx, setCarruselIdx] = useState(0);
+  const [skillFocus, setSkillFocus] = useState(null);
   const sliderRef = useRef(null);
   const startX = useRef(null);
 
@@ -271,14 +206,8 @@ export default function DashboardAnalista() {
     try {
       const r = await axios.get(`${API}/api/me`, { headers:{ Authorization:`Bearer ${token}` } });
       setUserData(r.data);
-      try {
-        const h = await axios.get(`${API}/api/sesiones/historial`, { headers:{ Authorization:`Bearer ${token}` } });
-        setHistorial(h.data || []);
-      } catch {}
-      try {
-        const rk = await axios.get(`${API}/api/ranking`, { headers:{ Authorization:`Bearer ${token}` } });
-        setRanking((rk.data?.jugadores || []).slice(0, 3));
-      } catch {}
+      try { const h = await axios.get(`${API}/api/sesiones/historial`, { headers:{ Authorization:`Bearer ${token}` } }); setHistorial(h.data || []); } catch {}
+      try { const rk = await axios.get(`${API}/api/ranking`, { headers:{ Authorization:`Bearer ${token}` } }); setRanking((rk.data?.jugadores || []).slice(0, 3)); } catch {}
     } catch { logout(); navigate('/login'); }
   };
 
@@ -286,10 +215,7 @@ export default function DashboardAnalista() {
   const handleTouchEnd = e => {
     if (!startX.current) return;
     const d = startX.current - e.changedTouches[0].clientX;
-    if (Math.abs(d) > 50) {
-      if (d > 0 && arenaIdx < ARENAS.length-1) setArenaIdx(i=>i+1);
-      if (d < 0 && arenaIdx > 0) setArenaIdx(i=>i-1);
-    }
+    if (Math.abs(d) > 50) { if (d > 0 && arenaIdx < ARENAS.length-1) setArenaIdx(i=>i+1); if (d < 0 && arenaIdx > 0) setArenaIdx(i=>i-1); }
     startX.current = null;
   };
 
@@ -312,7 +238,9 @@ export default function DashboardAnalista() {
   const tierNames = {bronce:'Bronce',plata:'Plata',oro:'Oro',diamante:'Diamante'};
   const tierColors = {bronce:'#d97706',plata:'#94a3b8',oro:'#f59e0b',diamante:'#3b82f6'};
   const skillEntries = SKILLS.map(s => ({...s, val: skills?.[s.key]||0}));
-  const weakestSkill = [...skillEntries].sort((a,b)=>a.val-b.val)[0];
+  const weakSkills = [...skillEntries].sort((a,b)=>a.val-b.val).slice(0,3);
+  const topSkills  = [...skillEntries].sort((a,b)=>b.val-a.val).slice(0,3);
+  const avgSkill   = Math.round(skillEntries.reduce((acc,s)=>acc+s.val,0)/skillEntries.length*10)/10;
 
   const css = `
     @keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -321,22 +249,23 @@ export default function DashboardAnalista() {
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+    @keyframes skillPulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,0.3);}50%{box-shadow:0 0 0 6px rgba(79,70,229,0);}}
     .arena-slide{animation:slideIn 0.3s ease forwards;}
     .planet-anim{animation:float 5s ease-in-out infinite;}
     .nav-btn:hover{background:#f1f5f9!important;color:#0f172a!important;}
-    .stat-card{transition:transform .2s ease,box-shadow .2s ease;}
     .stat-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.1)!important;}
     .quick-btn:hover{background:#f0f4ff!important;border-color:#c7d2fe!important;}
-    .skill-bar-fill{transition:width 1s ease;}
+    .skill-bar-fill{transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+    .skill-row:hover{background:#f8faff!important;border-color:#c7d2fe!important;}
     .hist-row:hover{background:#f8fafc!important;}
     .arena-dot:hover{transform:scale(1.4);}
     .empleo-tab:hover{background:rgba(79,70,229,0.06)!important;}
-    .oferta-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.1)!important;border-color:#c7d2fe!important;}
+    .oferta-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.1)!important;}
     .cert-row:hover{background:#f8faff!important;}
     .reto-row:hover{background:#f0fdf4!important;}
     .bootcamp-row:hover{background:#faf5ff!important;}
     .play-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
-    .action-btn:hover{filter:brightness(1.06);transform:translateY(-2px)!important;}
+    .action-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
   `;
 
@@ -352,7 +281,6 @@ export default function DashboardAnalista() {
       <style>{css}</style>
       <div style={{position:'fixed',inset:0,background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',zIndex:-1}}/>
       <ParticleCanvas/>
-
       <div style={{position:'relative',zIndex:1,minHeight:'100vh',fontFamily:"'Inter',-apple-system,sans-serif",color:'#0f172a'}}>
 
         {/* NAVBAR */}
@@ -362,29 +290,26 @@ export default function DashboardAnalista() {
             <span style={{fontSize:'15px',fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
           </div>
           <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
-            {/* Training */}
-            <button className="nav-btn" onClick={()=>navigate('/training')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconBook size={13} color="#64748b"/> Training
+            {[
+              {label:'Training',   icon:'book',   path:'/training'},
+              {label:'Ranking',    icon:'chart',  path:'/ranking'},
+              {label:'Certificado',icon:'award',  path:'/certificado'},
+              {label:'Perfil',     icon:'user',   path:'/perfil'},
+              {label:'Empleo',     icon:'users',  path:'#empleo'},
+            ].map((item,i)=>(
+              <button key={i} className="nav-btn"
+                onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
+                style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+                <Icon name={item.icon} size={13} color="#64748b"/> {item.label}
+              </button>
+            ))}
+            <button className="nav-btn" onClick={()=>navigate('/sesion')}
+              style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(37,99,235,0.07)',border:'1px solid rgba(37,99,235,0.18)',color:'#2563eb',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <Icon name="cup" size={13} color="#2563eb"/> Sesiones
             </button>
-            {/* Sesiones — azul con copa */}
-            <button className="nav-btn" onClick={()=>navigate('/sesion')} style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(37,99,235,0.06)',border:'1px solid rgba(37,99,235,0.15)',color:'#2563eb',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconCup size={13} color="#2563eb"/> Sesiones
-            </button>
-            {/* Labs — verde con microscopio */}
-            <button className="nav-btn" onClick={()=>navigate('/lab')} style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(5,150,105,0.06)',border:'1px solid rgba(5,150,105,0.15)',color:'#059669',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconMicroscope size={13} color="#059669"/> Labs
-            </button>
-            <button className="nav-btn" onClick={()=>navigate('/ranking')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconChart size={13} color="#64748b"/> Ranking
-            </button>
-            <button className="nav-btn" onClick={()=>navigate('/certificado')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconAward size={13} color="#64748b"/> Certificado
-            </button>
-            <button className="nav-btn" onClick={()=>navigate('/perfil')} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconUser size={13} color="#64748b"/> Perfil
-            </button>
-            <button className="nav-btn" onClick={()=>document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'})} style={{padding:'5px 12px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
-              <IconUsers size={13} color="#64748b"/> Empleo
+            <button className="nav-btn" onClick={()=>navigate('/lab')}
+              style={{padding:'5px 12px',borderRadius:'7px',background:'rgba(5,150,105,0.07)',border:'1px solid rgba(5,150,105,0.18)',color:'#059669',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+              <Icon name="flask" size={13} color="#059669"/> Labs
             </button>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
@@ -395,7 +320,7 @@ export default function DashboardAnalista() {
             </div>
             {streak > 0 && (
               <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'5px 10px',borderRadius:'8px',background:'linear-gradient(135deg,#fef3c7,#fffbeb)',border:'1px solid #fcd34d'}}>
-                <IconFire size={13} color="#92400e"/>
+                <Icon name="fire" size={13} color="#92400e"/>
                 <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
               </div>
             )}
@@ -403,7 +328,7 @@ export default function DashboardAnalista() {
           </div>
         </nav>
 
-        <div style={{maxWidth:'1160px',margin:'0 auto',padding:'24px 40px 72px'}}>
+        <div style={{maxWidth:'1200px',margin:'0 auto',padding:'24px 40px 72px'}}>
 
           {/* BIENVENIDA */}
           <div style={{marginBottom:'24px',display:'flex',alignItems:'flex-start',justifyContent:'space-between'}}>
@@ -412,12 +337,12 @@ export default function DashboardAnalista() {
                 Bienvenido de nuevo, <span style={{color:ACC}}>{user?.nombre}</span>
               </h1>
               <p style={{fontSize:'13px',color:'#94a3b8',fontFamily:'monospace'}}>
-                {arenaActual.name} · Tier {tier} — {TIERS[tier]} · {sesiones} sesiones completadas
+                {arenaActual.name} · Tier {tier} — {TIERS[tier]} · {sesiones} sesiones · Media skills: <span style={{color:ACC,fontWeight:700}}>{avgSkill}/10</span>
               </p>
             </div>
             {streak > 1 && (
               <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#fffbeb,#fef3c7)',border:'1px solid #fcd34d',boxShadow:'0 2px 8px rgba(251,191,36,0.2)'}}>
-                <IconFire size={20} color="#92400e"/>
+                <Icon name="fire" size={20} color="#92400e"/>
                 <div>
                   <div style={{fontSize:'18px',fontWeight:900,color:'#92400e',letterSpacing:'-0.5px',lineHeight:1}}>{streak} días</div>
                   <div style={{fontSize:'11px',color:'#b45309',fontWeight:600}}>racha activa</div>
@@ -429,7 +354,6 @@ export default function DashboardAnalista() {
           {/* FILA 1: ARENA + TERMINAL */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:'14px',marginBottom:'14px'}}>
             <div>
-              {/* Navigation dots */}
               <div style={{display:'flex',gap:'12px',marginBottom:'10px',alignItems:'center'}}>
                 {tierGroups.map(t=>(
                   <div key={t} style={{display:'flex',alignItems:'center',gap:'4px'}}>
@@ -443,23 +367,14 @@ export default function DashboardAnalista() {
                   </div>
                 ))}
               </div>
-
-              {/* ARENA CARD con botones de acción arriba a la derecha */}
               <div style={{position:'relative'}}>
-                {/* Botones de acción flotantes arriba a la derecha */}
-                <div style={{position:'absolute',top:'16px',right:'16px',zIndex:10,display:'flex',gap:'8px'}}>
-                  <button className="action-btn" onClick={(e)=>{ e.stopPropagation(); navigate('/sesion'); }}
-                    style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',borderRadius:'9px',background:'rgba(37,99,235,0.85)',backdropFilter:'blur(8px)',border:'1px solid rgba(147,197,253,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(37,99,235,0.4)'}}>
-                    <IconCup size={13} color="#fff"/>
-                    Sesión
-                  </button>
-                  <button className="action-btn" onClick={(e)=>{ e.stopPropagation(); navigate('/lab'); }}
-                    style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',borderRadius:'9px',background:'rgba(5,150,105,0.85)',backdropFilter:'blur(8px)',border:'1px solid rgba(110,231,183,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(16,185,129,0.4)'}}>
-                    <IconMicroscope size={13} color="#fff"/>
-                    Lab
+                {/* Botones flotantes */}
+                <div style={{position:'absolute',top:'14px',right:'14px',zIndex:10,display:'flex',gap:'7px'}}>
+                  <button className="action-btn" onClick={e=>{e.stopPropagation();navigate('/sesion');}}
+                    style={{display:'flex',alignItems:'center',gap:'5px',padding:'7px 13px',borderRadius:'8px',background:'rgba(37,99,235,0.88)',backdropFilter:'blur(8px)',border:'1px solid rgba(147,197,253,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 3px 14px rgba(37,99,235,0.4)'}}>
+                    <Icon name="cup" size={12} color="#fff"/> Sesión
                   </button>
                 </div>
-
                 <div ref={sliderRef} className="arena-slide" key={arenaIdx}
                   onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
                   onClick={()=>navigate('/arenas')}
@@ -501,7 +416,6 @@ export default function DashboardAnalista() {
                 </div>
               </div>
             </div>
-
             {/* TERMINAL */}
             <div style={{display:'flex',flexDirection:'column'}}>
               <div style={{flex:1,borderRadius:'14px',overflow:'hidden',border:'1px solid #e2e8f0',backgroundColor:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
@@ -523,17 +437,19 @@ export default function DashboardAnalista() {
           {/* STATS */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
             {[
-              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:<IconCup size={16} color={tierColors[arenaActual.tier]||'#d97706'}/>, onClick:()=>navigate('/arenas')},
-              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`, color:'#4f46e5', light:'#eef2ff', icon:<IconBolt size={16} color="#4f46e5"/>, onClick:()=>navigate('/perfil')},
-              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                 color:'#059669', light:'#ecfdf5', icon:<IconTarget size={16} color="#059669"/>, onClick:null},
-              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                  color:tierColor,  light:'#f8fafc', icon:<IconShield size={16} color={tierColor}/>, onClick:()=>navigate('/perfil')},
+              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:'cup',    onClick:()=>navigate('/arenas')},
+              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`, color:'#4f46e5', light:'#eef2ff', icon:'bolt',   onClick:()=>navigate('/perfil')},
+              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                 color:'#059669', light:'#ecfdf5', icon:'target', onClick:null},
+              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                  color:tierColor,  light:'#f8fafc', icon:'shield', onClick:()=>navigate('/perfil')},
             ].map((s,i)=>(
               <div key={i} className="stat-card" onClick={s.onClick||undefined}
                 style={{padding:'22px 20px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',cursor:s.onClick?'pointer':'default',boxShadow:'0 2px 10px rgba(0,0,0,.05)',position:'relative',overflow:'hidden'}}>
                 <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:`linear-gradient(90deg,${s.color},${s.color}80)`,borderRadius:'16px 16px 0 0'}}/>
                 <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'14px'}}>
-                  <div style={{width:'40px',height:'40px',borderRadius:'12px',backgroundColor:s.light,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${s.color}15`}}>{s.icon}</div>
-                  {s.onClick && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>}
+                  <div style={{width:'40px',height:'40px',borderRadius:'12px',backgroundColor:s.light,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${s.color}15`}}>
+                    <Icon name={s.icon} size={18} color={s.color}/>
+                  </div>
+                  {s.onClick && <Icon name="trend" size={14} color="#cbd5e1"/>}
                 </div>
                 <div style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'6px',fontFamily:'monospace'}}>{s.label}</div>
                 <div style={{fontSize:'26px',fontWeight:900,color:s.color,letterSpacing:'-0.8px',lineHeight:1,marginBottom:'5px'}}>{s.value}</div>
@@ -557,30 +473,26 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* CARRUSEL SESIONES + LABS — sin cards encima */}
-          <div style={{marginBottom:'24px'}}>
+          {/* CARRUSEL */}
+          <div style={{marginBottom:'28px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'2px'}}>MODOS DE JUEGO</p>
                 <p style={{fontSize:'12px',color:'#64748b'}}>Sesiones competitivas o laboratorio de investigación</p>
               </div>
-              <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
-                <button onClick={()=>setCarruselIdx(0)}
-                  style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===0?'#2563eb':'#e2e8f0'}`,backgroundColor:carruselIdx===0?'#2563eb':'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
-                  <IconCup size={12} color={carruselIdx===0?'#fff':'#64748b'}/> Sesiones
+              <div style={{display:'flex',gap:'6px'}}>
+                <button onClick={()=>setCarruselIdx(0)} style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===0?'#2563eb':'#e2e8f0'}`,backgroundColor:carruselIdx===0?'#2563eb':'#fff',color:carruselIdx===0?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+                  <Icon name="cup" size={12} color={carruselIdx===0?'#fff':'#64748b'}/> Sesiones
                 </button>
-                <button onClick={()=>setCarruselIdx(1)}
-                  style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===1?'#059669':'#e2e8f0'}`,backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
-                  <IconMicroscope size={12} color={carruselIdx===1?'#fff':'#64748b'}/> Labs
+                <button onClick={()=>setCarruselIdx(1)} style={{padding:'6px 14px',borderRadius:'8px',border:`1px solid ${carruselIdx===1?'#059669':'#e2e8f0'}`,backgroundColor:carruselIdx===1?'#059669':'#fff',color:carruselIdx===1?'#fff':'#64748b',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+                  <Icon name="flask" size={12} color={carruselIdx===1?'#fff':'#64748b'}/> Labs
                 </button>
               </div>
             </div>
-
             <div style={{overflow:'hidden',borderRadius:'20px'}}>
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
-
                 {/* CARD SESIONES */}
-                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.15)'}}>
+                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.2),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
@@ -592,32 +504,25 @@ export default function DashboardAnalista() {
                         Demuestra tu nivel.<br/><span style={{color:'#93c5fd'}}>Gana copas. Sube de arena.</span>
                       </h2>
                       <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan.
+                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan. La IA evalúa tus skills en cada decisión.
                       </p>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:<IconBolt size={12} color="#93c5fd"/>,l:'Tiempo limitado'},{icon:<IconCup size={12} color="#93c5fd"/>,l:'Copas y arenas'},{icon:<IconShield size={12} color="#93c5fd"/>,l:'IA evalúa decisiones'},{icon:<IconTrend size={12} color="#93c5fd"/>,l:'Ranking global'}].map((f,i)=>(
+                        {[{n:'bolt',l:'Tiempo limitado'},{n:'cup',l:'Copas y arenas'},{n:'brain',l:'Skills evaluadas'},{n:'trend',l:'Ranking global'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            {f.icon}
-                            <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
+                            <Icon name={f.n} size={12} color="#93c5fd"/><span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
                           </div>
                         ))}
                       </div>
                       <button className="play-btn" onClick={()=>navigate('/sesion')}
                         style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#2563eb,#3b82f6)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(37,99,235,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <IconBolt size={16} color="#fff"/>
-                        Jugar ahora →
+                        <Icon name="bolt" size={16} color="#fff"/> Jugar ahora →
                       </button>
                     </div>
                     <div style={{flexShrink:0,position:'relative',zIndex:1}}>
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',width:'200px'}}>
-                        {[
-                          {label:'Copas',    value:copas.toLocaleString(), color:'#fbbf24'},
-                          {label:'Arena',    value:arenaActual.name,       color:'#93c5fd'},
-                          {label:'Sesiones', value:sesiones,               color:'#34d399'},
-                          {label:'Tier',     value:`T${tier}`,             color:'#60a5fa'},
-                        ].map((s,i)=>(
+                        {[{label:'Copas',value:copas.toLocaleString(),color:'#fbbf24'},{label:'Arena',value:arenaActual.name,color:'#93c5fd'},{label:'Sesiones',value:sesiones,color:'#34d399'},{label:'Media skills',value:`${avgSkill}/10`,color:'#a78bfa'}].map((s,i)=>(
                           <div key={i} style={{padding:'12px',borderRadius:'10px',backgroundColor:'rgba(0,0,0,0.28)',border:'1px solid rgba(255,255,255,0.08)',textAlign:'center'}}>
-                            <div style={{fontSize:'16px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'3px'}}>{s.value}</div>
+                            <div style={{fontSize:'15px',fontWeight:800,color:s.color,lineHeight:1,marginBottom:'3px'}}>{s.value}</div>
                             <div style={{fontSize:'9px',color:'rgba(255,255,255,0.35)',fontFamily:'monospace'}}>{s.label}</div>
                           </div>
                         ))}
@@ -625,15 +530,11 @@ export default function DashboardAnalista() {
                     </div>
                   </div>
                   <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
-                    {[0,1].map(i=>(
-                      <div key={i} onClick={()=>setCarruselIdx(i)}
-                        style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>
-                    ))}
+                    {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
-
-                {/* CARD LABORATORIO */}
-                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.15)'}}>
+                {/* CARD LAB */}
+                <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
@@ -646,32 +547,28 @@ export default function DashboardAnalista() {
                         Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span>
                       </h2>
                       <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        SIEM completo, Log Explorer, Network Map y evaluación IA del informe. La profundidad de tu análisis es lo que puntúa.
+                        SIEM completo, Log Explorer, Network Map y evaluación IA. La profundidad de tu análisis es lo que mejora tus skills.
                       </p>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
-                        {[{icon:<IconChart size={12} color="#6ee7b7"/>,l:'SIEM con queries'},{icon:<IconBook size={12} color="#6ee7b7"/>,l:'Log Explorer'},{icon:<IconPlanet size={12} color="#6ee7b7"/>,l:'Network Map'},{icon:<IconShield size={12} color="#6ee7b7"/>,l:'Ticket system'},{icon:<IconTarget size={12} color="#6ee7b7"/>,l:'Evaluación IA'}].map((f,i)=>(
+                        {[{n:'network',l:'SIEM queries'},{n:'search',l:'Log Explorer'},{n:'planet',l:'Network Map'},{n:'brain',l:'IA evalúa skills'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
-                            {f.icon}
-                            <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
+                            <Icon name={f.n} size={12} color="#6ee7b7"/><span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f.l}</span>
                           </div>
                         ))}
                       </div>
                       <button className="play-btn" onClick={()=>navigate('/lab')}
                         style={{padding:'14px 36px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'15px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 24px rgba(16,185,129,0.5)',display:'inline-flex',alignItems:'center',gap:'10px'}}>
-                        <IconMicroscope size={16} color="#fff"/>
-                        Entrar al Lab →
+                        <Icon name="flask" size={16} color="#fff"/> Entrar al Lab →
                       </button>
                     </div>
                     <div style={{flexShrink:0,position:'relative',zIndex:1}}>
                       <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)',width:'200px'}}>
                         <div style={{backgroundColor:'#0f172a',padding:'7px 10px',borderBottom:'1px solid rgba(255,255,255,0.05)',display:'flex',gap:'4px'}}>
                           {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:c}}/>)}
-                          <span style={{fontSize:'8px',color:'#475569',fontFamily:'monospace',marginLeft:'5px'}}>siem</span>
                         </div>
                         <div style={{backgroundColor:'#020817',padding:'10px',fontFamily:'monospace',fontSize:'9px',lineHeight:1.9}}>
                           <p style={{color:'#475569'}}>siem&gt; index=windows</p>
                           <p style={{color:'#f87171',fontWeight:700}}>mimikatz.exe ⚠</p>
-                          <p style={{color:'#475569',marginTop:'4px'}}>siem&gt; index=dns</p>
                           <p style={{color:'#f87171'}}>c2.nighthawk.ru ⚠</p>
                           <div style={{marginTop:'6px',padding:'5px 7px',borderRadius:'5px',backgroundColor:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)'}}>
                             <p style={{color:'#34d399',fontSize:'8px'}}>IOC detectado</p>
@@ -681,105 +578,159 @@ export default function DashboardAnalista() {
                     </div>
                   </div>
                   <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
-                    {[0,1].map(i=>(
-                      <div key={i} onClick={()=>setCarruselIdx(i)}
-                        style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#10b981':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>
-                    ))}
+                    {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#10b981':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
 
-          {/* FILA: SKILLS + ACTIVIDAD + MINI RANKING */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'14px'}}>
-            {/* SKILLS */}
-            <div style={{padding:'20px 22px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
-                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>HABILIDADES</p>
-                <span style={{fontSize:'10px',color:'#ef4444',fontWeight:600,padding:'2px 8px',background:'#fef2f2',borderRadius:'5px',border:'1px solid #fecaca'}}>{weakestSkill.label} ↓</span>
+          {/* ═══ SKILLS SECTION — DESTACADA ═══ */}
+          <div style={{marginBottom:'28px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+              <div>
+                <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'3px'}}>SKILL MATRIX</p>
+                <p style={{fontSize:'13px',color:'#0f172a',fontWeight:700}}>Tus habilidades como analista SOC</p>
               </div>
-              <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              <button onClick={()=>navigate('/perfil')} style={{fontSize:'12px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600,display:'flex',alignItems:'center',gap:'4px'}}>
+                Ver detalle completo → 
+              </button>
+            </div>
+
+            {/* Resumen rápido skills */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'16px'}}>
+              <div style={{padding:'16px 18px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
+                <div style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'8px',fontFamily:'monospace'}}>MEDIA GLOBAL</div>
+                <div style={{fontSize:'32px',fontWeight:900,color:ACC,letterSpacing:'-1px',lineHeight:1,marginBottom:'4px'}}>{avgSkill}</div>
+                <div style={{fontSize:'11px',color:'#64748b'}}>/10 puntos</div>
+                <div style={{marginTop:'10px',height:'4px',borderRadius:'2px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
+                  <div style={{width:`${avgSkill*10}%`,height:'100%',borderRadius:'2px',background:`linear-gradient(90deg,${ACC}80,${ACC})`}}/>
+                </div>
+              </div>
+              <div style={{padding:'16px 18px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
+                <div style={{fontSize:'10px',color:'#ef4444',fontWeight:700,letterSpacing:'1.5px',marginBottom:'8px',fontFamily:'monospace'}}>SKILLS DÉBILES</div>
+                {weakSkills.slice(0,3).map((s,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'5px'}}>
+                    <span style={{fontSize:'11px',color:'#475569'}}>{s.label}</span>
+                    <span style={{fontSize:'11px',fontWeight:700,color:'#ef4444'}}>{s.val}/10</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{padding:'16px 18px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
+                <div style={{fontSize:'10px',color:'#059669',fontWeight:700,letterSpacing:'1.5px',marginBottom:'8px',fontFamily:'monospace'}}>TOP SKILLS</div>
+                {topSkills.slice(0,3).map((s,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'5px'}}>
+                    <span style={{fontSize:'11px',color:'#475569'}}>{s.label}</span>
+                    <span style={{fontSize:'11px',fontWeight:700,color:'#059669'}}>{s.val}/10</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Barras de skills expandidas */}
+            <div style={{backgroundColor:'#fff',borderRadius:'16px',border:'1px solid #e8eaf0',overflow:'hidden',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
+              <div style={{padding:'16px 20px',borderBottom:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <p style={{fontSize:'12px',color:'#0f172a',fontWeight:700}}>Desglose de habilidades</p>
+                <span style={{fontSize:'11px',color:'#94a3b8'}}>{skillEntries.filter(s=>s.val>=7).length} skills avanzadas · {skillEntries.filter(s=>s.val<4).length} por mejorar</span>
+              </div>
+              <div style={{padding:'6px 0'}}>
                 {skillEntries.map((s,i)=>{
                   const pct = Math.min((s.val/10)*100,100);
-                  const isWeak = s.key === weakestSkill.key;
+                  const isWeak = s.val < 4;
+                  const isTop  = s.val >= 7;
+                  const isFocus= skillFocus===s.key;
                   return (
-                    <div key={i}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:'5px'}}>
-                        <span style={{fontSize:'11px',color:isWeak?'#ef4444':'#475569',fontWeight:isWeak?600:500}}>{s.label}</span>
-                        <span style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{s.val}/10</span>
+                    <div key={i} className="skill-row"
+                      onMouseEnter={()=>setSkillFocus(s.key)}
+                      onMouseLeave={()=>setSkillFocus(null)}
+                      style={{display:'flex',alignItems:'center',gap:'14px',padding:'11px 20px',borderBottom:i<skillEntries.length-1?'1px solid #f8fafc':'none',cursor:'default',backgroundColor:isFocus?'#f8faff':'transparent',transition:'background .15s'}}>
+                      <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:isWeak?'#fef2f2':isTop?'#f0fdf4':`${s.color}10`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${isWeak?'#fecaca':isTop?'#bbf7d0':`${s.color}20`}`}}>
+                        <Icon name={s.icon} size={14} color={isWeak?'#ef4444':isTop?'#059669':s.color}/>
                       </div>
-                      <div style={{height:'6px',borderRadius:'3px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
-                        <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'3px',background:isWeak?`linear-gradient(90deg,#fca5a5,#ef4444)`:`linear-gradient(90deg,${ACC}80,${ACC})`}}/>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'5px'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                            <span style={{fontSize:'12px',color:isWeak?'#ef4444':isTop?'#059669':'#374151',fontWeight:600}}>{s.label}</span>
+                            {isWeak && <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'#fef2f2',color:'#ef4444',fontWeight:700,border:'1px solid #fecaca'}}>MEJORAR</span>}
+                            {isTop  && <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'#f0fdf4',color:'#059669',fontWeight:700,border:'1px solid #bbf7d0'}}>DOMINADA</span>}
+                          </div>
+                          <span style={{fontSize:'12px',fontWeight:800,color:isWeak?'#ef4444':isTop?'#059669':s.color,fontFamily:'monospace'}}>{s.val}/10</span>
+                        </div>
+                        <div style={{height:'7px',borderRadius:'4px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
+                          <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'4px',background:isWeak?`linear-gradient(90deg,#fca5a5,#ef4444)`:isTop?`linear-gradient(90deg,#86efac,#059669)`:`linear-gradient(90deg,${s.color}60,${s.color})`}}/>
+                        </div>
+                        {isFocus && <p style={{fontSize:'10px',color:'#94a3b8',marginTop:'3px',lineHeight:1.4}}>{s.desc}</p>}
                       </div>
                     </div>
                   );
                 })}
               </div>
+              <div style={{padding:'14px 20px',backgroundColor:'#f8fafc',borderTop:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <p style={{fontSize:'11px',color:'#94a3b8'}}>Las skills se mejoran automáticamente con cada sesión y laboratorio completado</p>
+                <button onClick={()=>navigate('/sesion')} style={{padding:'7px 16px',borderRadius:'8px',background:ACC,border:'none',color:'#fff',fontSize:'11px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}>
+                  <Icon name="bolt" size={11} color="#fff"/> Entrenar ahora
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* ACTIVIDAD + RANKING + HISTORIAL en fila más limpia */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
 
             {/* ACTIVIDAD */}
             <div style={{padding:'20px 22px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>ACTIVIDAD — 90 DÍAS</p>
-                <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
                   {[0.07,0.3,0.55,0.85].map((o,i)=><div key={i} style={{width:'8px',height:'8px',borderRadius:'2px',backgroundColor:`rgba(79,70,229,${o})`}}/>)}
                 </div>
               </div>
-              <div style={{overflowX:'auto'}}><ActivityHeatmap historial={historial}/></div>
-              <div style={{marginTop:'14px',padding:'12px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9'}}>
-                <div style={{display:'flex',justifyContent:'space-around'}}>
-                  {[
-                    {value:sesiones, label:'sesiones', color:ACC},
-                    {value:streak,   label:'racha',    color:'#f59e0b'},
-                    {value:historial.filter(s=>s.resultado?.copas_ganadas>0).length, label:'victorias', color:'#059669'},
-                  ].map((s,i)=>(
-                    <React.Fragment key={i}>
-                      {i>0&&<div style={{width:'1px',backgroundColor:'#e2e8f0'}}/>}
-                      <div style={{textAlign:'center'}}>
-                        <div style={{fontSize:'18px',fontWeight:900,color:s.color}}>{s.value}</div>
-                        <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>{s.label}</div>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
+              <div style={{overflowX:'auto',marginBottom:'14px'}}><ActivityHeatmap historial={historial}/></div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px'}}>
+                {[
+                  {value:sesiones, label:'sesiones', color:ACC},
+                  {value:streak,   label:'racha',    color:'#f59e0b'},
+                  {value:historial.filter(s=>s.resultado?.copas_ganadas>0).length, label:'victorias', color:'#059669'},
+                ].map((s,i)=>(
+                  <div key={i} style={{textAlign:'center',padding:'10px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9'}}>
+                    <div style={{fontSize:'20px',fontWeight:900,color:s.color}}>{s.value}</div>
+                    <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'2px'}}>{s.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* MINI RANKING + RECOMENDACIÓN */}
+            {/* RANKING + RECOMENDACIÓN */}
             <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
               <div style={{padding:'18px 20px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)',flex:1}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
                   <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>TOP RANKING</p>
                   <button onClick={()=>navigate('/ranking')} style={{fontSize:'10px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo →</button>
                 </div>
-                {ranking.length===0 ? (
-                  <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Cargando...</p>
-                ) : ranking.map((j,i)=>(
+                {ranking.length===0 ? <p style={{fontSize:'12px',color:'#94a3b8',textAlign:'center',padding:'10px 0'}}>Cargando...</p> : ranking.map((j,i)=>(
                   <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderBottom:i<ranking.length-1?'1px solid #f1f5f9':'none'}}>
-                    <div style={{width:'24px',height:'24px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <span style={{fontSize:'13px'}}>{i===0?'1':i===1?'2':'3'}</span>
+                    <div style={{width:'24px',height:'24px',borderRadius:'6px',backgroundColor:i===0?'#fef3c7':i===1?'#f1f5f9':'#fdf4ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',flexShrink:0}}>
+                      {i===0?'🥇':i===1?'🥈':'🥉'}
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'12px',fontWeight:600,color:'#0f172a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.nombre}</div>
                       <div style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace'}}>{j.arena}</div>
                     </div>
                     <div style={{fontSize:'12px',fontWeight:700,color:'#d97706',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'3px'}}>
-                      {j.copas?.toLocaleString()} <IconCup size={10} color="#d97706"/>
+                      {j.copas?.toLocaleString()} <Icon name="cup" size={10} color="#d97706"/>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{padding:'16px 18px',borderRadius:'16px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',boxShadow:'0 2px 10px rgba(79,70,229,.08)'}}>
+              <div style={{padding:'16px 18px',borderRadius:'16px',background:'linear-gradient(135deg,#fef2f2,#fff1f2)',border:'1px solid #fecaca',boxShadow:'0 2px 10px rgba(239,68,68,.06)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px'}}>
-                  <IconTarget size={14} color={ACC}/>
-                  <span style={{fontSize:'10px',color:ACC,fontWeight:700,letterSpacing:'1.5px',fontFamily:'monospace'}}>SIGUIENTE MISIÓN</span>
+                  <Icon name="target" size={14} color="#ef4444"/>
+                  <span style={{fontSize:'10px',color:'#ef4444',fontWeight:700,letterSpacing:'1.5px',fontFamily:'monospace'}}>SKILL A MEJORAR</span>
                 </div>
-                <p style={{fontSize:'12px',color:'#3730a3',fontWeight:600,marginBottom:'4px',lineHeight:1.4}}>Skill débil: <strong>{weakestSkill.label}</strong></p>
-                <p style={{fontSize:'11px',color:'#6366f1',lineHeight:1.5,marginBottom:'10px'}}>Entrena en {arenaActual.name} para subirla.</p>
-                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'9px',borderRadius:'9px',background:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}>
-                  <IconBolt size={12} color="#fff"/> Entrenar ahora →
+                <p style={{fontSize:'13px',color:'#7f1d1d',fontWeight:700,marginBottom:'4px'}}>{weakSkills[0]?.label}</p>
+                <p style={{fontSize:'11px',color:'#991b1b',lineHeight:1.5,marginBottom:'10px'}}>Actualmente {weakSkills[0]?.val}/10 — practica en {arenaActual.name}</p>
+                <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'9px',borderRadius:'9px',background:'linear-gradient(135deg,#ef4444,#dc2626)',border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}>
+                  <Icon name="bolt" size={12} color="#fff"/> Entrenar ahora →
                 </button>
               </div>
             </div>
@@ -794,7 +745,7 @@ export default function DashboardAnalista() {
               </div>
               {historial.length===0 ? (
                 <div style={{textAlign:'center',padding:'20px 0'}}>
-                  <IconTarget size={28} color="#cbd5e1"/>
+                  <Icon name="target" size={28} color="#cbd5e1"/>
                   <p style={{fontSize:'12px',color:'#94a3b8',marginTop:'8px'}}>Sin sesiones aún</p>
                   <button onClick={()=>navigate('/sesion')} style={{marginTop:'10px',padding:'8px 16px',borderRadius:'8px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'12px',fontWeight:600,cursor:'pointer'}}>Empezar</button>
                 </div>
@@ -803,7 +754,7 @@ export default function DashboardAnalista() {
                 return (
                   <div key={i} className="hist-row" style={{display:'flex',alignItems:'center',gap:'10px',padding:'9px 11px',borderRadius:'10px',backgroundColor:'#f8fafc',border:'1px solid #f1f5f9',marginBottom:'6px'}}>
                     <div style={{width:'30px',height:'30px',borderRadius:'8px',backgroundColor:positive?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <IconTrend size={14} color={positive?'#059669':'#ef4444'} style={{transform:positive?'none':'rotate(180deg)'}}/>
+                      <Icon name="trend" size={14} color={positive?'#059669':'#ef4444'}/>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontSize:'11px',color:'#0f172a',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.titulo||'Sesión SOC'}</p>
@@ -814,33 +765,34 @@ export default function DashboardAnalista() {
                 );
               })}
             </div>
-
             <div style={{padding:'20px 22px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
               <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 {[
-                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',    path:'/lab',         color:'#059669', light:'#ecfdf5', icon:<IconMicroscope size={15} color="#059669"/>},
-                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed', light:'#f5f3ff', icon:<IconBook size={15} color="#7c3aed"/>},
-                  {label:'Ranking Global',  desc:'Tu posición actual',      path:'/ranking',     color:'#d97706', light:'#fffbeb', icon:<IconChart size={15} color="#d97706"/>},
-                  {label:'Arenas',          desc:'Ver todas las divisiones',path:'/arenas',      color:'#0891b2', light:'#ecfeff', icon:<IconPlanet size={15} color="#0891b2"/>},
-                  {label:'Mi Certificado',  desc:'QR verificable',          path:'/certificado', color:'#059669', light:'#ecfdf5', icon:<IconAward size={15} color="#059669"/>},
-                  {label:'Perfil & Tiers',  desc:'Stats y progresión',      path:'/perfil',      color:'#2563eb', light:'#eff6ff', icon:<IconUser size={15} color="#2563eb"/>},
+                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',    path:'/lab',         color:'#059669', light:'#ecfdf5', icon:'flask'},
+                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed', light:'#f5f3ff', icon:'book'},
+                  {label:'Ranking Global',  desc:'Tu posición actual',      path:'/ranking',     color:'#d97706', light:'#fffbeb', icon:'chart'},
+                  {label:'Arenas',          desc:'Ver todas las divisiones',path:'/arenas',      color:'#0891b2', light:'#ecfeff', icon:'planet'},
+                  {label:'Mi Certificado',  desc:'QR verificable',          path:'/certificado', color:'#059669', light:'#ecfdf5', icon:'award'},
+                  {label:'Perfil & Tiers',  desc:'Stats y progresión',      path:'/perfil',      color:'#2563eb', light:'#eff6ff', icon:'user'},
                 ].map((item,i)=>(
                   <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
                     style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'11px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
-                    <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}15`}}>{item.icon}</div>
+                    <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:item.light,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${item.color}15`}}>
+                      <Icon name={item.icon} size={15} color={item.color}/>
+                    </div>
                     <div style={{flex:1}}>
                       <span style={{fontSize:'12px',color:'#0f172a',fontWeight:600}}>{item.label}</span>
                       <span style={{fontSize:'10px',color:'#94a3b8',marginLeft:'6px'}}>{item.desc}</span>
                     </div>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    <Icon name="trend" size={9} color="#cbd5e1"/>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* SECCIÓN EMPLEO */}
+          {/* EMPLEO */}
           <div id="empleo-section">
             <div style={{position:'relative',borderRadius:'20px',overflow:'hidden',marginBottom:'20px',padding:'36px 48px',background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%)'}}>
               <div style={{position:'absolute',top:'-60px',right:'-60px',width:'300px',height:'300px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.2),transparent)',pointerEvents:'none'}}/>
@@ -876,13 +828,13 @@ export default function DashboardAnalista() {
                       <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',backgroundColor:o.color}}/>
                       {o.badge&&<span style={{position:'absolute',top:'14px',right:'14px',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'5px',background:o.badge==='nueva'?'#ecfdf5':'#fef2f2',color:o.badge==='nueva'?'#059669':'#ef4444',border:`1px solid ${o.badge==='nueva'?'#a7f3d0':'#fecaca'}`}}>{o.badge.toUpperCase()}</span>}
                       <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}>
-                        <IconUsers size={18} color={o.color}/>
+                        <Icon name="users" size={18} color={o.color}/>
                       </div>
                       <div style={{fontSize:'11px',color:'#94a3b8',marginBottom:'4px'}}>{o.empresa}</div>
                       <div style={{fontSize:'16px',fontWeight:800,color:'#0f172a',marginBottom:'8px',lineHeight:1.2}}>{o.rol}</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'16px'}}>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>Ubicación: {o.ubicacion}</div>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>Salario: {o.salario}</div>
+                        <div style={{fontSize:'12px',color:'#64748b'}}>📍 {o.ubicacion}</div>
+                        <div style={{fontSize:'12px',color:'#64748b'}}>💰 {o.salario}</div>
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                         <span style={{fontSize:'10px',fontWeight:700,color:o.color,padding:'3px 8px',borderRadius:'5px',background:`${o.color}12`}}>Req: {o.arena}</span>
@@ -900,7 +852,6 @@ export default function DashboardAnalista() {
                 </div>
               </div>
             )}
-
             {empleoTab==='certs' && (
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
                 {CERTS_MOCK.map((c,i)=>(
@@ -908,7 +859,7 @@ export default function DashboardAnalista() {
                     style={{display:'flex',alignItems:'center',gap:'16px',padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',backgroundColor:c.color}}/>
                     <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <IconAward size={20} color={c.color}/>
+                      <Icon name="award" size={20} color={c.color}/>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'3px'}}>{c.nombre}</div>
@@ -925,13 +876,12 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             )}
-
             {empleoTab==='bootcamps' && (
               <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
                 {BOOTCAMPS_MOCK.map((b,i)=>(
                   <div key={i} className="bootcamp-row" style={{display:'flex',alignItems:'center',gap:'16px',padding:'18px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
                     <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <IconBook size={20} color="#7c3aed"/>
+                      <Icon name="book" size={20} color="#7c3aed"/>
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{b.nombre}</div>
@@ -947,14 +897,13 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             )}
-
             {empleoTab==='retos' && (
               <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'12px'}}>
                 {RETOS_MOCK.map((r,i)=>(
                   <div key={i} className="reto-row" onClick={()=>window.open(r.url,'_blank')}
                     style={{display:'flex',alignItems:'center',gap:'14px',padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
                     <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <IconSword size={18} color="#059669"/>
+                      <Icon name="shield" size={18} color="#059669"/>
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'13px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{r.nombre}</div>
@@ -963,13 +912,12 @@ export default function DashboardAnalista() {
                         {r.gratis&&<span style={{fontSize:'10px',color:'#059669',fontWeight:700}}>Gratis</span>}
                       </div>
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    <Icon name="trend" size={14} color="#94a3b8"/>
                   </div>
                 ))}
               </div>
             )}
           </div>
-
         </div>
       </div>
     </>
