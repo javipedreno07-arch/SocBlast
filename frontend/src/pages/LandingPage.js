@@ -52,7 +52,7 @@ const ParticlesBg = () => {
     const pts = Array.from({length:80},()=>({
       x:Math.random()*w, y:Math.random()*h,
       vx:(Math.random()-.5)*.7, vy:(Math.random()-.5)*.7,
-      r:Math.random()*2.2+.9, o:Math.random()*.22+.08
+     r:Math.random()*2.5+1, o:Math.random()*.30+.12
     }));
     let raf;
     const draw=()=>{
@@ -68,7 +68,7 @@ const ParticlesBg = () => {
         const d=Math.hypot(a.x-b.x,a.y-b.y);
         if(d<130){
           ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-          ctx.strokeStyle=`rgba(99,102,241,${(1-d/130)*.13})`;
+          ctx.strokeStyle=`rgba(99,102,241,${(1-d/130)*.18})`;
           ctx.lineWidth=.5; ctx.stroke();
         }
       }));
