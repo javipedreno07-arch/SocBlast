@@ -1,988 +1,835 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Draggable from 'react-draggable';
 import { useNavigate } from 'react-router-dom';
 
 const API = 'https://socblast-production.up.railway.app/api';
+const OB_KEY = 'socblast_lab_onboarding_v2';
 
-// ── PALETA ────────────────────────────────────────────────────────────────────
-const C = {
-  bg:      '#0a0e1a',
-  panel:   '#0f1524',
-  border:  '#1e2a3d',
-  border2: '#2a3a54',
-  t1:      '#e2e8f0',
-  t2:      '#94a3b8',
-  t3:      '#4a5a72',
-  acc:     '#00d4ff',
-  acc2:    '#7c3aed',
-  green:   '#10b981',
-  yellow:  '#f59e0b',
-  red:     '#ef4444',
-  orange:  '#f97316',
-};
-
-const SEV_COLOR = { CRITICA: C.red, ALTA: C.orange, MEDIA: C.yellow, BAJA: C.green };
-const SEV_BG    = { CRITICA: '#2d0a0a', ALTA: '#2d1a0a', MEDIA: '#2d250a', BAJA: '#0a2d1a' };
-const EST_COLOR = { comprometido: C.red, sospechoso: C.yellow, limpio: C.green, maliciosa: C.red, legitima: C.green, sospechosa: C.yellow };
-
-// ── UTILS ────────────────────────────────────────────────────────────────────
-function getToken() { return localStorage.getItem('token'); }
-
-async function apiFetch(path, opts = {}) {
+/* ─── helpers ──────────────────────────────────────────────────────────────── */
+const tok = () => localStorage.getItem('token');
+const api = async (path, opts = {}) => {
   const r = await fetch(`${API}${path}`, {
-    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
     ...opts,
   });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
   return r.json();
-}
+};
+const clock = () => new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+const clsx = (...a) => a.filter(Boolean).join(' ');
 
-// ── COMPONENTES BASE ──────────────────────────────────────────────────────────
-function Panel({ title, icon, children, style = {}, headerRight }) {
+/* ─── onboarding ────────────────────────────────────────────────────────────── */
+const OB_STEPS = [
+  { icon: '🖥️', title: 'Un ordenador comprometido real', body: 'La IA genera una máquina Windows o Linux que ha sido atacada. Tú eres el analista forense que debe descubrir qué pasó.' },
+  { icon: '🔍', title: 'Abre las aplicaciones', body: 'Haz doble clic en los iconos del escritorio para abrir SIEM, Terminal, Logs, Red o el Informe. Las ventanas son arrastrables y redimensionables.' },
+  { icon: '💻', title: 'Investiga sin límite de tiempo', body: 'Analiza alertas, ejecuta comandos en la terminal, correlaciona logs. Cuanto más investigues, más puntos ganas.' },
+  { icon: '📝', title: 'Envía tu informe', body: 'Responde las preguntas del Incident Report y redacta tu análisis. La IA evaluará tu investigación y mejorará tus skills.' },
+];
+
+function Onboarding({ onDone }) {
+  const [s, setS] = useState(0);
+  const cur = OB_STEPS[s];
   return (
-    <div style={{
-      background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8,
-      display: 'flex', flexDirection: 'column', overflow: 'hidden', ...style
-    }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 14px', borderBottom: `1px solid ${C.border}`,
-        background: '#0c1220', flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14 }}>{icon}</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.t2, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{title}</span>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Segoe UI, sans-serif' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '40px 44px', maxWidth: 480, width: '90%', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,.5)' }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>{cur.icon}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>{cur.title}</div>
+        <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.8, marginBottom: 28 }}>{cur.body}</div>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 24 }}>
+          {OB_STEPS.map((_, i) => <div key={i} style={{ width: i === s ? 22 : 8, height: 8, borderRadius: 4, background: i === s ? '#0078d4' : '#e2e8f0', transition: 'all .3s' }} />)}
         </div>
-        {headerRight}
-      </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
-        {children}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {s > 0 && <button onClick={() => setS(s - 1)} style={{ flex: 1, padding: '11px 0', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>← Atrás</button>}
+          <button onClick={() => s === OB_STEPS.length - 1 ? onDone() : setS(s + 1)}
+            style={{ flex: 2, padding: '12px 0', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#0078d4,#106ebe)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+            {s === OB_STEPS.length - 1 ? '🚀 ¡Empezar!' : 'Siguiente →'}
+          </button>
+        </div>
+        <button onClick={onDone} style={{ marginTop: 10, background: 'none', border: 'none', color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}>Saltar tutorial</button>
       </div>
     </div>
   );
 }
 
-function Badge({ label, color = C.acc, bg }) {
+/* ─── boot screen ────────────────────────────────────────────────────────────── */
+const WIN_BOOT = [
+  '', '  Starting Windows...', '  Microsoft Windows [Version 10.0.19045.3803]',
+  '  (c) Microsoft Corporation. All rights reserved.', '',
+  '  Loading CORP domain policies.......................... [OK]',
+  '  Starting Windows Defender Antivirus Service.......... [OK]',
+  '  Connecting to CORP-DC01.corp.local................... [OK]',
+  '  Mounting network drives.............................. [OK]',
+  '  Loading SOC Analyst workstation profile..............',
+  '', '  ████████████████████████████████  100%', '',
+  '  Welcome, SOC Analyst.',
+];
+
+function BootScreen({ onDone }) {
+  const [lines, setLines] = useState([]);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < WIN_BOOT.length) { setLines(l => [...l, WIN_BOOT[i++]]); }
+      else { clearInterval(iv); setTimeout(() => { setFading(true); setTimeout(onDone, 700); }, 800); }
+    }, 150);
+    return () => clearInterval(iv);
+  }, []);
+
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-      padding: '2px 7px', borderRadius: 4,
-      color, background: bg || color + '22',
-      border: `1px solid ${color}44`,
-    }}>{label}</span>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#000080', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Courier New', monospace", opacity: fading ? 0 : 1, transition: 'opacity .7s' }}>
+      <div style={{ fontSize: 72, marginBottom: 24 }}>🪟</div>
+      <div style={{ fontSize: 13, color: '#fff', lineHeight: 2.1, textAlign: 'center' }}>
+        {lines.map((l, i) => <div key={i} style={{ opacity: i === lines.length - 1 ? 1 : 0.75 }}>{l || '\u00a0'}</div>)}
+      </div>
+    </div>
   );
 }
 
-function Spinner({ size = 20, color = C.acc }) {
+/* ─── window manager ─────────────────────────────────────────────────────────── */
+let zTop = 10;
+
+function AppWindow({ id, title, icon, children, onClose, onMinimize, focused, onFocus, defaultX, defaultY, defaultW, defaultH, minW = 400, minH = 300 }) {
+  const nodeRef = useRef(null);
+  const [maximized, setMax] = useState(false);
+  const [size, setSize] = useState({ w: defaultW || 700, h: defaultH || 480 });
+  const [zIdx, setZ] = useState(zTop++);
+  const [pos, setPos] = useState({ x: defaultX || 80, y: defaultY || 40 });
+  const resizing = useRef(null);
+
+  const focus = () => { const z = zTop++; setZ(z); onFocus(); };
+
+  /* resize handle */
+  const onResizeStart = (e) => {
+    e.stopPropagation(); e.preventDefault();
+    resizing.current = { startX: e.clientX, startY: e.clientY, startW: size.w, startH: size.h };
+    const onMove = (ev) => {
+      if (!resizing.current) return;
+      const dw = ev.clientX - resizing.current.startX;
+      const dh = ev.clientY - resizing.current.startY;
+      setSize({ w: Math.max(minW, resizing.current.startW + dw), h: Math.max(minH, resizing.current.startH + dh) });
+    };
+    const onUp = () => { resizing.current = null; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const titleBg = focused ? '#1a1a2e' : '#2d2d3d';
+
   return (
-    <div style={{
-      width: size, height: size, border: `2px solid ${color}33`,
-      borderTopColor: color, borderRadius: '50%',
-      animation: 'spin 0.8s linear infinite', flexShrink: 0,
-    }} />
+    <Draggable nodeRef={nodeRef} handle=".win-drag" disabled={maximized}
+      position={maximized ? { x: 0, y: 0 } : undefined}
+      defaultPosition={{ x: defaultX || 80, y: defaultY || 40 }}
+      onStart={focus} bounds="parent">
+      <div ref={nodeRef} onMouseDown={focus} style={{
+        position: 'absolute',
+        width: maximized ? '100%' : size.w,
+        height: maximized ? 'calc(100% )' : size.h,
+        ...(maximized ? { top: 0, left: 0 } : {}),
+        background: '#fff',
+        border: focused ? '1px solid #0078d4' : '1px solid rgba(255,255,255,.15)',
+        borderRadius: maximized ? 0 : 6,
+        boxShadow: focused ? '0 16px 48px rgba(0,0,0,.55)' : '0 4px 16px rgba(0,0,0,.4)',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+        zIndex: zIdx,
+        fontFamily: "'Segoe UI', 'Inter', sans-serif",
+        transition: 'box-shadow .15s',
+        userSelect: 'none',
+      }}>
+        {/* title bar */}
+        <div className="win-drag" style={{ height: 32, background: titleBg, display: 'flex', alignItems: 'center', padding: '0 0 0 12px', gap: 8, cursor: 'move', flexShrink: 0 }}>
+          <span style={{ fontSize: 14 }}>{icon}</span>
+          <span style={{ flex: 1, fontSize: 12, color: '#e2e8f0', fontWeight: 600, letterSpacing: '.01em', userSelect: 'none' }}>{title}</span>
+          {/* win buttons */}
+          <WinCtrl icon="─" onClick={e => { e.stopPropagation(); onMinimize(); }} />
+          <WinCtrl icon="□" onClick={e => { e.stopPropagation(); setMax(m => !m); }} />
+          <WinCtrl icon="✕" red onClick={e => { e.stopPropagation(); onClose(); }} />
+        </div>
+        {/* content */}
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>{children}</div>
+        {/* resize handle */}
+        {!maximized && (
+          <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, cursor: 'nwse-resize', zIndex: 9999 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 12 L12 2 M6 12 L12 6 M10 12 L12 10" stroke="rgba(100,116,139,.5)" strokeWidth="1.5" /></svg>
+          </div>
+        )}
+      </div>
+    </Draggable>
   );
 }
 
-// ── PANTALLA: INTRO ───────────────────────────────────────────────────────────
-function LabIntro({ onStart, loading }) {
+function WinCtrl({ icon, onClick, red }) {
+  const [h, setH] = useState(false);
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
-        ::-webkit-scrollbar { width:5px; height:5px; }
-        ::-webkit-scrollbar-track { background: ${C.bg}; }
-        ::-webkit-scrollbar-thumb { background: ${C.border2}; border-radius:3px; }
-      `}</style>
+    <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      style={{ width: 46, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: h ? (red ? '#c42b1c' : 'rgba(255,255,255,.12)') : 'transparent', cursor: 'pointer', color: '#e2e8f0', fontSize: red ? 12 : 13, transition: 'background .12s' }}>
+      {icon}
+    </div>
+  );
+}
 
-      <div style={{ textAlign: 'center', maxWidth: 560, padding: 40, animation: 'fadeUp 0.5s ease' }}>
-        {/* Terminal header */}
-        <div style={{
-          background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12,
-          padding: '32px 40px', marginBottom: 32,
-        }}>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 24, justifyContent: 'flex-start' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ef4444' }} />
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#f59e0b' }} />
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#10b981' }} />
-          </div>
+/* ─── desktop icon ──────────────────────────────────────────────────────────── */
+function DesktopIcon({ icon, label, color = '#fff', onClick }) {
+  const [h, setH] = useState(false);
+  return (
+    <div onDoubleClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '8px 6px', borderRadius: 6, background: h ? 'rgba(255,255,255,.18)' : 'transparent', cursor: 'pointer', transition: 'background .15s', width: 76, userSelect: 'none' }}>
+      <div style={{ fontSize: 34, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }}>{icon}</div>
+      <div style={{ fontSize: 11, color, textAlign: 'center', lineHeight: 1.3, textShadow: '0 1px 3px rgba(0,0,0,.9)', fontWeight: 500, fontFamily: 'Segoe UI, sans-serif' }}>{label}</div>
+    </div>
+  );
+}
 
-          <div style={{ textAlign: 'left', marginBottom: 28 }}>
-            <div style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>soc-analyst@socblast:~$</div>
-            <div style={{ fontSize: 11, color: C.green, marginBottom: 2 }}>{'>'} Iniciando entorno de laboratorio SOC...</div>
-            <div style={{ fontSize: 11, color: C.t2, marginBottom: 2 }}>{'>'} Herramientas disponibles: SIEM · Log Explorer · Network Map · Ticket</div>
-            <div style={{ fontSize: 11, color: C.t2, marginBottom: 2 }}>{'>'} Evaluación: IA en tiempo real</div>
-            <div style={{ fontSize: 11, color: C.yellow }}>{'>'} Sin límite de tiempo. Investiga a fondo.<span style={{ animation: 'blink 1s infinite', display: 'inline-block' }}>_</span></div>
-          </div>
+/* ─── taskbar button ─────────────────────────────────────────────────────────── */
+function TaskBtn({ icon, label, active, minimized, onClick }) {
+  const [h, setH] = useState(false);
+  return (
+    <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '4px 12px', borderRadius: 4, background: active ? 'rgba(255,255,255,.22)' : h ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.06)', border: active ? '1px solid rgba(255,255,255,.3)' : '1px solid transparent', cursor: 'pointer', transition: 'all .12s', minWidth: 0, maxWidth: 160, opacity: minimized ? .7 : 1 }}>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Segoe UI, sans-serif' }}>{label}</span>
+    </div>
+  );
+}
 
-          <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 24 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, marginBottom: 8, letterSpacing: '-0.5px' }}>
-              🔬 Laboratorio SOC
+/* ─── APP: SIEM ──────────────────────────────────────────────────────────────── */
+function SIEMApp({ alertas, onQuery }) {
+  const [sel, setSel] = useState(null);
+  const [flt, setFlt] = useState('TODAS');
+  const SEV = { CRITICA: '#dc2626', ALTA: '#ea580c', MEDIA: '#d97706', BAJA: '#16a34a' };
+  const filtered = flt === 'TODAS' ? alertas : alertas.filter(a => a.severidad === flt);
+
+  return (
+    <div style={{ display: 'flex', height: '100%', fontSize: 12, background: '#f8fafc' }}>
+      {/* sidebar */}
+      <div style={{ width: 300, borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        {/* filter bar */}
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid #e8eaf0', display: 'flex', gap: 4, flexWrap: 'wrap', background: '#f8fafc' }}>
+          {['TODAS', 'CRITICA', 'ALTA', 'MEDIA', 'BAJA'].map(s => (
+            <button key={s} onClick={() => setFlt(s)} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${s === 'TODAS' ? '#e2e8f0' : SEV[s] || '#e2e8f0'}`, background: flt === s ? (SEV[s] || '#4f46e5') + '22' : 'transparent', color: flt === s ? (SEV[s] || '#4f46e5') : '#64748b' }}>{s}</button>
+          ))}
+        </div>
+        {/* list */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {filtered.length === 0 && <div style={{ padding: 20, color: '#94a3b8', textAlign: 'center', fontSize: 12 }}>Sin alertas</div>}
+          {filtered.map(a => (
+            <div key={a.id} onClick={() => { setSel(a); onQuery(`SIEM:${a.id}`); }}
+              style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', borderLeft: `3px solid ${sel?.id === a.id ? SEV[a.severidad] || '#4f46e5' : 'transparent'}`, background: sel?.id === a.id ? (SEV[a.severidad] || '#4f46e5') + '08' : 'transparent', transition: 'all .12s' }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
+                <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 3, background: (SEV[a.severidad] || '#666') + '18', color: SEV[a.severidad] || '#666', border: `1px solid ${SEV[a.severidad] || '#666'}30` }}>{a.severidad}</span>
+                <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 'auto' }}>{a.timestamp?.slice(11, 19)}</span>
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', lineHeight: 1.3, marginBottom: 2 }}>{a.titulo}</div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>{a.sistema} · {a.categoria}</div>
             </div>
-            <p style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, margin: '0 0 24px' }}>
-              La IA generará un escenario de incidente real adaptado a tu nivel.
-              Investiga libremente con todas las herramientas, responde las preguntas
-              y redacta tu informe de análisis.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24, textAlign: 'left' }}>
-              {[
-                ['🖥', 'SIEM Dashboard', 'Alertas con severidad y contexto'],
-                ['📋', 'Log Explorer', 'Logs filtrables por sistema o nivel'],
-                ['🌐', 'Network Map', 'Hosts, IPs y conexiones activas'],
-                ['🎫', 'Ticket de Análisis', 'Preguntas directas + informe libre'],
-              ].map(([icon, title, desc]) => (
-                <div key={title} style={{
-                  background: '#070b14', border: `1px solid ${C.border}`,
-                  borderRadius: 8, padding: '10px 12px',
-                }}>
-                  <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t1, marginBottom: 2 }}>{title}</div>
-                  <div style={{ fontSize: 10, color: C.t3 }}>{desc}</div>
+          ))}
+        </div>
+      </div>
+      {/* detail */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {sel ? (
+          <>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 4, background: (SEV[sel.severidad] || '#666') + '18', color: SEV[sel.severidad] || '#666', border: `1px solid ${SEV[sel.severidad] || '#666'}30` }}>{sel.severidad}</span>
+              <span style={{ fontSize: 11, color: '#64748b' }}>{sel.timestamp}</span>
+            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{sel.titulo}</h3>
+            <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.7, marginBottom: 16 }}>{sel.descripcion}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', background: '#f8fafc', borderRadius: 8, padding: 14 }}>
+              {[['Sistema', sel.sistema], ['Categoría', sel.categoria], ['IP Origen', sel.ip_origen], ['IP Destino', sel.ip_destino], ['Usuario', sel.usuario], ['Proceso', sel.proceso], ['Regla SIEM', sel.regla_disparada]].filter(([, v]) => v).map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>{k}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#1d4ed8', fontFamily: 'monospace' }}>{v}</div>
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={onStart}
-              disabled={loading}
-              style={{
-                width: '100%', padding: '14px 0', borderRadius: 8,
-                background: loading ? C.border : `linear-gradient(135deg, ${C.acc2}, ${C.acc})`,
-                border: 'none', color: '#fff', fontSize: 14, fontWeight: 700,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              {loading ? <><Spinner size={16} color="#fff" /> Generando escenario...</> : '⚡ Iniciar Laboratorio'}
-            </button>
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, color: '#94a3b8' }}>
+            <div style={{ fontSize: 40 }}>🖥️</div>
+            <div style={{ fontSize: 13 }}>Selecciona una alerta para ver el detalle</div>
           </div>
-        </div>
-
-        <div style={{ fontSize: 11, color: C.t3 }}>
-          El escenario se adapta a tu arena actual · Solo XP y habilidades, sin copas
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ── PANEL: SIEM ───────────────────────────────────────────────────────────────
-function SIEMPanel({ alertas, onQueryLog, queriesLog }) {
-  const [selected, setSelected] = useState(null);
-  const [filter, setFilter]     = useState('TODAS');
-  const sevs = ['TODAS', 'CRITICA', 'ALTA', 'MEDIA', 'BAJA'];
+/* ─── APP: TERMINAL ──────────────────────────────────────────────────────────── */
+function TerminalApp({ escenario, onQuery }) {
+  const [hist, setHist] = useState([{ t: 'sys', v: 'Microsoft Windows [Version 10.0.19045.3803]\n(c) Microsoft Corporation. All rights reserved.\n\nEscribe "help" para ver los comandos disponibles.' }]);
+  const [inp, setInp] = useState('');
+  const [cmds, setCmds] = useState([]);
+  const [ci, setCi] = useState(-1);
+  const bot = useRef(null);
+  const inpRef = useRef(null);
+  const prompt = 'C:\\Users\\analyst>';
 
-  const filtered = filter === 'TODAS' ? alertas : alertas.filter(a => a.severidad === filter);
+  const iocs = escenario?.iocs || {};
+  const logs = escenario?.logs || [];
+  const hosts = escenario?.red?.hosts || [];
+  const conns = escenario?.red?.conexiones || [];
+  const alertas = escenario?.alertas_siem || [];
+
+  const CMDS = {
+    help: () => `Comandos disponibles:\n  whoami           usuario actual\n  ipconfig         configuración de red\n  netstat -an      conexiones activas\n  tasklist         procesos en ejecución\n  dir              listar archivos\n  type <archivo>   mostrar archivo\n  grep <patron>    buscar en logs\n  ioc              IOCs del escenario\n  hosts            hosts de la red\n  alerts           resumen alertas SIEM\n  cls              limpiar pantalla`,
+    whoami: () => 'CORP\\analyst',
+    ipconfig: () => `Adaptador Ethernet Ethernet0:\n   Dirección IPv4. . . . . . : 10.0.0.50\n   Máscara de subred . . . . : 255.255.255.0\n   Puerta de enlace predeterminada: 10.0.0.1`,
+    'netstat -an': () => {
+      const lines = ['  Proto  Direcc. local          Direcc. externo        Estado'];
+      conns.forEach(c => {
+        const f = hosts.find(h => h.id === c.origen); const t = hosts.find(h => h.id === c.destino);
+        lines.push(`  TCP    ${f?.ip || '10.0.0.x'}:${c.puerto || 445}         ${t?.ip || '0.0.0.0'}:${c.puerto || 445}       ${c.estado === 'maliciosa' ? 'ESTABLISHED' : 'LISTENING'}`);
+      });
+      if (!conns.length) lines.push('  (sin conexiones activas)');
+      return lines.join('\n');
+    },
+    tasklist: () => {
+      const procs = iocs.procesos_sospechosos || [];
+      const base = ['Nombre de imagen       PID  Nombre de sesión  Uso de mem', '====================== ==== ================  ==========', 'System                 4    Services          1.580 KB', 'svchost.exe            892  Services          12.340 KB', 'explorer.exe           1456 Console           48.200 KB'];
+      procs.forEach((p, i) => base.push(`${p.slice(0, 22).padEnd(22)} ${1200 + i}  Console           24.${300 + i} KB  ← SOSPECHOSO`));
+      return base.join('\n');
+    },
+    dir: () => {
+      const files = logs.slice(0, 6).map(l => `${l.timestamp?.slice(0, 10).replace(/-/g, '/')}  ${l.sistema}.log`);
+      return `Directorio de C:\\Users\\analyst\n\n${files.join('\n') || '(vacío)'}\n\n               ${logs.length} archivos`;
+    },
+    ioc: () => {
+      const parts = ['═══ IOCs del escenario ═══'];
+      if (iocs.ips_maliciosas?.length) parts.push(`IPs maliciosas:\n  ${iocs.ips_maliciosas.join('\n  ')}`);
+      if (iocs.hashes_maliciosos?.length) parts.push(`Hashes:\n  ${iocs.hashes_maliciosos.join('\n  ')}`);
+      if (iocs.dominios_maliciosos?.length) parts.push(`Dominios C2:\n  ${iocs.dominios_maliciosos.join('\n  ')}`);
+      if (iocs.procesos_sospechosos?.length) parts.push(`Procesos sospechosos:\n  ${iocs.procesos_sospechosos.join('\n  ')}`);
+      if (iocs.usuarios_comprometidos?.length) parts.push(`Usuarios comprometidos:\n  ${iocs.usuarios_comprometidos.join('\n  ')}`);
+      return parts.length > 1 ? parts.join('\n\n') : '(no hay IOCs definidos)';
+    },
+    hosts: () => hosts.length ? hosts.map(h => `[${h.estado?.toUpperCase().padEnd(12)}] ${h.nombre.padEnd(20)} ${h.ip.padEnd(16)} ${h.tipo}`).join('\n') : '(sin hosts)',
+    alerts: () => alertas.length ? alertas.map(a => `[${a.severidad.padEnd(8)}] ${a.timestamp?.slice(11, 19)} ${a.titulo} — ${a.sistema}`).join('\n') : '(sin alertas)',
+    cls: () => null,
+  };
+
+  const run = (raw) => {
+    const cmd = raw.trim();
+    if (!cmd) return;
+    onQuery(`CMD:${cmd}`);
+    setCmds(p => [cmd, ...p]); setCi(-1);
+    let out = '';
+    const lc = cmd.toLowerCase();
+    if (lc === 'cls') { setHist([]); setInp(''); return; }
+    else if (lc.startsWith('grep ')) {
+      const pat = lc.slice(5).trim();
+      const m = logs.filter(l => l.mensaje.toLowerCase().includes(pat));
+      out = m.length ? m.map(l => `[${l.sistema}] ${l.mensaje}`).join('\n') : `grep: "${pat}" — sin coincidencias`;
+    } else if (lc.startsWith('type ')) {
+      const f = lc.slice(5).trim();
+      const l = logs.find(l => l.sistema.toLowerCase().includes(f) || l.id?.toLowerCase() === f);
+      out = l ? `--- ${l.sistema} ---\n${l.timestamp}  [${l.nivel}] ${l.mensaje}` : `type: No se puede encontrar el archivo especificado.`;
+    } else if (CMDS[lc]) { out = CMDS[lc](); if (out === null) { setHist([]); setInp(''); return; } }
+    else out = `'${cmd}' no se reconoce como un comando interno o externo.\nEscribe "help" para ver los disponibles.`;
+    setHist(h => [...h, { t: 'in', v: `${prompt}${cmd}` }, { t: 'out', v: out }]);
+    setInp('');
+  };
+
+  useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }); }, [hist]);
 
   return (
-    <Panel title="SIEM Dashboard" icon="🖥" headerRight={
-      <div style={{ display: 'flex', gap: 4 }}>
-        {sevs.map(s => (
-          <button key={s} onClick={() => setFilter(s)} style={{
-            fontSize: 9, padding: '2px 7px', borderRadius: 4, cursor: 'pointer', fontWeight: 700,
-            border: `1px solid ${s === 'TODAS' ? C.border2 : SEV_COLOR[s] || C.border2}`,
-            background: filter === s ? (SEV_COLOR[s] || C.acc) + '33' : 'transparent',
-            color: filter === s ? (SEV_COLOR[s] || C.acc) : C.t3,
-          }}>{s}</button>
+    <div onClick={() => inpRef.current?.focus()} style={{ flex: 1, background: '#0c0c0c', color: '#cccccc', fontFamily: "'Cascadia Code','Consolas','Courier New',monospace", fontSize: 12, display: 'flex', flexDirection: 'column', cursor: 'text' }}>
+      <div style={{ padding: '6px 8px', background: '#1a1a1a', borderBottom: '1px solid #333', fontSize: 11, color: '#888', flexShrink: 0 }}>
+        Símbolo del sistema — CORP\\analyst@SOC-WORKSTATION
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+        {hist.map((h, i) => (
+          <pre key={i} style={{ margin: 0, marginBottom: 4, whiteSpace: 'pre-wrap', lineHeight: 1.6, color: h.t === 'in' ? '#cccccc' : h.t === 'sys' ? '#aaa' : '#cccccc', fontFamily: 'inherit' }}>{h.v}</pre>
         ))}
+        <div ref={bot} />
       </div>
-    }>
-      <div style={{ display: 'flex', gap: 8, height: '100%' }}>
-        {/* Lista alertas */}
-        <div style={{ flex: '0 0 52%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {filtered.map(a => (
-            <div key={a.id}
-              onClick={() => { setSelected(a); onQueryLog(`SIEM:${a.id}`); }}
-              style={{
-                padding: '8px 10px', borderRadius: 6, cursor: 'pointer',
-                border: `1px solid ${selected?.id === a.id ? SEV_COLOR[a.severidad] || C.acc : C.border}`,
-                background: selected?.id === a.id ? (SEV_COLOR[a.severidad] || C.acc) + '11' : '#070b14',
-                transition: 'all 0.15s',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <Badge label={a.severidad} color={SEV_COLOR[a.severidad] || C.t2} />
-                <span style={{ fontSize: 9, color: C.t3, fontFamily: 'monospace' }}>{a.timestamp?.slice(11)}</span>
-                <span style={{ fontSize: 9, color: C.t3, marginLeft: 'auto' }}>{a.id}</span>
-              </div>
-              <div style={{ fontSize: 11, color: C.t1, fontWeight: 600, lineHeight: 1.3 }}>{a.titulo}</div>
-              <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>{a.sistema} · {a.categoria}</div>
-            </div>
-          ))}
-          {filtered.length === 0 && <div style={{ fontSize: 11, color: C.t3, textAlign: 'center', paddingTop: 20 }}>Sin alertas para este filtro</div>}
-        </div>
-
-        {/* Detalle */}
-        <div style={{
-          flex: 1, background: '#070b14', border: `1px solid ${C.border}`,
-          borderRadius: 6, padding: 12, fontSize: 11, overflow: 'auto',
-        }}>
-          {selected ? (
-            <>
-              <div style={{ marginBottom: 10 }}>
-                <Badge label={selected.severidad} color={SEV_COLOR[selected.severidad] || C.t2} />
-                <span style={{ marginLeft: 6, fontSize: 10, color: C.t3 }}>{selected.timestamp}</span>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>{selected.titulo}</div>
-              <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{selected.descripcion}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
-                {[
-                  ['Sistema', selected.sistema],
-                  ['Categoría', selected.categoria],
-                  ['IP Origen', selected.ip_origen],
-                  ['IP Destino', selected.ip_destino],
-                  ['Usuario', selected.usuario],
-                  ['Proceso', selected.proceso],
-                  ['Regla SIEM', selected.regla_disparada],
-                ].filter(([, v]) => v).map(([k, v]) => (
-                  <div key={k}>
-                    <span style={{ color: C.t3, fontSize: 10 }}>{k}: </span>
-                    <span style={{ color: C.acc, fontSize: 10, fontFamily: 'monospace' }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div style={{ color: C.t3, fontSize: 11, textAlign: 'center', paddingTop: 30 }}>
-              Selecciona una alerta para ver los detalles
-            </div>
-          )}
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', borderTop: '1px solid #333', flexShrink: 0 }}>
+        <span style={{ color: '#ccc', marginRight: 6, whiteSpace: 'nowrap', fontSize: 12 }}>{prompt}</span>
+        <input ref={inpRef} autoFocus value={inp} onChange={e => setInp(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') run(inp);
+            else if (e.key === 'ArrowUp') { const ni = Math.min(ci + 1, cmds.length - 1); setCi(ni); setInp(cmds[ni] || ''); }
+            else if (e.key === 'ArrowDown') { const ni = Math.max(ci - 1, -1); setCi(ni); setInp(ni === -1 ? '' : cmds[ni] || ''); }
+          }}
+          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#cccccc', fontSize: 12, fontFamily: 'inherit' }}
+          placeholder="escribe un comando..." />
       </div>
-    </Panel>
+    </div>
   );
 }
 
-// ── PANEL: LOG EXPLORER ───────────────────────────────────────────────────────
-function LogPanel({ logs, onQueryLog }) {
-  const [search, setSearch]   = useState('');
-  const [nivel, setNivel]     = useState('TODOS');
-  const [onlyRel, setOnlyRel] = useState(false);
-
+/* ─── APP: LOG EXPLORER ──────────────────────────────────────────────────────── */
+function LogApp({ logs, onQuery }) {
+  const [search, setSearch] = useState('');
+  const [nivel, setNivel] = useState('TODOS');
+  const [onlyRel, setRel] = useState(false);
+  const NVC = { ERROR: '#dc2626', WARNING: '#d97706', INFO: '#64748b' };
   const filtered = logs.filter(l => {
     if (nivel !== 'TODOS' && l.nivel !== nivel) return false;
     if (onlyRel && !l.relevante) return false;
     if (search && !JSON.stringify(l).toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
-
-  const handleSearch = (v) => {
-    setSearch(v);
-    if (v.length > 2) onQueryLog(`SEARCH:${v}`);
-  };
+  const hs = v => { setSearch(v); if (v.length > 2) onQuery(`SEARCH:${v}`); };
 
   return (
-    <Panel title="Log Explorer" icon="📋" headerRight={
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <label style={{ fontSize: 10, color: C.t3, display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer' }}>
-          <input type="checkbox" checked={onlyRel} onChange={e => setOnlyRel(e.target.checked)} style={{ accentColor: C.acc }} />
-          Solo relevantes
-        </label>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', fontSize: 12 }}>
+      {/* toolbar */}
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', background: '#f8fafc', flexShrink: 0 }}>
+        <input value={search} onChange={e => hs(e.target.value)} placeholder="Filtrar logs: IP, proceso, Event ID, usuario..."
+          style={{ flex: 1, minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', fontSize: 11, outline: 'none', fontFamily: 'monospace' }} />
         {['TODOS', 'ERROR', 'WARNING', 'INFO'].map(n => (
-          <button key={n} onClick={() => setNivel(n)} style={{
-            fontSize: 9, padding: '2px 6px', borderRadius: 4, cursor: 'pointer', fontWeight: 700,
-            border: `1px solid ${C.border2}`,
-            background: nivel === n ? C.acc + '22' : 'transparent',
-            color: nivel === n ? C.acc : C.t3,
-          }}>{n}</button>
+          <button key={n} onClick={() => setNivel(n)} style={{ fontSize: 10, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${NVC[n] || '#e2e8f0'}`, background: nivel === n ? (NVC[n] || '#4f46e5') + '22' : 'transparent', color: nivel === n ? NVC[n] || '#4f46e5' : '#64748b' }}>{n}</button>
         ))}
+        <label style={{ fontSize: 11, color: '#64748b', display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <input type="checkbox" checked={onlyRel} onChange={e => setRel(e.target.checked)} style={{ accentColor: '#0078d4' }} /> Solo relevantes
+        </label>
       </div>
-    }>
-      {/* Search */}
-      <div style={{ marginBottom: 8 }}>
-        <input
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder="Filtrar logs... (IP, proceso, usuario, Event ID)"
-          style={{
-            width: '100%', padding: '6px 10px', borderRadius: 6,
-            background: '#070b14', border: `1px solid ${C.border2}`,
-            color: C.t1, fontSize: 11, fontFamily: 'monospace',
-            outline: 'none', boxSizing: 'border-box',
-          }}
-        />
-      </div>
-
-      {/* Logs */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* list */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
         {filtered.map(l => (
-          <div key={l.id} style={{
-            padding: '6px 10px', borderRadius: 5, fontFamily: 'monospace',
-            background: l.relevante ? '#070b14' : '#050810',
-            border: `1px solid ${l.relevante ? C.border : '#0f1520'}`,
-            opacity: l.relevante ? 1 : 0.6,
-          }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2 }}>
-              <span style={{ fontSize: 9, color: C.t3 }}>{l.timestamp?.slice(11)}</span>
-              <Badge
-                label={l.nivel}
-                color={l.nivel === 'ERROR' ? C.red : l.nivel === 'WARNING' ? C.yellow : C.t3}
-              />
-              <span style={{ fontSize: 9, color: C.t3 }}>{l.fuente}</span>
-              <span style={{ fontSize: 9, color: C.acc2, fontWeight: 700 }}>{l.sistema}</span>
-              {l.event_id && <Badge label={`EID:${l.event_id}`} color={C.t3} />}
-              {!l.relevante && <Badge label="RUIDO" color={C.t3} />}
+          <div key={l.id} style={{ padding: '7px 10px', borderRadius: 5, marginBottom: 3, fontFamily: 'Consolas, monospace', background: l.relevante ? '#fff' : '#fafafa', border: `1px solid ${l.relevante ? '#e2e8f0' : '#f1f5f9'}`, opacity: l.relevante ? 1 : 0.55 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, color: '#64748b' }}>{l.timestamp?.slice(11, 19)}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, color: NVC[l.nivel] || '#64748b', background: (NVC[l.nivel] || '#64748b') + '18', border: `1px solid ${NVC[l.nivel] || '#64748b'}30` }}>{l.nivel}</span>
+              <span style={{ fontSize: 10, color: '#1d4ed8', fontWeight: 600 }}>{l.sistema}</span>
+              <span style={{ fontSize: 10, color: '#64748b' }}>{l.fuente}</span>
+              {l.event_id && <span style={{ fontSize: 9, color: '#64748b', border: '1px solid #e2e8f0', padding: '0 4px', borderRadius: 3 }}>EID:{l.event_id}</span>}
+              {!l.relevante && <span style={{ fontSize: 9, color: '#94a3b8', marginLeft: 'auto' }}>ruido</span>}
             </div>
-            <div style={{ fontSize: 10, color: l.relevante ? C.t2 : C.t3, lineHeight: 1.4, wordBreak: 'break-all' }}>
-              {l.mensaje}
-            </div>
+            <div style={{ fontSize: 11, color: l.relevante ? '#0f172a' : '#94a3b8', lineHeight: 1.5, wordBreak: 'break-all' }}>{l.mensaje}</div>
           </div>
         ))}
-        {filtered.length === 0 && (
-          <div style={{ fontSize: 11, color: C.t3, textAlign: 'center', paddingTop: 20 }}>
-            {search ? `Sin resultados para "${search}"` : 'Sin logs'}
-          </div>
-        )}
+        {filtered.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>{search ? `Sin resultados para "${search}"` : 'Sin logs'}</div>}
       </div>
-      <div style={{ marginTop: 8, fontSize: 10, color: C.t3 }}>
-        {filtered.length} de {logs.length} logs · {logs.filter(l => l.relevante).length} relevantes
+      <div style={{ padding: '4px 12px', borderTop: '1px solid #e2e8f0', fontSize: 10, color: '#94a3b8', background: '#f8fafc', flexShrink: 0 }}>
+        {filtered.length} / {logs.length} entradas · {logs.filter(l => l.relevante).length} relevantes
       </div>
-    </Panel>
+    </div>
   );
 }
 
-// ── PANEL: NETWORK MAP ────────────────────────────────────────────────────────
-function NetworkPanel({ red }) {
-  const canvasRef  = useRef(null);
-  const [selected, setSelected] = useState(null);
-  const hosts      = red?.hosts || [];
-  const conexiones = red?.conexiones || [];
-
-  // Posicionar hosts en círculo
-  const getPos = useCallback((idx, total) => {
-    const cx = 260, cy = 160, r = 120;
-    if (total === 1) return { x: cx, y: cy };
-    const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
-    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
-  }, []);
-
-  const positions = hosts.reduce((acc, h, i) => {
-    acc[h.id] = getPos(i, hosts.length);
-    return acc;
-  }, {});
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Dibujar conexiones
-    conexiones.forEach(c => {
-      const from = positions[c.origen];
-      const to   = positions[c.destino];
-      if (!from || !to) return;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = EST_COLOR[c.estado] || C.t3;
-      ctx.lineWidth   = c.estado === 'maliciosa' ? 2 : 1;
-      ctx.globalAlpha = c.estado === 'maliciosa' ? 0.8 : 0.3;
-      if (c.estado === 'maliciosa') {
-        ctx.setLineDash([6, 3]);
-      } else {
-        ctx.setLineDash([]);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
-
-      // Etiqueta puerto
-      if (c.puerto) {
-        const mx = (from.x + to.x) / 2;
-        const my = (from.y + to.y) / 2;
-        ctx.font      = '9px monospace';
-        ctx.fillStyle = EST_COLOR[c.estado] || C.t3;
-        ctx.fillText(`${c.protocolo}:${c.puerto}`, mx + 4, my - 3);
-      }
-    });
-  }, [conexiones, positions]);
+/* ─── APP: NETWORK MONITOR ───────────────────────────────────────────────────── */
+function NetworkApp({ red }) {
+  const [sel, setSel] = useState(null);
+  const hosts = red?.hosts || [];
+  const conns = red?.conexiones || [];
+  const EC = { comprometido: '#dc2626', sospechoso: '#d97706', limpio: '#16a34a', maliciosa: '#dc2626', sospechosa: '#d97706', legitima: '#16a34a' };
 
   return (
-    <Panel title="Network Map" icon="🌐">
-      <div style={{ display: 'flex', gap: 8, height: '100%' }}>
-        {/* Canvas */}
-        <div style={{ flex: '0 0 55%', position: 'relative' }}>
-          <canvas
-            ref={canvasRef}
-            width={520}
-            height={320}
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-          />
-          <svg width="100%" height="100%" viewBox="0 0 520 320" style={{ position: 'absolute', top: 0, left: 0 }}>
-            {hosts.map((h, i) => {
-              const pos   = getPos(i, hosts.length);
-              const color = EST_COLOR[h.estado] || C.t3;
-              const isSel = selected?.id === h.id;
+    <div style={{ display: 'flex', height: '100%', fontSize: 12, background: '#fff' }}>
+      {/* host list */}
+      <div style={{ width: 260, borderRight: '1px solid #e2e8f0', overflowY: 'auto' }}>
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #e2e8f0', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', background: '#f8fafc' }}>
+          Hosts en red ({hosts.length})
+        </div>
+        {hosts.map(h => (
+          <div key={h.id} onClick={() => setSel(h)} style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: sel?.id === h.id ? (EC[h.estado] || '#4f46e5') + '08' : 'transparent', transition: 'background .12s' }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: EC[h.estado] || '#94a3b8', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, color: '#0f172a' }}>{h.nombre}</div>
+              <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>{h.ip}</div>
+            </div>
+            <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 10, background: (EC[h.estado] || '#94a3b8') + '18', color: EC[h.estado] || '#94a3b8', fontWeight: 700 }}>{h.estado?.toUpperCase()}</span>
+          </div>
+        ))}
+      </div>
+      {/* detail */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {sel ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: EC[sel.estado] || '#94a3b8' }} />
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{sel.nombre}</span>
+              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: (EC[sel.estado] || '#94a3b8') + '18', color: EC[sel.estado] || '#94a3b8', fontWeight: 700 }}>{sel.estado?.toUpperCase()}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px', background: '#f8fafc', borderRadius: 8, padding: 12, marginBottom: 14 }}>
+              {[['IP', sel.ip], ['Tipo', sel.tipo], ['OS', sel.os]].filter(([, v]) => v).map(([k, v]) => (
+                <div key={k}><div style={{ fontSize: 10, color: '#94a3b8' }}>{k}</div><div style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8', fontFamily: 'monospace' }}>{v}</div></div>
+              ))}
+            </div>
+            {sel.servicios?.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 6 }}>SERVICIOS:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {sel.servicios.map(s => <span key={s} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: '#f1f5f9', color: '#0f172a', fontFamily: 'monospace', border: '1px solid #e2e8f0' }}>{s}</span>)}
+                </div>
+              </div>
+            )}
+            {sel.notas && <div style={{ padding: 10, background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a', fontSize: 11, color: '#92400e', lineHeight: 1.5, marginBottom: 14 }}>⚠ {sel.notas}</div>}
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Conexiones</div>
+            {conns.filter(c => c.origen === sel.id || c.destino === sel.id).map((c, i) => {
+              const other = c.origen === sel.id ? hosts.find(h => h.id === c.destino) : hosts.find(h => h.id === c.origen);
               return (
-                <g key={h.id} onClick={() => setSelected(h)} style={{ cursor: 'pointer' }}>
-                  <circle cx={pos.x} cy={pos.y} r={isSel ? 20 : 16}
-                    fill={C.panel} stroke={color} strokeWidth={isSel ? 2.5 : 1.5}
-                  />
-                  <text x={pos.x} y={pos.y + 1} textAnchor="middle" dominantBaseline="middle"
-                    fontSize={10} fill={color} fontWeight={700}>
-                    {h.tipo?.includes('Controller') ? 'DC' :
-                     h.tipo?.includes('Web') || h.tipo?.includes('Server') ? 'SRV' :
-                     h.tipo?.includes('Workstation') || h.tipo?.includes('Laptop') ? 'WS' : 'HOST'}
-                  </text>
-                  <text x={pos.x} y={pos.y + 28} textAnchor="middle" fontSize={8.5} fill={C.t2}>
-                    {h.nombre?.length > 12 ? h.nombre.slice(0, 12) + '…' : h.nombre}
-                  </text>
-                  <text x={pos.x} y={pos.y + 39} textAnchor="middle" fontSize={8} fill={C.t3}>
-                    {h.ip}
-                  </text>
-                </g>
+                <div key={i} style={{ padding: '8px 12px', borderRadius: 6, marginBottom: 4, background: '#f8fafc', border: `1px solid ${EC[c.estado] || '#e2e8f0'}44`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: EC[c.estado] || '#94a3b8', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#0f172a' }}>{c.origen === sel.id ? '→' : '←'} {other?.nombre || 'externo'} ({other?.ip || '?'})</span>
+                  <span style={{ fontSize: 10, color: '#64748b' }}>{c.protocolo}:{c.puerto}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: EC[c.estado] || '#94a3b8' }}>{c.estado?.toUpperCase()}</span>
+                </div>
               );
             })}
-          </svg>
-        </div>
-
-        {/* Detalle host */}
-        <div style={{
-          flex: 1, background: '#070b14', border: `1px solid ${C.border}`,
-          borderRadius: 6, padding: 10, fontSize: 11, overflow: 'auto',
-        }}>
-          {selected ? (
-            <>
-              <div style={{ marginBottom: 8 }}>
-                <Badge label={selected.estado?.toUpperCase()} color={EST_COLOR[selected.estado] || C.t3} />
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>{selected.nombre}</div>
-              {[
-                ['IP', selected.ip],
-                ['Tipo', selected.tipo],
-                ['OS', selected.os],
-              ].map(([k, v]) => v ? (
-                <div key={k} style={{ marginBottom: 3 }}>
-                  <span style={{ color: C.t3 }}>{k}: </span>
-                  <span style={{ color: C.acc, fontFamily: 'monospace' }}>{v}</span>
-                </div>
-              ) : null)}
-              {selected.servicios?.length > 0 && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 10, color: C.t3, marginBottom: 4 }}>Servicios:</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    {selected.servicios.map(s => <Badge key={s} label={s} color={C.t2} />)}
-                  </div>
-                </div>
-              )}
-              {selected.notas && (
-                <div style={{ marginTop: 8, padding: 8, background: C.panel, borderRadius: 5, fontSize: 10, color: C.t2, lineHeight: 1.5 }}>
-                  {selected.notas}
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={{ color: C.t3, fontSize: 11, textAlign: 'center', paddingTop: 30 }}>
-              Haz clic en un host para ver sus detalles
-            </div>
-          )}
-
-          {/* Leyenda */}
-          <div style={{ marginTop: 12, borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
-            {[['comprometido', 'Comprometido'], ['sospechoso', 'Sospechoso'], ['limpio', 'Limpio']].map(([k, l]) => (
-              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: EST_COLOR[k] }} />
-                <span style={{ fontSize: 10, color: C.t3 }}>{l}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </Panel>
-  );
-}
-
-// ── PANEL: TICKET ─────────────────────────────────────────────────────────────
-function TicketPanel({ preguntas, onSubmit, submitting, queriesLog }) {
-  const [respuestas, setRespuestas]     = useState({});
-  const [informe, setInforme]           = useState('');
-  const [activeTab, setActiveTab]       = useState('preguntas');
-
-  const handleChange = (id, val) => setRespuestas(r => ({ ...r, [String(id)]: val }));
-
-  const respondidas = preguntas.filter(p => respuestas[String(p.id)]?.trim()).length;
-
-  const handleSubmit = () => {
-    onSubmit({ respuestas, informe_libre: informe, queries_usadas: queriesLog });
-  };
-
-  return (
-    <Panel title="Ticket de Análisis" icon="🎫" headerRight={
-      <div style={{ display: 'flex', gap: 4 }}>
-        {['preguntas', 'informe'].map(t => (
-          <button key={t} onClick={() => setActiveTab(t)} style={{
-            fontSize: 10, padding: '3px 10px', borderRadius: 4, cursor: 'pointer', fontWeight: 700,
-            border: `1px solid ${activeTab === t ? C.acc : C.border}`,
-            background: activeTab === t ? C.acc + '22' : 'transparent',
-            color: activeTab === t ? C.acc : C.t3,
-          }}>{t === 'preguntas' ? `Preguntas (${respondidas}/${preguntas.length})` : 'Informe libre'}</button>
-        ))}
-      </div>
-    }>
-      {activeTab === 'preguntas' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {preguntas.map(p => (
-            <div key={p.id} style={{
-              background: '#070b14', border: `1px solid ${respuestas[String(p.id)] ? C.acc + '44' : C.border}`,
-              borderRadius: 8, padding: '12px 14px', transition: 'border-color 0.2s',
-            }}>
-              {/* Cabecera siempre visible */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
-                <div style={{
-                  flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
-                  background: respuestas[String(p.id)] ? C.green + '22' : C.border,
-                  border: `1px solid ${respuestas[String(p.id)] ? C.green : C.border2}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700,
-                  color: respuestas[String(p.id)] ? C.green : C.t3,
-                }}>
-                  {respuestas[String(p.id)] ? '✓' : p.id}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, color: C.acc2, fontWeight: 700, marginBottom: 4 }}>{p.categoria}</div>
-                  {/* Pregunta siempre visible encima del input */}
-                  <div style={{ fontSize: 12, color: C.t1, lineHeight: 1.5, marginBottom: 8, fontWeight: 600 }}>
-                    {p.pregunta}
-                  </div>
-                  <input
-                    value={respuestas[String(p.id)] || ''}
-                    onChange={e => handleChange(p.id, e.target.value)}
-                    placeholder={p.placeholder || 'Escribe tu respuesta aquí...'}
-                    style={{
-                      width: '100%', padding: '8px 10px', borderRadius: 6,
-                      background: C.panel, border: `1px solid ${C.border2}`,
-                      color: C.t1, fontSize: 12, fontFamily: 'monospace',
-                      outline: 'none', boxSizing: 'border-box',
-                      transition: 'border-color 0.2s',
-                    }}
-                    onFocus={e => e.target.style.borderColor = C.acc}
-                    onBlur={e => e.target.style.borderColor = C.border2}
-                  />
-                  {/* Pista siempre visible debajo del input */}
-                  <div style={{ fontSize: 10, color: C.t3, marginTop: 6, display: 'flex', gap: 5 }}>
-                    <span style={{ color: C.yellow }}>💡</span>
-                    <span>{p.pista}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Barra progreso */}
-          <div style={{ marginTop: 4 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.t3, marginBottom: 4 }}>
-              <span>Progreso del análisis</span>
-              <span>{respondidas}/{preguntas.length} preguntas respondidas</span>
-            </div>
-            <div style={{ height: 4, background: C.border, borderRadius: 2 }}>
-              <div style={{
-                height: '100%', borderRadius: 2,
-                width: `${(respondidas / preguntas.length) * 100}%`,
-                background: `linear-gradient(90deg, ${C.acc2}, ${C.acc})`,
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
-          <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.6 }}>
-            Describe la cadena completa del ataque: vector de entrada, técnicas usadas, sistemas afectados,
-            movimiento lateral, persistencia, y acciones de remediación recomendadas.
-          </div>
-          <textarea
-            value={informe}
-            onChange={e => setInforme(e.target.value)}
-            placeholder="Escribe aquí tu análisis completo del incidente..."
-            style={{
-              flex: 1, minHeight: 200, padding: '10px 12px', borderRadius: 8,
-              background: '#070b14', border: `1px solid ${C.border2}`,
-              color: C.t1, fontSize: 12, fontFamily: 'monospace', lineHeight: 1.6,
-              outline: 'none', resize: 'vertical',
-            }}
-            onFocus={e => e.target.style.borderColor = C.acc}
-            onBlur={e => e.target.style.borderColor = C.border2}
-          />
-          <div style={{ fontSize: 10, color: C.t3 }}>
-            Un informe detallado puede sumar hasta +10 puntos extra en la evaluación
-          </div>
-        </div>
-      )}
-
-      {/* Botón enviar */}
-      <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
-        <div style={{ fontSize: 10, color: C.t3, marginBottom: 8 }}>
-          Queries SIEM ejecutadas: <span style={{ color: C.acc }}>{queriesLog.length}</span>
-        </div>
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || respondidas === 0}
-          style={{
-            width: '100%', padding: '12px 0', borderRadius: 8,
-            background: submitting || respondidas === 0
-              ? C.border
-              : `linear-gradient(135deg, ${C.green}, ${C.acc})`,
-            border: 'none', color: '#fff', fontSize: 13, fontWeight: 700,
-            cursor: submitting || respondidas === 0 ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}
-        >
-          {submitting ? <><Spinner size={14} color="#fff" /> Evaluando con IA...</> : '📤 Enviar análisis para evaluación'}
-        </button>
-        {respondidas === 0 && (
-          <div style={{ fontSize: 10, color: C.t3, textAlign: 'center', marginTop: 6 }}>
-            Responde al menos una pregunta para enviar
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, color: '#94a3b8' }}>
+            <div style={{ fontSize: 40 }}>🌐</div>
+            <div style={{ fontSize: 13 }}>Selecciona un host para ver detalles y conexiones</div>
           </div>
         )}
       </div>
-    </Panel>
+    </div>
   );
 }
 
-// ── PANTALLA: RESULTADOS ──────────────────────────────────────────────────────
-function ResultadosPanel({ resultado, escenario, onNuevoLab, onDashboard }) {
-  const [tab, setTab] = useState('resumen');
-  const pct   = resultado.puntuacion_normalizada || 0;
-  const color = pct >= 80 ? C.green : pct >= 50 ? C.yellow : C.red;
-
-  const skillLabels = {
-    siem_queries: 'SIEM & Queries', forense_digital: 'Forense Digital',
-    threat_hunting: 'Threat Hunting', analisis_logs: 'Análisis de Logs',
-    inteligencia_amenazas: 'Intel. Amenazas',
-  };
+/* ─── APP: INCIDENT REPORT ───────────────────────────────────────────────────── */
+function ReportApp({ preguntas, onSubmit, submitting, queriesCount }) {
+  const [resp, setResp] = useState({});
+  const [inf, setInf] = useState('');
+  const [tab, setTab] = useState('preguntas');
+  const acc = '#0078d4';
+  const respondidas = preguntas.filter(p => resp[String(p.id)]?.trim()).length;
 
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg, fontFamily: "'JetBrains Mono', monospace",
-      padding: 24, color: C.t1,
-    }}>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{
-          background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12,
-          padding: '24px 28px', marginBottom: 20,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div>
-            <div style={{ fontSize: 12, color: C.t3, marginBottom: 4 }}>LABORATORIO COMPLETADO</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.t1 }}>{escenario?.titulo || 'Lab SOC'}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', fontSize: 13, fontFamily: 'Segoe UI, sans-serif' }}>
+      {/* tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', flexShrink: 0, background: '#f8fafc' }}>
+        {['preguntas', 'informe'].map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 20px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: tab === t ? '#fff' : 'transparent', color: tab === t ? acc : '#64748b', borderBottom: tab === t ? `2px solid ${acc}` : '2px solid transparent', transition: 'all .15s' }}>
+            {t === 'preguntas' ? `📋 Preguntas (${respondidas}/${preguntas.length})` : '📝 Informe libre'}
+          </button>
+        ))}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+        {tab === 'preguntas' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {preguntas.map(p => (
+              <div key={p.id} style={{ border: `1px solid ${resp[String(p.id)] ? acc + '44' : '#e2e8f0'}`, borderRadius: 10, padding: '14px 16px', background: '#fafafa', transition: 'border-color .2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, background: resp[String(p.id)] ? '#10b98122' : '#f1f5f9', border: `1px solid ${resp[String(p.id)] ? '#10b981' : '#e2e8f0'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: resp[String(p.id)] ? '#10b981' : '#94a3b8' }}>
+                    {resp[String(p.id)] ? '✓' : p.id}
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: acc }}>{p.categoria}</span>
+                </div>
+                {/* PREGUNTA SIEMPRE VISIBLE */}
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', lineHeight: 1.6, marginBottom: 10 }}>{p.pregunta}</div>
+                <input value={resp[String(p.id)] || ''} onChange={e => setResp(r => ({ ...r, [String(p.id)]: e.target.value }))}
+                  placeholder={p.placeholder || 'Escribe tu respuesta aquí...'}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: `1px solid #e2e8f0`, background: '#fff', color: '#0f172a', fontSize: 12, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color .2s' }}
+                  onFocus={e => e.target.style.borderColor = acc} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                {/* PISTA SIEMPRE VISIBLE */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginTop: 8, padding: '6px 10px', borderRadius: 6, background: '#fffbeb', border: '1px solid #fde68a' }}>
+                  <span>💡</span>
+                  <span style={{ fontSize: 11, color: '#92400e', lineHeight: 1.5 }}>{p.pista}</span>
+                </div>
+              </div>
+            ))}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 6 }}><span>Progreso</span><span>{respondidas}/{preguntas.length}</span></div>
+              <div style={{ height: 5, background: '#f1f5f9', borderRadius: 3 }}>
+                <div style={{ height: '100%', borderRadius: 3, width: `${preguntas.length > 0 ? (respondidas / preguntas.length) * 100 : 0}%`, background: `linear-gradient(90deg,${acc},#106ebe)`, transition: 'width .4s' }} />
+              </div>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>{Math.round(pct)}</div>
-            <div style={{ fontSize: 11, color: C.t3 }}>/ 100 puntos</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.7 }}>Describe la cadena completa del ataque: vector de entrada, técnicas usadas, sistemas afectados, movimiento lateral, persistencia y remediación. Un buen informe suma hasta +10 puntos extra.</div>
+            <textarea value={inf} onChange={e => setInf(e.target.value)} placeholder="Escribe aquí tu análisis técnico completo del incidente..."
+              style={{ minHeight: 220, padding: '12px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#0f172a', fontSize: 12, lineHeight: 1.7, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+              onFocus={e => e.target.style.borderColor = acc} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
           </div>
+        )}
+      </div>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid #e2e8f0', flexShrink: 0, background: '#f8fafc' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 11, color: '#64748b' }}>
+          <span>Herramientas usadas: <strong style={{ color: acc }}>{queriesCount}</strong></span>
+          <span>Preguntas: <strong style={{ color: respondidas === preguntas.length ? '#10b981' : acc }}>{respondidas}/{preguntas.length}</strong></span>
         </div>
+        <button onClick={() => onSubmit({ respuestas: resp, informe_libre: inf })} disabled={submitting || respondidas === 0}
+          style={{ width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', background: submitting || respondidas === 0 ? '#e2e8f0' : 'linear-gradient(135deg,#10b981,#059669)', color: submitting || respondidas === 0 ? '#94a3b8' : '#fff', fontSize: 13, fontWeight: 700, cursor: submitting || respondidas === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {submitting ? '⏳ Evaluando con IA...' : '📤 Enviar análisis para evaluación'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
-        {/* Stats rápidos */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
-          {[
-            ['⚡ XP Ganada', `+${resultado.xp_ganada || 0}`, C.acc],
-            ['🔗 Cadena descubierta', `${resultado.cadena_ataque_descubierta || 0}%`, color],
-            ['🔍 Queries SIEM', resultado.puntuacion_queries !== undefined ? `+${resultado.puntuacion_queries} pts` : '-', C.green],
-            ['📋 Informe', resultado.puntuacion_informe !== undefined ? `+${resultado.puntuacion_informe} pts` : '-', C.yellow],
-          ].map(([label, val, c]) => (
-            <div key={label} style={{
-              background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 16px',
-            }}>
-              <div style={{ fontSize: 10, color: C.t3, marginBottom: 4 }}>{label}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: c }}>{val}</div>
+/* ─── pantalla resultado ─────────────────────────────────────────────────────── */
+function Resultados({ resultado, escenario, onNew, onDash }) {
+  const [tab, setTab] = useState('resumen');
+  const pct = Math.round(resultado.puntuacion_normalizada || 0);
+  const color = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+  const SL = { siem_queries: 'SIEM & Queries', forense_digital: 'Forense Digital', threat_hunting: 'Threat Hunting', analisis_logs: 'Análisis de Logs', inteligencia_amenazas: 'Intel. Amenazas' };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f0f4ff', fontFamily: 'Segoe UI, Inter, sans-serif', padding: 32, color: '#0f172a' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: '28px 32px', marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,.06)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Laboratorio completado</div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.5px' }}>{escenario?.titulo || 'Lab SOC'}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}><div style={{ fontSize: 52, fontWeight: 900, color, lineHeight: 1 }}>{pct}</div><div style={{ fontSize: 12, color: '#64748b' }}>/100 puntos</div></div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+          {[['⚡ XP Ganada', `+${resultado.xp_ganada || 0}`, '#4f46e5'], ['🔗 Cadena', `${resultado.cadena_ataque_descubierta || 0}%`, color], ['🔍 Queries', `+${resultado.puntuacion_queries || 0} pts`, '#10b981'], ['📋 Informe', `+${resultado.puntuacion_informe || 0} pts`, '#f59e0b']].map(([l, v, c]) => (
+            <div key={l} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 18px' }}>
+              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{l}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
             </div>
           ))}
         </div>
-
-        {/* Tabs */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           {['resumen', 'preguntas', 'skills', 'solucion'].map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding: '6px 16px', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700,
-              border: `1px solid ${tab === t ? C.acc : C.border}`,
-              background: tab === t ? C.acc + '22' : 'transparent',
-              color: tab === t ? C.acc : C.t3,
-            }}>
+            <button key={t} onClick={() => setTab(t)} style={{ padding: '8px 18px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `1px solid ${tab === t ? '#0078d4' : '#e2e8f0'}`, background: tab === t ? '#0078d408' : '#fff', color: tab === t ? '#0078d4' : '#64748b' }}>
               {t === 'resumen' ? '📊 Resumen' : t === 'preguntas' ? '❓ Preguntas' : t === 'skills' ? '📈 Skills' : '🔓 Solución'}
             </button>
           ))}
         </div>
-
-        <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, marginBottom: 20 }}>
-          {tab === 'resumen' && (
-            <div>
-              <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.8, marginBottom: 12 }}>
-                {resultado.feedback_general}
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 24, marginBottom: 20 }}>
+          {tab === 'resumen' && <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8 }}>{resultado.feedback_general}</p>}
+          {tab === 'preguntas' && (resultado.feedback_preguntas || []).map(fp => (
+            <div key={fp.id} style={{ padding: '14px 16px', borderRadius: 10, background: fp.correcto ? '#f0fdf4' : '#fef2f2', border: `1px solid ${fp.correcto ? '#bbf7d0' : '#fecaca'}`, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>{fp.correcto ? '✅' : '❌'}</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Pregunta {fp.id}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: fp.correcto ? '#bbf7d0' : '#fecaca', color: fp.correcto ? '#15803d' : '#dc2626' }}>{fp.puntos}/10 pts</span>
               </div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Respuesta correcta: <span style={{ color: '#1d4ed8', fontWeight: 600, fontFamily: 'monospace' }}>{fp.respuesta_correcta}</span></div>
+              <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.6 }}>{fp.feedback}</div>
             </div>
-          )}
-
-          {tab === 'preguntas' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {(resultado.feedback_preguntas || []).map(fp => (
-                <div key={fp.id} style={{
-                  padding: '12px 14px', borderRadius: 8,
-                  background: '#070b14',
-                  border: `1px solid ${fp.correcto ? C.green + '44' : C.red + '33'}`,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 16 }}>{fp.correcto ? '✅' : '❌'}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>Pregunta {fp.id}</span>
-                    <Badge label={`${fp.puntos}/10`} color={fp.correcto ? C.green : C.red} />
-                  </div>
-                  <div style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>Respuesta correcta: <span style={{ color: C.acc, fontFamily: 'monospace' }}>{fp.respuesta_correcta}</span></div>
-                  <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.5 }}>{fp.feedback}</div>
+          ))}
+          {tab === 'skills' && Object.entries(resultado.skills_mejoradas || {}).map(([sk, d]) => {
+            const delta = typeof d === 'object' ? d.delta : d;
+            return (
+              <div key={sk} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                <div style={{ width: 160, fontSize: 13, color: '#374151', fontWeight: 600 }}>{SL[sk] || sk}</div>
+                <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}>
+                  <div style={{ height: '100%', borderRadius: 4, width: `${(delta / 0.3) * 100}%`, background: delta >= 0.2 ? '#10b981' : delta > 0 ? '#f59e0b' : '#e2e8f0', transition: 'width .7s' }} />
                 </div>
-              ))}
-            </div>
-          )}
-
-          {tab === 'skills' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {Object.entries(resultado.skills_mejoradas || {}).map(([skill, datos]) => {
-                const delta = typeof datos === 'object' ? datos.delta : datos;
-                return (
-                  <div key={skill} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 140, fontSize: 11, color: C.t2, flexShrink: 0 }}>
-                      {skillLabels[skill] || skill}
-                    </div>
-                    <div style={{ flex: 1, height: 6, background: C.border, borderRadius: 3 }}>
-                      <div style={{
-                        height: '100%', borderRadius: 3,
-                        width: `${(delta / 0.3) * 100}%`,
-                        background: delta >= 0.2 ? C.green : delta > 0 ? C.yellow : C.border2,
-                        transition: 'width 0.6s ease',
-                      }} />
-                    </div>
-                    <div style={{ width: 50, fontSize: 11, color: delta > 0 ? C.green : C.t3, textAlign: 'right', flexShrink: 0 }}>
-                      {delta > 0 ? `+${delta.toFixed(2)}` : '—'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
+                <div style={{ width: 52, fontSize: 13, color: delta > 0 ? '#10b981' : '#94a3b8', textAlign: 'right', fontWeight: 700 }}>{delta > 0 ? `+${delta.toFixed(2)}` : '—'}</div>
+              </div>
+            );
+          })}
           {tab === 'solucion' && resultado.solucion_completa && (
             <div>
-              <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 14 }}>
-                {resultado.solucion_completa.resumen}
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 11, color: C.t3, marginBottom: 8, fontWeight: 700 }}>CADENA DEL ATAQUE:</div>
-                {(resultado.solucion_completa.cadena_ataque || []).map((paso, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.acc2 + '33', border: `1px solid ${C.acc2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.acc2, flexShrink: 0 }}>{i + 1}</div>
-                    <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.5 }}>{paso}</div>
-                  </div>
-                ))}
-              </div>
+              <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, marginBottom: 16 }}>{resultado.solucion_completa.resumen}</p>
+              {(resultado.solucion_completa.cadena_ataque || []).map((p, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, background: '#0078d408', border: '1px solid #0078d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#0078d4' }}>{i + 1}</div>
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.6, paddingTop: 3 }}>{p}</div>
+                </div>
+              ))}
               {resultado.solucion_completa.tecnicas_mitre?.length > 0 && (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, color: C.t3, marginBottom: 6, fontWeight: 700 }}>TTPs MITRE ATT&CK:</div>
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>TTPs MITRE ATT&CK:</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {resultado.solucion_completa.tecnicas_mitre.map(t => (
-                      <Badge key={t} label={t} color={C.acc} />
-                    ))}
+                    {resultado.solucion_completa.tecnicas_mitre.map(t => <span key={t} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, background: '#ede9fe', color: '#7c3aed', fontWeight: 700 }}>{t}</span>)}
                   </div>
                 </div>
               )}
-              <div style={{ padding: 12, background: '#070b14', borderRadius: 8, border: `1px solid ${C.border}` }}>
-                <div style={{ fontSize: 10, color: C.yellow, marginBottom: 4, fontWeight: 700 }}>💡 LECCIONES APRENDIDAS</div>
-                <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.6 }}>{resultado.solucion_completa.lecciones}</div>
-              </div>
+              {resultado.solucion_completa.lecciones && (
+                <div style={{ marginTop: 16, padding: 14, background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#92400e', marginBottom: 4 }}>💡 LECCIONES APRENDIDAS</div>
+                  <div style={{ fontSize: 12, color: '#78350f', lineHeight: 1.7 }}>{resultado.solucion_completa.lecciones}</div>
+                </div>
+              )}
             </div>
           )}
         </div>
-
-        {/* Botones */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onNuevoLab} style={{
-            flex: 1, padding: '13px 0', borderRadius: 8,
-            background: `linear-gradient(135deg, ${C.acc2}, ${C.acc})`,
-            border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}>
-            🔬 Nuevo laboratorio
-          </button>
-          <button onClick={onDashboard} style={{
-            flex: 1, padding: '13px 0', borderRadius: 8,
-            background: 'transparent', border: `1px solid ${C.border2}`,
-            color: C.t2, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}>
-            ← Volver al dashboard
-          </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={onNew} style={{ flex: 1, padding: '14px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#0078d4,#106ebe)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>🔬 Nuevo laboratorio</button>
+          <button onClick={onDash} style={{ flex: 1, padding: '14px 0', borderRadius: 10, background: '#fff', border: '1px solid #e2e8f0', color: '#374151', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>← Dashboard</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── MAIN ──────────────────────────────────────────────────────────────────────
+/* ─── MAIN ───────────────────────────────────────────────────────────────────── */
+const APPS_DEF = [
+  { id: 'siem',    label: 'SIEM Alerts',     icon: '🖥️', defaultX: 40,  defaultY: 20,  defaultW: 720, defaultH: 500 },
+  { id: 'logs',    label: 'Log Explorer',    icon: '📋', defaultX: 100, defaultY: 60,  defaultW: 680, defaultH: 480 },
+  { id: 'network', label: 'Network Monitor', icon: '🌐', defaultX: 160, defaultY: 100, defaultW: 660, defaultH: 460 },
+  { id: 'terminal',label: 'Terminal',        icon: '💻', defaultX: 220, defaultY: 140, defaultW: 640, defaultH: 400 },
+  { id: 'report',  label: 'Incident Report', icon: '📝', defaultX: 280, defaultY: 60,  defaultW: 580, defaultH: 560 },
+];
+
 export default function LabPage() {
   const navigate = useNavigate();
-
-  const [fase, setFase]           = useState('intro');    // intro | lab | resultado
+  const [fase, setFase] = useState('intro');      // intro | boot | lab | resultado
   const [escenario, setEscenario] = useState(null);
   const [resultado, setResultado] = useState(null);
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState('');
+  const [error, setError] = useState('');
   const [queriesLog, setQueriesLog] = useState([]);
+  const [showOB, setShowOB] = useState(false);
+  const [tickTime, setTickTime] = useState(clock());
+  const [focused, setFocused] = useState(null);
 
-  // Registrar cada interacción como "query"
-  const onQueryLog = useCallback((q) => {
-    setQueriesLog(prev => {
-      if (prev.includes(q)) return prev;
-      return [...prev, q];
-    });
-  }, []);
+  /* windows state */
+  const initWins = () => APPS_DEF.reduce((a, app) => ({ ...a, [app.id]: { open: false, minimized: false } }), {});
+  const [wins, setWins] = useState(initWins);
+
+  /* clock tick */
+  useEffect(() => { const iv = setInterval(() => setTickTime(clock()), 10000); return () => clearInterval(iv); }, []);
+
+  /* onboarding */
+  useEffect(() => { if (!localStorage.getItem(OB_KEY)) setShowOB(true); }, []);
+
+  const onQuery = useCallback(q => setQueriesLog(p => p.includes(q) ? p : [...p, q]), []);
+
+  const openApp  = id => { setWins(w => ({ ...w, [id]: { open: true, minimized: false } })); setFocused(id); onQuery(`OPEN:${id}`); };
+  const closeApp = id => setWins(w => ({ ...w, [id]: { ...w[id], open: false } }));
+  const minApp   = id => setWins(w => ({ ...w, [id]: { ...w[id], minimized: true } }));
+  const taskClick = id => {
+    const w = wins[id];
+    if (!w?.open) return;
+    if (w.minimized) { setWins(ww => ({ ...ww, [id]: { ...ww[id], minimized: false } })); setFocused(id); }
+    else if (focused === id) minApp(id);
+    else setFocused(id);
+  };
 
   const iniciarLab = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const data = await apiFetch('/lab/generar', { method: 'POST' });
-      setEscenario(data);
-      setFase('lab');
-      setQueriesLog([]);
-    } catch (e) {
-      setError(e.message || 'Error generando el laboratorio');
-    } finally {
-      setLoading(false);
-    }
+      const d = await api('/lab/generar', { method: 'POST' });
+      setEscenario(d); setQueriesLog([]); setFase('boot');
+    } catch (e) { setError(e.message || 'Error generando el laboratorio'); }
+    finally { setLoading(false); }
   };
 
-  const enviarAnalisis = async ({ respuestas, informe_libre, queries_usadas }) => {
-    setSubmitting(true);
-    setError('');
+  const enviar = async ({ respuestas, informe_libre }) => {
+    setSubmitting(true); setError('');
     try {
-      const data = await apiFetch('/lab/evaluar', {
-        method: 'POST',
-        body: JSON.stringify({
-          lab_id:        escenario.lab_id,
-          respuestas,
-          informe_libre,
-          queries_usadas,
-        }),
-      });
-      setResultado(data);
-      setFase('resultado');
-    } catch (e) {
-      setError(e.message || 'Error evaluando el laboratorio');
-    } finally {
-      setSubmitting(false);
-    }
+      const d = await api('/lab/evaluar', { method: 'POST', body: JSON.stringify({ lab_id: escenario.lab_id, respuestas, informe_libre, queries_usadas: queriesLog }) });
+      setResultado(d); setFase('resultado');
+    } catch (e) { setError(e.message || 'Error evaluando'); }
+    finally { setSubmitting(false); }
   };
 
-  const nuevoLab = () => {
-    setEscenario(null);
-    setResultado(null);
-    setFase('intro');
-  };
+  const nuevoLab = () => { setEscenario(null); setResultado(null); setFase('intro'); setWins(initWins()); setQueriesLog([]); };
 
-  // ── RENDER: INTRO ──────────────────────────────────────────────────────────
-  if (fase === 'intro') {
-    return (
-      <>
-        <LabIntro onStart={iniciarLab} loading={loading} />
-        {error && (
-          <div style={{
-            position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-            background: C.red + '22', border: `1px solid ${C.red}`, borderRadius: 8,
-            padding: '10px 20px', color: C.red, fontSize: 12,
-          }}>{error}</div>
-        )}
-      </>
-    );
-  }
+  /* ── intro ── */
+  if (fase === 'intro') return (
+    <div style={{ minHeight: '100vh', background: '#f0f4ff', fontFamily: 'Segoe UI, Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}`}</style>
+      {showOB && <Onboarding onDone={() => { localStorage.setItem(OB_KEY, '1'); setShowOB(false); }} />}
+      <div style={{ maxWidth: 560, width: '90%', animation: 'fadeUp .4s ease' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>🔬</div>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0f172a', margin: '0 0 8px', letterSpacing: '-.8px' }}>Laboratorio SOC</h1>
+          <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, margin: 0 }}>Accede a una máquina comprometida. Investiga con las herramientas del SOC. Redacta tu informe forense.</p>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: '28px 32px', boxShadow: '0 4px 20px rgba(0,0,0,.06)', border: '1px solid #e2e8f0', marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 22 }}>
+            {[['🖥️', 'SIEM Alerts', 'Alertas con detalle técnico'], ['📋', 'Log Explorer', 'Logs filtrables del sistema'], ['🌐', 'Network Monitor', 'Hosts y conexiones activas'], ['💻', 'Terminal Windows', 'Comandos reales para investigar'], ['📝', 'Incident Report', 'Preguntas + informe evaluado por IA'], ['⏱', 'Sin límite de tiempo', 'Investiga todo lo que necesites']].map(([icon, title, desc]) => (
+              <div key={title} style={{ display: 'flex', gap: 10, padding: '10px 12px', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
+                <div><div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>{title}</div><div style={{ fontSize: 11, color: '#64748b' }}>{desc}</div></div>
+              </div>
+            ))}
+          </div>
+          <button onClick={iniciarLab} disabled={loading} style={{ width: '100%', padding: '15px 0', borderRadius: 10, border: 'none', background: loading ? '#e2e8f0' : 'linear-gradient(135deg,#0078d4,#106ebe)', color: loading ? '#94a3b8' : '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: loading ? 'none' : '0 4px 14px rgba(0,120,212,.35)' }}>
+            {loading ? '⏳ Generando escenario con IA...' : '⚡ Iniciar Laboratorio'}
+          </button>
+          {error && <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', fontSize: 12, color: '#dc2626' }}>⚠ {error}</div>}
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>El escenario se adapta a tu arena · Solo XP y habilidades, sin copas</div>
+      </div>
+    </div>
+  );
 
-  // ── RENDER: RESULTADO ──────────────────────────────────────────────────────
-  if (fase === 'resultado') {
-    return <ResultadosPanel resultado={resultado} escenario={escenario} onNuevoLab={nuevoLab} onDashboard={() => navigate('/dashboard')} />;
-  }
+  /* ── boot ── */
+  if (fase === 'boot') return <BootScreen onDone={() => setFase('lab')} />;
 
-  // ── RENDER: LAB ────────────────────────────────────────────────────────────
+  /* ── resultado ── */
+  if (fase === 'resultado') return <Resultados resultado={resultado} escenario={escenario} onNew={nuevoLab} onDash={() => navigate('/dashboard')} />;
+
+  /* ── lab (escritorio Windows) ── */
+  const taskApps = APPS_DEF.filter(a => wins[a.id]?.open);
+
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-      display: 'flex', flexDirection: 'column',
-    }}>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', fontFamily: 'Segoe UI, sans-serif', userSelect: 'none' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width:5px; height:5px; }
-        ::-webkit-scrollbar-track { background: ${C.bg}; }
-        ::-webkit-scrollbar-thumb { background: ${C.border2}; border-radius:3px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
 
-      {/* Topbar */}
+      {/* ── ESCRITORIO ── */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 20px', borderBottom: `1px solid ${C.border}`,
-        background: C.panel, flexShrink: 0,
+        position: 'relative',
+        width: '100%',
+        height: 'calc(100vh - 40px)',
+        background: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 40%, #2563eb 70%, #1e40af 100%)',
+        overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14 }}>🔬</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{escenario?.titulo || 'Laboratorio SOC'}</span>
-          <Badge label={escenario?.nivel || 'BRONCE'} color={C.acc2} />
+        {/* wallpaper pattern */}
+        <div style={{ position: 'absolute', inset: 0, opacity: .06, backgroundImage: 'radial-gradient(circle,#fff 1px,transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
+
+        {/* objetivo banner */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '6px 16px', background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 10, zIndex: 5, borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#fbbf24', letterSpacing: '.06em' }}>🎯 OBJETIVO:</span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.8)' }}>{escenario?.objetivo || escenario?.descripcion}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,.5)' }}>🔍 <span style={{ color: '#7dd3fc' }}>{queriesLog.length}</span> queries</span>
+            <button onClick={() => navigate('/dashboard')} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 5, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.7)', cursor: 'pointer' }}>← Dashboard</button>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ fontSize: 11, color: C.t3 }}>
-            🔍 <span style={{ color: C.acc }}>{queriesLog.length}</span> queries ejecutadas
-          </span>
-          <button onClick={() => navigate('/dashboard')} style={{
-            fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-            background: 'transparent', border: `1px solid ${C.border2}`, color: C.t3,
-          }}>← Dashboard</button>
+
+        {/* desktop icons — columna izq */}
+        <div style={{ position: 'absolute', top: 40, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 4 }}>
+          {APPS_DEF.map(a => <DesktopIcon key={a.id} icon={a.icon} label={a.label} onClick={() => openApp(a.id)} />)}
         </div>
+
+        {/* VENTANAS */}
+        {APPS_DEF.map(app => wins[app.id]?.open && !wins[app.id]?.minimized ? (
+          <AppWindow key={app.id} id={app.id} title={app.label} icon={app.icon}
+            onClose={() => closeApp(app.id)} onMinimize={() => minApp(app.id)}
+            onFocus={() => setFocused(app.id)} focused={focused === app.id}
+            defaultX={app.defaultX} defaultY={app.defaultY + 30}
+            defaultW={app.defaultW} defaultH={app.defaultH}>
+            {app.id === 'siem'     && <SIEMApp alertas={escenario?.alertas_siem || []} onQuery={onQuery} />}
+            {app.id === 'logs'     && <LogApp logs={escenario?.logs || []} onQuery={onQuery} />}
+            {app.id === 'network'  && <NetworkApp red={escenario?.red} />}
+            {app.id === 'terminal' && <TerminalApp escenario={escenario} onQuery={onQuery} />}
+            {app.id === 'report'   && <ReportApp preguntas={escenario?.preguntas || []} onSubmit={enviar} submitting={submitting} queriesCount={queriesLog.length} />}
+          </AppWindow>
+        ) : null)}
+
+        {error && (
+          <div style={{ position: 'absolute', bottom: 60, left: '50%', transform: 'translateX(-50%)', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 20px', color: '#dc2626', fontSize: 12, zIndex: 9999 }}>{error}</div>
+        )}
       </div>
 
-      {/* Contexto del escenario */}
+      {/* ── TASKBAR ── */}
       <div style={{
-        padding: '10px 20px', borderBottom: `1px solid ${C.border}`,
-        background: '#0b1121', flexShrink: 0,
+        position: 'fixed', bottom: 0, left: 0, right: 0, height: 40,
+        background: 'rgba(10,14,26,.97)', backdropFilter: 'blur(16px)',
+        borderTop: '1px solid rgba(255,255,255,.08)',
+        display: 'flex', alignItems: 'center', padding: '0 8px', gap: 4,
+        zIndex: 200,
       }}>
-        <span style={{ fontSize: 10, color: C.yellow, marginRight: 8 }}>🎯 OBJETIVO:</span>
-        <span style={{ fontSize: 11, color: C.t2 }}>{escenario?.objetivo || escenario?.descripcion}</span>
-      </div>
-
-      {error && (
-        <div style={{ padding: '8px 20px', background: C.red + '11', borderBottom: `1px solid ${C.red}33`, fontSize: 11, color: C.red }}>
-          ⚠ {error}
+        {/* start */}
+        <div style={{ width: 36, height: 32, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer', flexShrink: 0 }}>🪟</div>
+        <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,.12)', margin: '0 4px' }} />
+        {/* task buttons */}
+        {taskApps.map(a => (
+          <TaskBtn key={a.id} icon={a.icon} label={a.label}
+            active={focused === a.id && !wins[a.id]?.minimized}
+            minimized={wins[a.id]?.minimized}
+            onClick={() => taskClick(a.id)} />
+        ))}
+        {/* right side */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, paddingRight: 8 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', fontFamily: 'Segoe UI' }}>{tickTime}</span>
         </div>
-      )}
-
-      {/* Grid 2x2 */}
-      <div style={{
-        flex: 1, display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gridTemplateRows: '1fr 1fr',
-        gap: 10, padding: 10,
-        minHeight: 0,
-      }}>
-        <SIEMPanel
-          alertas={escenario?.alertas_siem || []}
-          onQueryLog={onQueryLog}
-          queriesLog={queriesLog}
-        />
-        <LogPanel
-          logs={escenario?.logs || []}
-          onQueryLog={onQueryLog}
-        />
-        <NetworkPanel
-          red={escenario?.red}
-        />
-        <TicketPanel
-          preguntas={escenario?.preguntas || []}
-          onSubmit={enviarAnalisis}
-          submitting={submitting}
-          queriesLog={queriesLog}
-        />
       </div>
     </div>
   );
