@@ -27,13 +27,38 @@ ARENAS_CONFIG = [
     {"nombre": "Diamante 1","grupo": "Diamante","min": 3300,"max": 99999},
 ]
 
-SKILLS_MAX = 10  # Máximo valor de cualquier skill
+SKILLS_LIST = [
+    "analisis_logs", "deteccion_amenazas", "respuesta_incidentes",
+    "threat_hunting", "forense_digital", "gestion_vulnerabilidades",
+    "inteligencia_amenazas", "siem_queries"
+]
+
+# Cap de skill según grupo de arena
+SKILLS_CAP = {
+    "Bronce":   6.0,
+    "Plata":    8.0,
+    "Oro":      10.0,
+    "Diamante": 10.0,
+}
+
+DELTA_BAJA        = 0.1   # penalización por racha mala
+RACHA_MALA_LIMITE = 3     # sesiones seguidas fallando → penalizar
+
 
 def get_arena_por_copas(copas: int) -> str:
     for a in ARENAS_CONFIG:
         if copas <= a["max"]:
             return a["nombre"]
     return "Diamante 1"
+
+
+def get_grupo_arena(arena: str) -> str:
+    """Extrae el grupo ('Bronce', 'Plata', 'Oro', 'Diamante') del nombre de arena."""
+    for grupo in ["Diamante", "Oro", "Plata", "Bronce"]:
+        if grupo in arena:
+            return grupo
+    return "Bronce"
+
 
 def calcular_tier(xp: int) -> int:
     if xp < 500:   return 1
@@ -45,13 +70,62 @@ def calcular_tier(xp: int) -> int:
     if xp < 18000: return 7
     return 8
 
-def aplicar_skills(skills_actuales: dict, skills_mejora: dict) -> dict:
-    """Aplica mejoras de skills con cap en SKILLS_MAX."""
-    nuevas = dict(skills_actuales)
-    for key, delta in skills_mejora.items():
-        if key in nuevas and delta > 0:
-            nuevas[key] = min(SKILLS_MAX, nuevas[key] + delta)
-    return nuevas
+
+def aplicar_skills(
+    skills_actuales: dict,
+    evaluacion_ia: dict,       # {"skill": {"delta": 0.2, "malo": False}, ...}
+    skills_streak_bad: dict,   # {"skill": 0, ...} — contador rachas malas
+    arena: str
+) -> tuple:
+    """
+    Aplica mejoras/penalizaciones de skills con:
+    - Cap por grupo de arena (Bronce ≤6, Plata ≤8, Oro/Diamante ≤10)
+    - Penalización -0.1 si lleva RACHA_MALA_LIMITE sesiones seguidas fallando esa skill
+    - Skills pueden subir máximo 0.3 por sesión
+
+    Retorna (nuevas_skills: dict, nuevo_streak_bad: dict)
+    """
+    grupo = get_grupo_arena(arena)
+    cap   = SKILLS_CAP.get(grupo, 6.0)
+
+    nuevas     = {k: float(v) for k, v in skills_actuales.items()}
+    nuevo_streak = dict(skills_streak_bad)
+
+    for skill, datos in evaluacion_ia.items():
+        if skill not in nuevas:
+            continue
+
+        # Compatibilidad: si la IA devolviera formato antiguo (solo número)
+        if isinstance(datos, (int, float)):
+            delta = float(datos) * 0.15  # escalar 0-2 → 0-0.3
+            malo  = (datos == 0)
+        else:
+            delta = min(0.3, max(0.0, float(datos.get("delta", 0.0))))
+            malo  = bool(datos.get("malo", False))
+
+        if malo:
+            # Incrementar racha mala
+            nuevo_streak[skill] = nuevo_streak.get(skill, 0) + 1
+
+            # Penalizar si alcanza el límite de rachas
+            if nuevo_streak[skill] >= RACHA_MALA_LIMITE:
+                nuevas[skill]        = round(max(0.0, nuevas[skill] - DELTA_BAJA), 2)
+                nuevo_streak[skill]  = 0  # reset tras penalizar
+        else:
+            # Resetear racha mala siempre que no falle
+            nuevo_streak[skill] = 0
+
+            if delta > 0:
+                # Aplicar mejora respetando cap de arena
+                nuevas[skill] = round(min(cap, nuevas[skill] + delta), 2)
+
+    return nuevas, nuevo_streak
+
+
+def skills_streak_inicial() -> dict:
+    """Devuelve un streak_bad limpio para usuario nuevo."""
+    return {s: 0 for s in SKILLS_LIST}
+
 
 # ── OAUTH GOOGLE ──────────────────────────────────────────────────────────────
 oauth = OAuth()
@@ -72,21 +146,18 @@ async def google_login(request: Request):
 async def google_callback(request: Request):
     frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     try:
-        token = await oauth.google.authorize_access_token(request)
+        token     = await oauth.google.authorize_access_token(request)
         user_info = token.get('userinfo')
-        email  = user_info['email']
-        nombre = user_info.get('name', email.split('@')[0])
-        db = get_db()
-        existing = await db.users.find_one({"email": email})
+        email     = user_info['email']
+        nombre    = user_info.get('name', email.split('@')[0])
+        db        = get_db()
+        existing  = await db.users.find_one({"email": email})
         if not existing:
             await db.users.insert_one({
                 "email": email, "password": "", "nombre": nombre, "rol": "analista",
                 "copas": 0, "xp": 0, "tier": 1, "arena": "Bronce 3",
-                "skills": {
-                    "analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
-                    "threat_hunting": 0, "forense_digital": 0,
-                    "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0
-                },
+                "skills": {s: 0.0 for s in SKILLS_LIST},
+                "skills_streak_bad": skills_streak_inicial(),
                 "sesiones_completadas": 0, "training_progreso": {},
                 "fecha_registro": datetime.now().isoformat(),
                 "oauth_provider": "google", "email_verificado": True
@@ -94,11 +165,21 @@ async def google_callback(request: Request):
             rol = "analista"
         else:
             rol = existing.get("rol", "analista")
+            # Migrar usuarios existentes que no tengan siem_queries o skills_streak_bad
+            updates = {}
+            if "siem_queries" not in existing.get("skills", {}):
+                updates["skills.siem_queries"] = 0.0
+            if "skills_streak_bad" not in existing:
+                updates["skills_streak_bad"] = skills_streak_inicial()
+            if updates:
+                await db.users.update_one({"email": email}, {"$set": updates})
+
         access_token = create_access_token({"sub": email, "rol": rol})
         return RedirectResponse(url=f"{frontend_url}/oauth/callback?token={access_token}&rol={rol}&nombre={nombre}")
     except Exception as e:
         print(f"Error Google OAuth: {e}")
         return RedirectResponse(url=f"{frontend_url}/login?error=google_failed")
+
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
 @router.post("/register")
@@ -108,16 +189,13 @@ async def register(user: UserRegister):
     if existing:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
     await db.users.insert_one({
-        "email": user.email,
+        "email":    user.email,
         "password": get_password_hash(user.password),
-        "nombre": user.nombre,
-        "rol": user.rol,
+        "nombre":   user.nombre,
+        "rol":      user.rol,
         "copas": 0, "xp": 0, "tier": 1, "arena": "Bronce 3",
-        "skills": {
-            "analisis_logs": 0, "deteccion_amenazas": 0, "respuesta_incidentes": 0,
-            "threat_hunting": 0, "forense_digital": 0,
-            "gestion_vulnerabilidades": 0, "inteligencia_amenazas": 0
-        },
+        "skills":             {s: 0.0 for s in SKILLS_LIST},
+        "skills_streak_bad":  skills_streak_inicial(),
         "sesiones_completadas": 0, "training_progreso": {},
         "fecha_registro": datetime.now().isoformat(),
         "email_verificado": True,
@@ -134,6 +212,16 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     if not db_user.get("email_verificado", False):
         raise HTTPException(status_code=403, detail="Debes verificar tu email antes de iniciar sesión")
+
+    # Migrar usuarios existentes sin siem_queries o skills_streak_bad
+    updates = {}
+    if "siem_queries" not in db_user.get("skills", {}):
+        updates["skills.siem_queries"] = 0.0
+    if "skills_streak_bad" not in db_user:
+        updates["skills_streak_bad"] = skills_streak_inicial()
+    if updates:
+        await db.users.update_one({"email": user.email}, {"$set": updates})
+
     token = create_access_token({"sub": user.email, "rol": db_user["rol"]})
     return {"access_token": token, "token_type": "bearer", "rol": db_user["rol"], "nombre": db_user["nombre"]}
 
@@ -158,6 +246,7 @@ async def get_me(email: str = Depends(get_current_user)):
     user["_id"] = str(user["_id"])
     return user
 
+
 # ── STATS ─────────────────────────────────────────────────────────────────────
 @router.put("/me/copas")
 async def update_copas(copas_delta: int, email: str = Depends(get_current_user)):
@@ -177,12 +266,13 @@ async def update_xp(xp_delta: int, email: str = Depends(get_current_user)):
     await db.users.update_one({"email": email}, {"$set": {"xp": nueva_xp, "tier": tier}})
     return {"xp": nueva_xp, "tier": tier}
 
+
 # ── SESIONES ──────────────────────────────────────────────────────────────────
 from sessions import generar_sesion, evaluar_respuesta
 
 @router.post("/sesiones/generar")
 async def crear_sesion(email: str = Depends(get_current_user)):
-    db = get_db()
+    db    = get_db()
     user  = await db.users.find_one({"email": email})
     arena = user.get("arena", "Bronce 3")
     grupo = arena.split(" ")[0] if " " in arena else arena
@@ -215,27 +305,38 @@ async def responder_incidente(
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
-    incidente   = sesion["incidentes"][incidente_id - 1]
-    arena       = sesion.get("arena", "Bronce 3")
-    grupo       = arena.split(" ")[0] if " " in arena else arena
-    tiempos     = {"Bronce": 20, "Plata": 15, "Oro": 10, "Diamante": 7}
+    incidente     = sesion["incidentes"][incidente_id - 1]
+    arena         = sesion.get("arena", "Bronce 3")
+    grupo         = arena.split(" ")[0] if " " in arena else arena
+    tiempos       = {"Bronce": 20, "Plata": 15, "Oro": 10, "Diamante": 7}
     tiempo_limite = tiempos.get(grupo, 20)
 
+    # Pasar arena a evaluar_respuesta para que filtre skills por nivel
     evaluacion = await evaluar_respuesta(
-        incidente, respuesta, tiempo_usado, tiempo_limite, pistas_usadas
+        incidente, respuesta, tiempo_usado, tiempo_limite, pistas_usadas, arena
     )
 
-    # ── APLICAR SKILLS MEJORADAS A LA BASE DE DATOS ───────────────────────────
+    # ── APLICAR SKILLS ────────────────────────────────────────────────────────
     skills_mejora = evaluacion.get("skills_mejoradas", {})
     if skills_mejora:
         user = await db.users.find_one({"email": email})
-        skills_actuales = user.get("skills", {})
-        skills_nuevas   = aplicar_skills(skills_actuales, skills_mejora)
+        skills_actuales    = user.get("skills", {s: 0.0 for s in SKILLS_LIST})
+        skills_streak_bad  = user.get("skills_streak_bad", skills_streak_inicial())
+
+        skills_nuevas, nuevo_streak = aplicar_skills(
+            skills_actuales,
+            skills_mejora,
+            skills_streak_bad,
+            arena
+        )
+
         await db.users.update_one(
             {"email": email},
-            {"$set": {"skills": skills_nuevas}}
+            {"$set": {
+                "skills":            skills_nuevas,
+                "skills_streak_bad": nuevo_streak,
+            }}
         )
-        # Incluir las nuevas skills en la respuesta para el frontend
         evaluacion["skills_nuevas"] = skills_nuevas
 
     # Guardar respuesta en la sesión
@@ -243,7 +344,7 @@ async def responder_incidente(
         {"_id": ObjectId(sesion_id)},
         {"$push": {"respuestas": {
             "incidente_id": incidente_id,
-            "evaluacion": evaluacion
+            "evaluacion":   evaluacion
         }}}
     )
 
@@ -273,10 +374,10 @@ async def finalizar_sesion(sesion_id: str, email: str = Depends(get_current_user
     tier         = calcular_tier(nueva_xp)
 
     await db.users.update_one({"email": email}, {"$set": {
-        "copas":               nuevas_copas,
-        "arena":               arena,
-        "xp":                  nueva_xp,
-        "tier":                tier,
+        "copas":                nuevas_copas,
+        "arena":                arena,
+        "xp":                   nueva_xp,
+        "tier":                 tier,
         "sesiones_completadas": user.get("sesiones_completadas", 0) + 1,
     }})
 
@@ -311,6 +412,7 @@ async def historial_sesiones(email: str = Depends(get_current_user)):
         s["_id"] = str(s["_id"])
     return sesiones
 
+
 # ── RANKING ───────────────────────────────────────────────────────────────────
 @router.get("/ranking")
 async def get_ranking(email: str = Depends(get_current_user)):
@@ -336,6 +438,7 @@ async def get_ranking(email: str = Depends(get_current_user)):
             "posicion": posicion,
         }
     return {"jugadores": jugadores, "mi_posicion": mi_posicion}
+
 
 # ── EMPRESA ───────────────────────────────────────────────────────────────────
 @router.get("/talent-pool")
@@ -367,15 +470,15 @@ async def crear_simulacion_empresa(simulacion: dict, email: str = Depends(get_cu
     result = await db.simulaciones_empresa.insert_one(simulacion)
     return {"id": str(result.inserted_id), "mensaje": "Simulación creada correctamente"}
 
+
 # ── LAB ───────────────────────────────────────────────────────────────────────
 @router.post("/lab/evaluar")
 async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
     """Evaluación local del laboratorio — sin IA para no gastar tokens."""
     informe  = payload.get("informe", "").lower()
     queries  = payload.get("queries_usadas", [])
-    notas    = payload.get("notas", [])
 
-    puntos   = 0
+    puntos    = 0
     hallazgos = []
     perdidos  = []
 
@@ -417,9 +520,8 @@ async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
 
     xp_ganada = round(puntos * 1.5)
 
-    # Aplicar XP al usuario
-    db = get_db()
-    user = await db.users.find_one({"email": email})
+    db       = get_db()
+    user     = await db.users.find_one({"email": email})
     nueva_xp = user["xp"] + xp_ganada
     tier     = calcular_tier(nueva_xp)
     await db.users.update_one({"email": email}, {"$set": {"xp": nueva_xp, "tier": tier}})

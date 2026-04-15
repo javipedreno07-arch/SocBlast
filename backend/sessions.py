@@ -5,7 +5,6 @@ import os
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_arena_config(arena: str):
-    # Normaliza arena (puede venir como "Bronce I", "Plata III", etc.)
     if "Diamante" in arena:
         tier = "Diamante"
     elif "Oro" in arena:
@@ -66,6 +65,20 @@ def get_arena_config(arena: str):
         }
     }
     return configs.get(tier, configs["Bronce"])
+
+
+# Skills evaluables por nivel de arena
+SKILLS_POR_NIVEL = {
+    "Bronce":   ["analisis_logs", "deteccion_amenazas", "respuesta_incidentes", "siem_queries"],
+    "Plata":    ["analisis_logs", "deteccion_amenazas", "respuesta_incidentes",
+                 "siem_queries", "gestion_vulnerabilidades", "inteligencia_amenazas"],
+    "Oro":      ["analisis_logs", "deteccion_amenazas", "respuesta_incidentes",
+                 "siem_queries", "gestion_vulnerabilidades", "inteligencia_amenazas",
+                 "forense_digital", "threat_hunting"],
+    "Diamante": ["analisis_logs", "deteccion_amenazas", "respuesta_incidentes",
+                 "siem_queries", "gestion_vulnerabilidades", "inteligencia_amenazas",
+                 "forense_digital", "threat_hunting"],
+}
 
 
 async def generar_sesion(arena: str):
@@ -169,8 +182,21 @@ async def evaluar_respuesta(
     respuesta_usuario: str,
     tiempo_usado: int,
     tiempo_limite: int,
-    pistas_usadas: int
+    pistas_usadas: int,
+    arena: str = "Bronce"
 ):
+    # Determinar nivel de arena
+    if "Diamante" in arena:
+        nivel = "Diamante"
+    elif "Oro" in arena:
+        nivel = "Oro"
+    elif "Plata" in arena:
+        nivel = "Plata"
+    else:
+        nivel = "Bronce"
+
+    skills_a_evaluar = SKILLS_POR_NIVEL.get(nivel, SKILLS_POR_NIVEL["Bronce"])
+
     # Parsear la respuesta del usuario
     partes = {}
     for parte in respuesta_usuario.split('|'):
@@ -182,6 +208,27 @@ async def evaluar_respuesta(
     just_usuario  = partes.get('JUST', 'Sin justificación')
     logs_usuario  = partes.get('LOGS', '')
     acciones_txt  = partes.get('ACCIONES', '')
+
+    # Construir bloque de skills con criterios específicos
+    skills_criterios = {
+        "analisis_logs":             "¿Identificó los logs relevantes y descartó el ruido? ¿Extrajo timestamps y secuencia correcta?",
+        "deteccion_amenazas":        "¿Clasificó correctamente el tipo de amenaza y su severidad? ¿Evitó caer en falsos positivos?",
+        "respuesta_incidentes":      "¿Las acciones de contención/erradicación son correctas y están bien ordenadas?",
+        "siem_queries":              "¿Demostró conocimiento de queries o sintaxis de búsqueda para investigar el incidente?",
+        "gestion_vulnerabilidades":  "¿Priorizó correctamente los vectores de ataque según riesgo real?",
+        "inteligencia_amenazas":     "¿Identificó TTPs, actores conocidos o familias de malware relevantes?",
+        "forense_digital":           "¿Construyó una línea de tiempo forense coherente con los artefactos disponibles?",
+        "threat_hunting":            "¿Propuso hipótesis de hunting proactivas o buscó IOCs más allá del incidente visible?",
+    }
+
+    criterios_aplicables = "\n".join(
+        f"- {s}: {skills_criterios[s]}" for s in skills_a_evaluar
+    )
+
+    # Construir estructura de respuesta esperada para skills
+    skills_json_template = "\n    ".join(
+        f'"{s}": {{"delta": <0.0-0.3>, "malo": <true|false>}},' for s in skills_a_evaluar
+    ).rstrip(",")
 
     prompt = f"""Eres un evaluador experto de analistas SOC. Evalúa la respuesta con criterio profesional pero justo.
 
@@ -204,6 +251,7 @@ Justificación escrita:
 ═══ MÉTRICAS ═══
 Tiempo usado: {tiempo_usado}s de {tiempo_limite * 60}s disponibles
 Pistas usadas: {pistas_usadas}
+Arena: {arena}
 
 ═══ CRITERIOS DE EVALUACIÓN ═══
 
@@ -235,6 +283,19 @@ COPAS_DELTA:
 - Total 5-8: entre 0 y +7
 - Total 0-4: entre -5 y -15
 
+═══ EVALUACIÓN DE SKILLS ═══
+Evalúa SOLO estas skills (las correspondientes al nivel {nivel}):
+{criterios_aplicables}
+
+Para cada skill:
+- "delta": float entre 0.0 y 0.3
+  * 0.0 = el analista falló claramente esta skill o no aplica
+  * 0.1 = respuesta básica, parcialmente correcta
+  * 0.2 = buena respuesta, demuestra conocimiento sólido
+  * 0.3 = respuesta excelente, nivel experto
+- "malo": true si el analista falló claramente esta skill (delta 0.0 Y era evaluable en este incidente)
+  Si la skill no era relevante para este incidente concreto, pon delta 0.0 y malo false.
+
 Devuelve SOLO un JSON válido:
 {{
   "puntuacion_calidad": <0-12>,
@@ -247,13 +308,7 @@ Devuelve SOLO un JSON válido:
   "feedback": "feedback detallado en 2-3 frases: qué hizo bien, qué falló, consejo específico",
   "solucion_explicada": "explicación completa de la solución correcta con contexto técnico (2-3 frases)",
   "skills_mejoradas": {{
-    "analisis_logs": <0-2>,
-    "deteccion_amenazas": <0-2>,
-    "respuesta_incidentes": <0-2>,
-    "threat_hunting": <0-1>,
-    "forense_digital": <0-1>,
-    "gestion_vulnerabilidades": <0-1>,
-    "inteligencia_amenazas": <0-1>
+    {skills_json_template}
   }}
 }}
 
@@ -277,5 +332,24 @@ Sé honesto: si la justificación es vaga o incorrecta, penalízala. Si el anali
         result.get('puntuacion_pistas', 0)
     )
     result['total'] = min(20, max(0, total_calculado))
+
+    # Normalizar skills_mejoradas: asegurar que delta es float y malo es bool
+    skills_raw = result.get("skills_mejoradas", {})
+    skills_normalizadas = {}
+    for skill in skills_a_evaluar:
+        dato = skills_raw.get(skill, {"delta": 0.0, "malo": False})
+        # Compatibilidad: si la IA devuelve el formato antiguo (solo número), convertir
+        if isinstance(dato, (int, float)):
+            delta = float(dato)
+            skills_normalizadas[skill] = {
+                "delta": min(0.3, max(0.0, delta * 0.15)),  # escalar 0-2 → 0-0.3
+                "malo": delta == 0
+            }
+        else:
+            skills_normalizadas[skill] = {
+                "delta": min(0.3, max(0.0, float(dato.get("delta", 0.0)))),
+                "malo": bool(dato.get("malo", False))
+            }
+    result["skills_mejoradas"] = skills_normalizadas
 
     return result
