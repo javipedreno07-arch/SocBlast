@@ -4,6 +4,278 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
+const ONBOARDING_KEY = 'socblast_onboarding_done';
+
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    icon: '🛡️',
+    tag: 'BIENVENIDO A SOCBLAST',
+    title: 'Tu plataforma de entrenamiento SOC',
+    desc: 'Aquí practicas ciberseguridad defensiva de verdad. Escenarios generados por IA, evaluación en tiempo real y un sistema de progresión como en los mejores juegos competitivos.',
+    color: '#4f46e5',
+    light: '#eef2ff',
+    visual: (
+      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        {[
+          { c:'#ef4444', t:'CRITICA', m:'Brute force detected — 185.220.101.45' },
+          { c:'#f97316', t:'ALTA',    m:'Mimikatz.exe spawned by svchost.exe' },
+          { c:'#f59e0b', t:'MEDIA',   m:'Lateral movement to CORP-DC01' },
+        ].map((a,i) => (
+          <div key={i} style={{ padding:'8px 12px', borderRadius:8, background:'#0f172a', border:`1px solid ${a.c}33`, display:'flex', gap:8, alignItems:'center' }}>
+            <span style={{ fontSize:9, fontWeight:800, padding:'2px 6px', borderRadius:4, background:a.c+'22', color:a.c, border:`1px solid ${a.c}44`, flexShrink:0 }}>{a.t}</span>
+            <span style={{ fontSize:10, color:'#94a3b8', fontFamily:'monospace' }}>{a.m}</span>
+          </div>
+        ))}
+        <div style={{ padding:'8px 12px', borderRadius:8, background:'#0f172a', border:'1px solid #10b98133', marginTop:4 }}>
+          <span style={{ fontSize:10, color:'#10b981', fontFamily:'monospace' }}>$ awaiting analyst action... ▌</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: '⚡',
+    tag: 'MODO COMPETITIVO',
+    title: 'Sesiones: incidentes SOC en tiempo real',
+    desc: 'Cada sesión es un incidente real generado por IA. Tienes tiempo limitado para diagnosticar la amenaza, seleccionar logs y elegir acciones de respuesta. Tu velocidad y precisión determinan las copas que ganas.',
+    color: '#2563eb',
+    light: '#eff6ff',
+    visual: (
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+          {[
+            { label:'Copas', value:'+35', color:'#fbbf24', bg:'#78350f' },
+            { label:'XP',    value:'+180', color:'#a5b4fc', bg:'#1e1b4b' },
+            { label:'Arena', value:'Plata II', color:'#94a3b8', bg:'#1e293b' },
+            { label:'Skill', value:'▲ 0.2', color:'#6ee7b7', bg:'#064e3b' },
+          ].map((s,i) => (
+            <div key={i} style={{ padding:'10px', borderRadius:8, background:s.bg, textAlign:'center' }}>
+              <div style={{ fontSize:16, fontWeight:900, color:s.color }}>{s.value}</div>
+              <div style={{ fontSize:9, color:'rgba(255,255,255,0.5)', fontFamily:'monospace' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding:'10px 12px', borderRadius:8, background:'#020817', border:'1px solid #1e293b' }}>
+          <div style={{ fontSize:9, color:'#64748b', fontFamily:'monospace', marginBottom:4 }}>Evaluación IA:</div>
+          <div style={{ fontSize:10, color:'#10b981', fontFamily:'monospace' }}>✓ Diagnóstico correcto +5 pts</div>
+          <div style={{ fontSize:10, color:'#10b981', fontFamily:'monospace' }}>✓ Velocidad 45% del tiempo +4 pts</div>
+          <div style={{ fontSize:10, color:'#10b981', fontFamily:'monospace' }}>✓ Sin pistas usadas +3 pts</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: '🔬',
+    tag: 'LABORATORIO FORENSE',
+    title: 'Labs: investiga sin límite de tiempo',
+    desc: 'Accedes a un ordenador comprometido (Windows o Linux) con SIEM, Terminal, Log Explorer y Network Monitor. Sin prisas — investiga a fondo, redacta tu informe y la IA lo evalúa.',
+    color: '#059669',
+    light: '#ecfdf5',
+    visual: (
+      <div style={{ borderRadius:10, overflow:'hidden', border:'1px solid #1e293b' }}>
+        <div style={{ background:'#1e293b', padding:'6px 10px', display:'flex', gap:5 }}>
+          {['#FF5F57','#FEBC2E','#28C840'].map((c,i) => <div key={i} style={{ width:8, height:8, borderRadius:'50%', background:c }}/>)}
+          <span style={{ fontSize:9, color:'#64748b', fontFamily:'monospace', marginLeft:6 }}>soc-terminal — analyst@workstation</span>
+        </div>
+        <div style={{ background:'#0d1117', padding:'10px 12px', fontFamily:'monospace', fontSize:10 }}>
+          <div style={{ color:'#7ee787' }}>analyst@soc:~$ grep "mimikatz" /var/log/sysmon.log</div>
+          <div style={{ color:'#f87171', marginTop:2 }}>2024-03-15 02:18:33 mimikatz.exe PID:1337 CORP\jsmith</div>
+          <div style={{ color:'#7ee787', marginTop:4 }}>analyst@soc:~$ netstat -an | grep ESTABLISHED</div>
+          <div style={{ color:'#f87171', marginTop:2 }}>TCP 10.0.0.15:49832 → 185.220.101.47:4444 ESTABLISHED</div>
+          <div style={{ color:'#58a6ff', marginTop:4 }}>analyst@soc:~$ <span style={{ animation:'blink 1s infinite', display:'inline-block' }}>▌</span></div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: '🏆',
+    tag: 'PROGRESIÓN',
+    title: 'Skills, arenas y tiers reales',
+    desc: '8 habilidades SOC que suben y bajan según tu rendimiento. 12 divisiones de arena competitivas. 8 tiers de analista. Tu progresión refleja tu nivel real — no hay atajos.',
+    color: '#7c3aed',
+    light: '#f5f3ff',
+    visual: (
+      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        {[
+          { label:'SIEM & Queries',     val:7.4, color:'#0891b2' },
+          { label:'Análisis de Logs',   val:6.1, color:'#3b82f6' },
+          { label:'Detección Amenazas', val:4.8, color:'#4f46e5' },
+          { label:'Threat Hunting',     val:3.2, color:'#8b5cf6', weak:true },
+        ].map((s,i) => (
+          <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:10, color: s.weak ? '#ef4444' : '#94a3b8', width:130, flexShrink:0 }}>{s.label}</span>
+            <div style={{ flex:1, height:6, background:'#1e293b', borderRadius:3 }}>
+              <div style={{ width:`${s.val*10}%`, height:'100%', borderRadius:3, background: s.weak ? '#ef4444' : s.color, transition:'width 1s ease' }}/>
+            </div>
+            <span style={{ fontSize:10, fontWeight:700, color: s.weak ? '#ef4444' : s.color, width:28, textAlign:'right', fontFamily:'monospace' }}>{s.val}</span>
+          </div>
+        ))}
+        <div style={{ marginTop:4, padding:'8px 12px', borderRadius:8, background:'#1e1b4b', border:'1px solid #3730a3', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:10, color:'#a5b4fc' }}>Arena actual</span>
+          <span style={{ fontSize:12, fontWeight:800, color:'#818cf8' }}>Plata II · 1.320 copas</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: '💼',
+    tag: 'EMPLEO REAL',
+    title: 'Conectamos talento con empresas',
+    desc: 'Tu perfil SoCBlast es tu CV en ciberseguridad. Ofertas de trabajo reales, certificaciones recomendadas y bootcamps seleccionados. Las empresas pueden ver tu arena, skills y sesiones completadas.',
+    color: '#d97706',
+    light: '#fffbeb',
+    visual: (
+      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        {[
+          { empresa:'CiberShield S.L.', rol:'Analista SOC L1', salario:'24K–30K', req:'Bronce I+', color:'#059669' },
+          { empresa:'TechDefend',       rol:'SOC Analyst L2',  salario:'32K–40K', req:'Plata II+', color:'#3b82f6' },
+          { empresa:'Grupo Securitas',  rol:'Threat Hunter',   salario:'40K–52K', req:'Oro I+',    color:'#ef4444' },
+        ].map((o,i) => (
+          <div key={i} style={{ padding:'10px 12px', borderRadius:8, background:'#fff', border:'1px solid #e2e8f0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <div style={{ fontSize:10, color:'#94a3b8', marginBottom:2 }}>{o.empresa}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'#0f172a' }}>{o.rol}</div>
+            </div>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#059669' }}>{o.salario}</div>
+              <span style={{ fontSize:9, padding:'1px 6px', borderRadius:4, background:o.color+'15', color:o.color, fontWeight:700 }}>Req: {o.req}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+];
+
+function OnboardingModal({ nombre, onFinish }) {
+  const [step, setStep]     = useState(0);
+  const [exiting, setExit]  = useState(false);
+  const [entering, setEnter] = useState(false);
+  const s       = STEPS[step];
+  const isLast  = step === STEPS.length - 1;
+  const pct     = ((step + 1) / STEPS.length) * 100;
+
+  const goTo = (next) => {
+    setExit(true);
+    setTimeout(() => { setStep(next); setExit(false); setEnter(true); setTimeout(() => setEnter(false), 300); }, 220);
+  };
+
+  return (
+    <div style={{
+      position:'fixed', inset:0, zIndex:9999,
+      background:'rgba(10,14,26,0.88)',
+      backdropFilter:'blur(8px)',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontFamily:"'Inter','Segoe UI',sans-serif",
+      padding:16,
+    }}>
+      <style>{`
+        @keyframes ob-in  { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
+        @keyframes ob-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(-12px) scale(0.97); } }
+        @keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
+        .ob-enter { animation: ob-in  0.3s ease forwards; }
+        .ob-exit  { animation: ob-out 0.22s ease forwards; }
+      `}</style>
+
+      <div style={{
+        background:'#fff', borderRadius:20, width:'100%', maxWidth:740,
+        boxShadow:'0 32px 80px rgba(0,0,0,0.45)',
+        overflow:'hidden', display:'flex', flexDirection:'column',
+      }}>
+        {/* Barra de progreso top */}
+        <div style={{ height:4, background:'#f1f5f9' }}>
+          <div style={{ height:'100%', background:`linear-gradient(90deg,${s.color}80,${s.color})`, width:`${pct}%`, transition:'width 0.4s ease, background 0.4s ease', borderRadius:4 }}/>
+        </div>
+
+        {/* Header con paso y nombre */}
+        <div style={{ padding:'16px 28px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ padding:'3px 10px', borderRadius:100, background:s.light, border:`1px solid ${s.color}33` }}>
+              <span style={{ fontSize:10, fontWeight:800, color:s.color, letterSpacing:'0.08em' }}>{s.tag}</span>
+            </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:12, color:'#94a3b8' }}>{step + 1} / {STEPS.length}</span>
+            <button onClick={onFinish} style={{ background:'none', border:'1px solid #e2e8f0', color:'#94a3b8', fontSize:11, padding:'3px 10px', borderRadius:6, cursor:'pointer' }}>
+              Saltar →
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido */}
+        <div className={exiting ? 'ob-exit' : entering ? 'ob-enter' : ''} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:0 }}>
+          {/* Texto izquierda */}
+          <div style={{ padding:'28px 28px 24px' }}>
+            <div style={{ fontSize:40, marginBottom:14 }}>{s.icon}</div>
+            <h2 style={{ fontSize:22, fontWeight:900, color:'#0f172a', letterSpacing:'-0.6px', lineHeight:1.25, marginBottom:12 }}>
+              {step === 0 ? <>Hola, <span style={{ color:s.color }}>{nombre}</span> 👋<br/>{s.title}</> : s.title}
+            </h2>
+            <p style={{ fontSize:13, color:'#475569', lineHeight:1.85, marginBottom:24 }}>{s.desc}</p>
+
+            {/* Dots */}
+            <div style={{ display:'flex', gap:6, marginBottom:24 }}>
+              {STEPS.map((_, i) => (
+                <button key={i} onClick={() => i !== step && goTo(i)} style={{
+                  width: i === step ? 24 : 8, height:8, borderRadius:4, border:'none', cursor:'pointer',
+                  background: i === step ? s.color : i < step ? s.color + '55' : '#e2e8f0',
+                  transition:'all 0.35s ease', padding:0,
+                }}/>
+              ))}
+            </div>
+
+            {/* Botones */}
+            <div style={{ display:'flex', gap:8 }}>
+              {step > 0 && (
+                <button onClick={() => goTo(step - 1)} style={{
+                  padding:'11px 20px', borderRadius:10, border:'1px solid #e2e8f0',
+                  background:'#fff', color:'#64748b', fontSize:13, fontWeight:600, cursor:'pointer',
+                }}>← Anterior</button>
+              )}
+              <button onClick={() => isLast ? onFinish() : goTo(step + 1)} style={{
+                flex:1, padding:'12px 20px', borderRadius:10, border:'none',
+                background:`linear-gradient(135deg,${s.color},${s.color}cc)`,
+                color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer',
+                boxShadow:`0 4px 16px ${s.color}44`,
+                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              }}>
+                {isLast ? '🚀 ¡Empezar!' : 'Siguiente →'}
+              </button>
+            </div>
+          </div>
+
+          {/* Visual derecha */}
+          <div style={{
+            background: step === 0 ? '#0f172a' : step === 1 ? '#020817' : step === 2 ? '#020817' : step === 3 ? '#0f172a' : '#f8fafc',
+            padding:'28px 24px',
+            display:'flex', flexDirection:'column', justifyContent:'center',
+            borderLeft:`1px solid ${step >= 4 ? '#e2e8f0' : '#1e293b'}`,
+          }}>
+            {s.visual}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding:'10px 28px 14px', borderTop:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', gap:6 }}>
+            {['Sesiones','Labs','Skills','Progresión','Empleo'].map((l, i) => (
+              <span key={i} style={{
+                fontSize:10, padding:'2px 8px', borderRadius:5,
+                background: i === step ? s.light : '#f8fafc',
+                color: i === step ? s.color : '#94a3b8',
+                fontWeight: i === step ? 700 : 400,
+                border: `1px solid ${i === step ? s.color + '33' : '#f1f5f9'}`,
+                cursor:'pointer',
+              }} onClick={() => goTo(i)}>{l}</span>
+            ))}
+          </div>
+          <span style={{ fontSize:11, color:'#cbd5e1' }}>SoCBlast · v2.0</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── RESTO DEL DASHBOARD (sin cambios) ───────────────────────────────────────
 
 const ARENAS = [
   { id:'bronce3', name:'Bronce III', tier:'bronce', div:3, min:0,    max:299,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#d97706', gradTo:'#92400e', colorRgb:'180,83,9'   },
@@ -99,7 +371,6 @@ const calcStreak = (historial) => {
   return streak;
 };
 
-// SVG Icons
 const IC = {
   cup:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
   flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
@@ -176,6 +447,7 @@ export default function DashboardAnalista() {
   const [ranking, setRanking] = useState([]);
   const [carruselIdx, setCarruselIdx] = useState(0);
   const [skillFocus, setSkillFocus] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const sliderRef = useRef(null);
   const startX = useRef(null);
 
@@ -199,6 +471,10 @@ export default function DashboardAnalista() {
     if (userData) {
       const idx = ARENAS.findIndex(a => userData.copas >= a.min && userData.copas <= a.max);
       setArenaIdx(idx >= 0 ? idx : 0);
+      // Mostrar onboarding solo si nunca se ha visto Y es la primera sesión del usuario
+      if (!localStorage.getItem(ONBOARDING_KEY)) {
+        setShowOnboarding(true);
+      }
     }
   }, [userData]);
 
@@ -249,7 +525,6 @@ export default function DashboardAnalista() {
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-    @keyframes skillPulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,0.3);}50%{box-shadow:0 0 0 6px rgba(79,70,229,0);}}
     .arena-slide{animation:slideIn 0.3s ease forwards;}
     .planet-anim{animation:float 5s ease-in-out infinite;}
     .nav-btn:hover{background:#f1f5f9!important;color:#0f172a!important;}
@@ -279,6 +554,18 @@ export default function DashboardAnalista() {
   return (
     <>
       <style>{css}</style>
+
+      {/* ONBOARDING */}
+      {showOnboarding && (
+        <OnboardingModal
+          nombre={user?.nombre || 'Analista'}
+          onFinish={() => {
+            localStorage.setItem(ONBOARDING_KEY, '1');
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
       <div style={{position:'fixed',inset:0,background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',zIndex:-1}}/>
       <ParticleCanvas/>
       <div style={{position:'relative',zIndex:1,minHeight:'100vh',fontFamily:"'Inter',-apple-system,sans-serif",color:'#0f172a'}}>
@@ -324,6 +611,12 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
               </div>
             )}
+            {/* Botón para relanzar onboarding */}
+            <button
+              onClick={() => { localStorage.removeItem(ONBOARDING_KEY); setShowOnboarding(true); }}
+              title="Ver tutorial"
+              style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 10px',borderRadius:'7px',fontSize:'13px',cursor:'pointer'}}
+            >?</button>
             <button onClick={()=>{logout();navigate('/');}} style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer'}}>Salir</button>
           </div>
         </nav>
@@ -368,7 +661,6 @@ export default function DashboardAnalista() {
                 ))}
               </div>
               <div style={{position:'relative'}}>
-                {/* Botones flotantes */}
                 <div style={{position:'absolute',top:'14px',right:'14px',zIndex:10,display:'flex',gap:'7px'}}>
                   <button className="action-btn" onClick={e=>{e.stopPropagation();navigate('/sesion');}}
                     style={{display:'flex',alignItems:'center',gap:'5px',padding:'7px 13px',borderRadius:'8px',background:'rgba(37,99,235,0.88)',backdropFilter:'blur(8px)',border:'1px solid rgba(147,197,253,0.3)',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer',boxShadow:'0 3px 14px rgba(37,99,235,0.4)'}}>
@@ -416,7 +708,6 @@ export default function DashboardAnalista() {
                 </div>
               </div>
             </div>
-            {/* TERMINAL */}
             <div style={{display:'flex',flexDirection:'column'}}>
               <div style={{flex:1,borderRadius:'14px',overflow:'hidden',border:'1px solid #e2e8f0',backgroundColor:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
                 <div style={{backgroundColor:'#f8fafc',padding:'7px 14px',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:'5px'}}>
@@ -491,7 +782,6 @@ export default function DashboardAnalista() {
             </div>
             <div style={{overflow:'hidden',borderRadius:'20px'}}>
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
-                {/* CARD SESIONES */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.2),transparent)',pointerEvents:'none'}}/>
@@ -500,12 +790,8 @@ export default function DashboardAnalista() {
                         <div style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#93c5fd',animation:'pulse 2s infinite'}}/>
                         <span style={{fontSize:'10px',color:'#93c5fd',fontWeight:700,letterSpacing:'2px'}}>SESIONES COMPETITIVAS</span>
                       </div>
-                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>
-                        Demuestra tu nivel.<br/><span style={{color:'#93c5fd'}}>Gana copas. Sube de arena.</span>
-                      </h2>
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan. La IA evalúa tus skills en cada decisión.
-                      </p>
+                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>Demuestra tu nivel.<br/><span style={{color:'#93c5fd'}}>Gana copas. Sube de arena.</span></h2>
+                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>Escenarios SOC únicos generados por IA. Tiempo limitado. Velocidad y precisión puntúan. La IA evalúa tus skills en cada decisión.</p>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
                         {[{n:'bolt',l:'Tiempo limitado'},{n:'cup',l:'Copas y arenas'},{n:'brain',l:'Skills evaluadas'},{n:'trend',l:'Ranking global'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
@@ -533,7 +819,6 @@ export default function DashboardAnalista() {
                     {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
-                {/* CARD LAB */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
@@ -543,12 +828,8 @@ export default function DashboardAnalista() {
                         <span style={{fontSize:'10px',color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>LABORATORIO SOC — BETA</span>
                         <span style={{fontSize:'9px',padding:'1px 6px',borderRadius:'4px',backgroundColor:'rgba(52,211,153,0.25)',color:'#6ee7b7',fontWeight:700}}>NUEVO</span>
                       </div>
-                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>
-                        Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span>
-                      </h2>
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>
-                        SIEM completo, Log Explorer, Network Map y evaluación IA. La profundidad de tu análisis es lo que mejora tus skills.
-                      </p>
+                      <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>Investiga a fondo.<br/><span style={{color:'#6ee7b7'}}>Sin límite de tiempo.</span></h2>
+                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,maxWidth:'460px',marginBottom:'20px'}}>SIEM completo, Log Explorer, Network Map y evaluación IA. La profundidad de tu análisis es lo que mejora tus skills.</p>
                       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'26px'}}>
                         {[{n:'network',l:'SIEM queries'},{n:'search',l:'Log Explorer'},{n:'planet',l:'Network Map'},{n:'brain',l:'IA evalúa skills'}].map((f,i)=>(
                           <div key={i} style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',borderRadius:'7px',backgroundColor:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.13)'}}>
@@ -585,19 +866,15 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* ═══ SKILLS SECTION — DESTACADA ═══ */}
+          {/* SKILLS */}
           <div style={{marginBottom:'28px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
               <div>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace',marginBottom:'3px'}}>SKILL MATRIX</p>
                 <p style={{fontSize:'13px',color:'#0f172a',fontWeight:700}}>Tus habilidades como analista SOC</p>
               </div>
-              <button onClick={()=>navigate('/perfil')} style={{fontSize:'12px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600,display:'flex',alignItems:'center',gap:'4px'}}>
-                Ver detalle completo → 
-              </button>
+              <button onClick={()=>navigate('/perfil')} style={{fontSize:'12px',color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600,display:'flex',alignItems:'center',gap:'4px'}}>Ver detalle completo →</button>
             </div>
-
-            {/* Resumen rápido skills */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'16px'}}>
               <div style={{padding:'16px 18px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
                 <div style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:'8px',fontFamily:'monospace'}}>MEDIA GLOBAL</div>
@@ -626,8 +903,6 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             </div>
-
-            {/* Barras de skills expandidas */}
             <div style={{backgroundColor:'#fff',borderRadius:'16px',border:'1px solid #e8eaf0',overflow:'hidden',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
               <div style={{padding:'16px 20px',borderBottom:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <p style={{fontSize:'12px',color:'#0f172a',fontWeight:700}}>Desglose de habilidades</p>
@@ -674,10 +949,8 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* ACTIVIDAD + RANKING + HISTORIAL en fila más limpia */}
+          {/* ACTIVIDAD + RANKING */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
-
-            {/* ACTIVIDAD */}
             <div style={{padding:'20px 22px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
                 <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',fontFamily:'monospace'}}>ACTIVIDAD — 90 DÍAS</p>
@@ -699,8 +972,6 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             </div>
-
-            {/* RANKING + RECOMENDACIÓN */}
             <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
               <div style={{padding:'18px 20px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)',flex:1}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
@@ -819,7 +1090,6 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             </div>
-
             {empleoTab==='ofertas' && (
               <div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'14px',marginBottom:'16px'}}>
@@ -827,9 +1097,7 @@ export default function DashboardAnalista() {
                     <div key={i} className="oferta-card" style={{padding:'24px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',position:'relative',overflow:'hidden',cursor:'pointer'}}>
                       <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',backgroundColor:o.color}}/>
                       {o.badge&&<span style={{position:'absolute',top:'14px',right:'14px',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'5px',background:o.badge==='nueva'?'#ecfdf5':'#fef2f2',color:o.badge==='nueva'?'#059669':'#ef4444',border:`1px solid ${o.badge==='nueva'?'#a7f3d0':'#fecaca'}`}}>{o.badge.toUpperCase()}</span>}
-                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}>
-                        <Icon name="users" size={18} color={o.color}/>
-                      </div>
+                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}><Icon name="users" size={18} color={o.color}/></div>
                       <div style={{fontSize:'11px',color:'#94a3b8',marginBottom:'4px'}}>{o.empresa}</div>
                       <div style={{fontSize:'16px',fontWeight:800,color:'#0f172a',marginBottom:'8px',lineHeight:1.2}}>{o.rol}</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'16px'}}>
@@ -858,9 +1126,7 @@ export default function DashboardAnalista() {
                   <div key={i} className="cert-row" onClick={()=>window.open(c.url,'_blank')}
                     style={{display:'flex',alignItems:'center',gap:'16px',padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',backgroundColor:c.color}}/>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <Icon name="award" size={20} color={c.color}/>
-                    </div>
+                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="award" size={20} color={c.color}/></div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'3px'}}>{c.nombre}</div>
                       <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
@@ -880,9 +1146,7 @@ export default function DashboardAnalista() {
               <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
                 {BOOTCAMPS_MOCK.map((b,i)=>(
                   <div key={i} className="bootcamp-row" style={{display:'flex',alignItems:'center',gap:'16px',padding:'18px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <Icon name="book" size={20} color="#7c3aed"/>
-                    </div>
+                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="book" size={20} color="#7c3aed"/></div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{b.nombre}</div>
                       <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
@@ -902,9 +1166,7 @@ export default function DashboardAnalista() {
                 {RETOS_MOCK.map((r,i)=>(
                   <div key={i} className="reto-row" onClick={()=>window.open(r.url,'_blank')}
                     style={{display:'flex',alignItems:'center',gap:'14px',padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <Icon name="shield" size={18} color="#059669"/>
-                    </div>
+                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="shield" size={18} color="#059669"/></div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'13px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{r.nombre}</div>
                       <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
