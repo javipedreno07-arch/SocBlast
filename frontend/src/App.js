@@ -22,7 +22,6 @@ import ArenasPage from './pages/ArenasPage';
 import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
 
-
 const GUEST_USER = {
   nombre: 'Invitado',
   rol: 'analista',
@@ -36,15 +35,20 @@ const GUEST_USER = {
   skills: { analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2, threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1 }
 };
 
-const GuestRoute = ({ children }) => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
-  return children;
+const safeLocalStorage = {
+  get: (key) => { try { return localStorage.getItem(key); } catch { return null; } },
+  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
+  remove: (key) => { try { localStorage.removeItem(key); } catch {} },
+  clear: () => { try { localStorage.clear(); } catch {} },
 };
 
 const PrivateRoute = ({ children, rol }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f5f7fa', color: '#0f172a' }}>Cargando...</div>;
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', backgroundColor:'#f5f7fa', color:'#0f172a' }}>
+      Cargando...
+    </div>
+  );
   if (!user) return <Navigate to="/login" />;
   if (rol && user.rol !== rol) return <Navigate to="/" />;
   return children;
@@ -81,8 +85,8 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   const handleGuestLogin = () => {
-    localStorage.setItem('token', 'guest-token');
-    localStorage.setItem('user', JSON.stringify(GUEST_USER));
+    safeLocalStorage.set('token', 'guest-token');
+    safeLocalStorage.set('user', JSON.stringify(GUEST_USER));
     window.location.href = '/dashboard';
   };
 
@@ -95,7 +99,6 @@ function App() {
             <AppRoutes onGuestLogin={handleGuestLogin} />
           </Router>
         </AuthProvider>
-        
       </div>
     </>
   );
