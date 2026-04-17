@@ -1,16 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
-const safeGet = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
-const safeSet = (key, val) => { try { localStorage.setItem(key, val); } catch {} };
-const safeRemove = (key) => { try { localStorage.removeItem(key); } catch {} };
+const safeGet    = (k) => { try { return localStorage.getItem(k); }    catch { return null; } };
+const safeSet    = (k, v) => { try { localStorage.setItem(k, v); }    catch {} };
+const safeRemove = (k) => { try { localStorage.removeItem(k); }        catch {} };
+
+// Normaliza "company" → "empresa" para que no haya dos versiones del mismo rol
+const normalizeRol = (rol) => (rol === 'company' ? 'empresa' : rol);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [user,    setUser]    = useState(null);
+  const [token,   setToken]   = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,8 +22,10 @@ export const AuthProvider = ({ children }) => {
       if (storedToken && storedUser) {
         const parsed = JSON.parse(storedUser);
         if (parsed && typeof parsed === 'object' && parsed.email) {
+          // Normalizar rol al cargar desde localStorage
+          const normalized = { ...parsed, rol: normalizeRol(parsed.rol) };
           setToken(storedToken);
-          setUser(parsed);
+          setUser(normalized);
         } else {
           safeRemove('token');
           safeRemove('user');
@@ -36,10 +40,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, userToken) => {
-    setUser(userData);
+    // Normalizar siempre al hacer login
+    const normalized = { ...userData, rol: normalizeRol(userData.rol) };
+    setUser(normalized);
     setToken(userToken);
     safeSet('token', userToken);
-    safeSet('user', JSON.stringify(userData));
+    safeSet('user', JSON.stringify(normalized));
   };
 
   const logout = () => {

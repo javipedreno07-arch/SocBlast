@@ -21,6 +21,7 @@ import VerificarEmail from './pages/VerificarEmail';
 import ArenasPage from './pages/ArenasPage';
 import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
+import { Analytics } from '@vercel/analytics/react';
 
 const GUEST_USER = {
   nombre: 'Invitado',
@@ -35,12 +36,14 @@ const GUEST_USER = {
   skills: { analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2, threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1 }
 };
 
-const safeLocalStorage = {
-  get: (key) => { try { return localStorage.getItem(key); } catch { return null; } },
-  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
-  remove: (key) => { try { localStorage.removeItem(key); } catch {} },
-  clear: () => { try { localStorage.clear(); } catch {} },
+const safeLS = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  remove: (k) => { try { localStorage.removeItem(k); } catch {} },
 };
+
+// ── empresa y company son el mismo rol, normalizamos a "empresa" ──
+const isEmpresa = (rol) => rol === 'empresa' || rol === 'company';
 
 const PrivateRoute = ({ children, rol }) => {
   const { user, loading } = useAuth();
@@ -50,8 +53,17 @@ const PrivateRoute = ({ children, rol }) => {
     </div>
   );
   if (!user) return <Navigate to="/login" />;
-  if (rol && user.rol !== rol) return <Navigate to="/" />;
+  // si se pide rol "empresa" aceptamos tanto "empresa" como "company"
+  if (rol === 'empresa' && !isEmpresa(user.rol)) return <Navigate to="/" />;
+  if (rol && rol !== 'empresa' && user.rol !== rol) return <Navigate to="/" />;
   return children;
+};
+
+const getHome = (rol) => {
+  if (!rol) return '/login';
+  if (rol === 'analista') return '/dashboard';
+  if (isEmpresa(rol)) return '/company';
+  return '/';
 };
 
 const AppRoutes = ({ onGuestLogin }) => {
@@ -59,24 +71,30 @@ const AppRoutes = ({ onGuestLogin }) => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage onGuestLogin={onGuestLogin} />} />
-      <Route path="/login" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <LoginPage onGuestLogin={onGuestLogin} />} />
-      <Route path="/register" element={user ? <Navigate to={user.rol === 'analista' ? '/dashboard' : '/company'} /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
-      <Route path="/dashboard" element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
-      <Route path="/arenas" element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
-      <Route path="/sesion" element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
-      <Route path="/training" element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
-      <Route path="/ranking" element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
-      <Route path="/perfil" element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
-      <Route path="/certificado" element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
-      <Route path="/company" element={<PrivateRoute rol="company"><DashboardCompany /></PrivateRoute>} />
-      <Route path="/talent-pool" element={<PrivateRoute rol="company"><TalentPoolPage /></PrivateRoute>} />
-      <Route path="/simulacion-empresa" element={<PrivateRoute rol="company"><SimulacionPage /></PrivateRoute>} />
-      <Route path="/ofertas" element={<PrivateRoute rol="company"><OfertasPage /></PrivateRoute>} />
-      <Route path="/oauth/callback" element={<OAuthCallback />} />
-      <Route path="/registro-exitoso" element={<RegistroExitoso />} />
+      <Route path="/login"    element={user ? <Navigate to={getHome(user.rol)} /> : <LoginPage    onGuestLogin={onGuestLogin} />} />
+      <Route path="/register" element={user ? <Navigate to={getHome(user.rol)} /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
+
+      {/* ── Rutas analista ── */}
+      <Route path="/dashboard"  element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
+      <Route path="/arenas"     element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
+      <Route path="/sesion"     element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
+      <Route path="/training"   element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
+      <Route path="/ranking"    element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
+      <Route path="/perfil"     element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
+      <Route path="/certificado"element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
+      <Route path="/lab"        element={<LabPage />} />
+
+      {/* ── Rutas empresa — acepta "empresa" y "company" ── */}
+      <Route path="/company"           element={<PrivateRoute rol="empresa"><DashboardCompany /></PrivateRoute>} />
+      <Route path="/talent-pool"       element={<PrivateRoute rol="empresa"><TalentPoolPage /></PrivateRoute>} />
+      <Route path="/simulacion-empresa"element={<PrivateRoute rol="empresa"><SimulacionPage /></PrivateRoute>} />
+      <Route path="/ofertas"           element={<PrivateRoute rol="empresa"><OfertasPage /></PrivateRoute>} />
+
+      {/* ── Misc ── */}
+      <Route path="/oauth/callback"  element={<OAuthCallback />} />
+      <Route path="/registro-exitoso"element={<RegistroExitoso />} />
       <Route path="/verificar-email" element={<VerificarEmail />} />
-      <Route path="/guest" element={<DashboardGuest />} />
-      <Route path="/lab" element={<LabPage />} />
+      <Route path="/guest"           element={<DashboardGuest />} />
     </Routes>
   );
 };
@@ -85,8 +103,8 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   const handleGuestLogin = () => {
-    safeLocalStorage.set('token', 'guest-token');
-    safeLocalStorage.set('user', JSON.stringify(GUEST_USER));
+    safeLS.set('token', 'guest-token');
+    safeLS.set('user', JSON.stringify(GUEST_USER));
     window.location.href = '/dashboard';
   };
 
@@ -100,6 +118,7 @@ function App() {
           </Router>
         </AuthProvider>
       </div>
+      <Analytics />
     </>
   );
 }
