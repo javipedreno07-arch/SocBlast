@@ -21,7 +21,7 @@ import VerificarEmail from './pages/VerificarEmail';
 import ArenasPage from './pages/ArenasPage';
 import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
-import { Analytics } from '@vercel/analytics/react';
+
 
 const GUEST_USER = {
   nombre: 'Invitado',
@@ -118,7 +118,6 @@ function App() {
           </Router>
         </AuthProvider>
       </div>
-      <Analytics />
     </>
   );
 }
