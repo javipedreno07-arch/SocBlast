@@ -1,63 +1,100 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardAnalista from './pages/DashboardAnalista';
+import DashboardCompany from './pages/DashboardCompany';
+import SesionPage from './pages/SesionPage';
+import TrainingPage from './pages/TrainingPage';
+import RankingPage from './pages/RankingPage';
+import PerfilPage from './pages/PerfilPage';
+import CertificadoPage from './pages/CertificadoPage';
+import TalentPoolPage from './pages/TalentPoolPage';
+import SimulacionPage from './pages/SimulacionPage';
+import OfertasPage from './pages/OfertasPage';
+import SplashScreen from './components/SplashScreen';
+import OAuthCallback from './pages/OAuthCallback';
+import RegistroExitoso from './pages/RegistroExitoso';
+import VerificarEmail from './pages/VerificarEmail';
+import ArenasPage from './pages/ArenasPage';
+import DashboardGuest from './pages/DashboardGuest';
+import LabPage from './pages/LabPage';
 
-const AuthContext = createContext();
-export const useAuth = () => useContext(AuthContext);
+const GUEST_USER = {
+  nombre: 'Invitado',
+  rol: 'analista',
+  email: 'guest@socblast.com',
+  copas: 450,
+  xp: 820,
+  tier: 2,
+  arena: 'Plata 3',
+  sesiones_completadas: 3,
+  isGuest: true,
+  skills: { analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2, threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1 }
+};
 
-const safeGet    = (k) => { try { return localStorage.getItem(k); }    catch { return null; } };
-const safeSet    = (k, v) => { try { localStorage.setItem(k, v); }    catch {} };
-const safeRemove = (k) => { try { localStorage.removeItem(k); }        catch {} };
+const PrivateRoute = ({ children, rol }) => {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', backgroundColor:'#f5f7fa', color:'#0f172a' }}>
+      Cargando...
+    </div>
+  );
+  if (!user) return <Navigate to="/login" />;
+  if (rol && user.rol !== rol) return <Navigate to="/" />;
+  return children;
+};
 
-// Normaliza "company" → "empresa" para que no haya dos versiones del mismo rol
-const normalizeRol = (rol) => (rol === 'company' ? 'empresa' : rol);
+const AppRoutes = ({ onGuestLogin }) => {
+  const { user } = useAuth();
+  const home = user ? (user.rol === 'analista' ? '/dashboard' : '/company') : null;
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage onGuestLogin={onGuestLogin} />} />
+      <Route path="/login"    element={home ? <Navigate to={home} replace /> : <LoginPage onGuestLogin={onGuestLogin} />} />
+      <Route path="/register" element={home ? <Navigate to={home} replace /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
+      <Route path="/dashboard"         element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
+      <Route path="/arenas"            element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
+      <Route path="/sesion"            element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
+      <Route path="/training"          element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
+      <Route path="/ranking"           element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
+      <Route path="/perfil"            element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
+      <Route path="/certificado"       element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
+      <Route path="/company"           element={<PrivateRoute rol="company"><DashboardCompany /></PrivateRoute>} />
+      <Route path="/talent-pool"       element={<PrivateRoute rol="company"><TalentPoolPage /></PrivateRoute>} />
+      <Route path="/simulacion-empresa"element={<PrivateRoute rol="company"><SimulacionPage /></PrivateRoute>} />
+      <Route path="/ofertas"           element={<PrivateRoute rol="company"><OfertasPage /></PrivateRoute>} />
+      <Route path="/oauth/callback"    element={<OAuthCallback />} />
+      <Route path="/registro-exitoso"  element={<RegistroExitoso />} />
+      <Route path="/verificar-email"   element={<VerificarEmail />} />
+      <Route path="/guest"             element={<DashboardGuest />} />
+      <Route path="/lab"               element={<LabPage />} />
+    </Routes>
+  );
+};
 
-export const AuthProvider = ({ children }) => {
-  const [user,    setUser]    = useState(null);
-  const [token,   setToken]   = useState(null);
-  const [loading, setLoading] = useState(true);
+function App() {
+  const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    try {
-      const storedToken = safeGet('token');
-      const storedUser  = safeGet('user');
-      if (storedToken && storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed && typeof parsed === 'object' && parsed.email) {
-          // Normalizar rol al cargar desde localStorage
-          const normalized = { ...parsed, rol: normalizeRol(parsed.rol) };
-          setToken(storedToken);
-          setUser(normalized);
-        } else {
-          safeRemove('token');
-          safeRemove('user');
-        }
-      }
-    } catch {
-      safeRemove('token');
-      safeRemove('user');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = (userData, userToken) => {
-    // Normalizar siempre al hacer login
-    const normalized = { ...userData, rol: normalizeRol(userData.rol) };
-    setUser(normalized);
-    setToken(userToken);
-    safeSet('token', userToken);
-    safeSet('user', JSON.stringify(normalized));
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    safeRemove('token');
-    safeRemove('user');
+  const handleGuestLogin = () => {
+    try { localStorage.setItem('token', 'guest-token'); localStorage.setItem('user', JSON.stringify(GUEST_USER)); } catch {}
+    window.location.href = '/dashboard';
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
+    <>
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      <div style={{ opacity: showSplash ? 0 : 1, transition: 'opacity 0.4s ease' }}>
+        <AuthProvider>
+          <Router>
+            <AppRoutes onGuestLogin={handleGuestLogin} />
+          </Router>
+        </AuthProvider>
+      </div>
+    </>
   );
-};
+}
+
+export default App;

@@ -22,7 +22,7 @@ const LoginPage = ({ onGuestLogin }) => {
       const res = await axios.post(`${API}/api/login`, form);
       login({ nombre: res.data.nombre, rol: res.data.rol, email: form.email }, res.data.access_token);
       setLoading(false);
-      navigate(getHome(res.data.rol));
+      window.location.href = getHome(res.data.rol);
     } catch (err) {
       setLoading(false);
       setError(err.response?.status === 403 ? 'Debes verificar tu email antes de entrar.' : 'Email o contraseña incorrectos');
@@ -33,7 +33,6 @@ const LoginPage = ({ onGuestLogin }) => {
 
   const css = `
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
     @keyframes spin{to{transform:rotate(360deg)}}
     .fade-up{animation:fadeUp 0.5s ease forwards}
@@ -43,7 +42,7 @@ const LoginPage = ({ onGuestLogin }) => {
     .sbtn:hover{opacity:.92!important;transform:translateY(-1px)!important}
     .guestbtn:hover{background:#f5f3ff!important;border-color:#c4b5fd!important;color:#4f46e5!important}
     .lnk:hover{text-decoration:underline}
-    .stat-card{transition:transform .2s ease,box-shadow .2s ease}
+    .stat-card{transition:transform .2s ease}
     .stat-card:hover{transform:translateY(-3px)}
     *{box-sizing:border-box}
   `;
@@ -58,8 +57,6 @@ const LoginPage = ({ onGuestLogin }) => {
   return (
     <div style={{ minHeight:'100vh', display:'flex', fontFamily:"'Inter',-apple-system,sans-serif" }}>
       <style>{css}</style>
-
-      {/* ── PANEL IZQUIERDO ── */}
       <div style={{ flex:'0 0 52%', background:'linear-gradient(160deg,#0f0c29 0%,#1e1b4b 35%,#24006a 70%,#1e3a8a 100%)', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'48px 52px', minHeight:'100vh', position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:'-120px', right:'-80px', width:'420px', height:'420px', borderRadius:'50%', background:'radial-gradient(circle,rgba(129,140,248,0.12) 0%,transparent 70%)', pointerEvents:'none' }}/>
         <div style={{ position:'absolute', bottom:'-100px', left:'-80px', width:'360px', height:'360px', borderRadius:'50%', background:'radial-gradient(circle,rgba(79,70,229,0.1) 0%,transparent 70%)', pointerEvents:'none' }}/>
@@ -81,9 +78,8 @@ const LoginPage = ({ onGuestLogin }) => {
           </h2>
           <p style={{ fontSize:'15px', color:'#c7d2fe', lineHeight:1.75, maxWidth:'360px', marginBottom:'36px' }}>12 divisiones competitivas. Sesiones SOC generadas por IA. Certificado verificable con QR.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', maxWidth:'380px', marginBottom:'36px' }}>
-            {[{v:'2.400+',l:'Analistas activos',icon:'👥'},{v:'12',l:'Divisiones de arena',icon:'🏆'},{v:'98%',l:'Satisfacción',icon:'⭐'},{v:'QR',l:'Cert. verificable',icon:'🛡️'}].map((s,i)=>(
+            {[{v:'2.400+',l:'Analistas activos'},{v:'12',l:'Divisiones de arena'},{v:'98%',l:'Satisfacción'},{v:'QR',l:'Cert. verificable'}].map((s,i)=>(
               <div key={i} className="stat-card" style={{ padding:'16px', borderRadius:'12px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ fontSize:'18px', marginBottom:'6px' }}>{s.icon}</div>
                 <div style={{ fontSize:'20px', fontWeight:800, color:'#fff', letterSpacing:'-0.5px' }}>{s.v}</div>
                 <div style={{ fontSize:'11px', color:'#a5b4fc', marginTop:'2px' }}>{s.l}</div>
               </div>
@@ -106,8 +102,6 @@ const LoginPage = ({ onGuestLogin }) => {
           <span style={{ fontSize:'11px', color:'rgba(165,180,252,0.5)', letterSpacing:'2px', fontWeight:600 }}>POWERED BY ZORION</span>
         </div>
       </div>
-
-      {/* ── PANEL DERECHO ── */}
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'48px 40px', background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 50%,#f5f0ff 100%)' }}>
         <div className="fade-up" style={{ width:'100%', maxWidth:'400px' }}>
           <div style={{ marginBottom:'28px' }}>
@@ -116,7 +110,7 @@ const LoginPage = ({ onGuestLogin }) => {
           </div>
           {error && (
             <div style={{ marginBottom:'18px', padding:'12px 16px', borderRadius:'10px', background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', fontSize:'13px', display:'flex', alignItems:'center', gap:'8px' }}>
-              <span>⚠️</span> {error}
+              <span style={{ flexShrink:0 }}>⚠</span> {error}
             </div>
           )}
           <button className="gbtn" onClick={handleGoogle}
@@ -126,7 +120,7 @@ const LoginPage = ({ onGuestLogin }) => {
           </button>
           <button className="guestbtn" onClick={onGuestLogin || (() => navigate('/guest'))}
             style={{ width:'100%', padding:'10px 16px', borderRadius:'10px', background:'#fff', border:'1.5px solid #e2e8f0', color:'#64748b', fontSize:'13px', fontWeight:600, cursor:'pointer', marginBottom:'20px', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
-            <span>👁️</span> Explorar como invitado
+            Explorar como invitado
           </button>
           <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'18px' }}>
             <div style={{ flex:1, height:'1px', background:'#e2e8f0' }}/>
