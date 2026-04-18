@@ -22,12 +22,22 @@ const RegisterPage = ({ onGuestLogin }) => {
     setLoading(true); setError('');
     try {
       await axios.post(`${API}/api/register`, form);
-      const res = await axios.post(`${API}/api/login`, { email: form.email, password: form.password });
-      login({ nombre: res.data.nombre, rol: res.data.rol, email: form.email }, res.data.access_token);
-      setLoading(false);
-      navigate(getHome(res.data.rol));
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al registrarse');
+      const detail = err.response?.data?.detail || '';
+      if (!detail.toLowerCase().includes('ya está registrado')) {
+        setError(detail || 'Error al registrarse');
+        setLoading(false);
+        return;
+      }
+    }
+    try {
+      const res = await axios.post(`${API}/api/login`, { email: form.email, password: form.password });
+      const userData = { nombre: res.data.nombre, rol: res.data.rol, email: form.email };
+      login(userData, res.data.access_token);
+      setLoading(false);
+      navigate(getHome(res.data.rol), { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Error al iniciar sesión tras el registro');
       setLoading(false);
     }
   };
@@ -85,9 +95,8 @@ const RegisterPage = ({ onGuestLogin }) => {
           </h2>
           <p style={{ fontSize:'15px', color:'#c7d2fe', lineHeight:1.75, maxWidth:'360px', marginBottom:'36px' }}>12 divisiones competitivas. De Bronce III a Diamante I. Certifícate con QR verificable.</p>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', maxWidth:'380px', marginBottom:'36px' }}>
-            {[{v:'2.400+',l:'Analistas activos',icon:'👥'},{v:'12',l:'Divisiones de arena',icon:'🏆'},{v:'3',l:'Cursos SOC',icon:'📚'},{v:'QR',l:'Cert. verificable',icon:'🛡️'}].map((s,i)=>(
+            {[{v:'2.400+',l:'Analistas activos'},{v:'12',l:'Divisiones de arena'},{v:'3',l:'Cursos SOC'},{v:'QR',l:'Cert. verificable'}].map((s,i)=>(
               <div key={i} className="stat-card" style={{ padding:'16px', borderRadius:'12px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ fontSize:'18px', marginBottom:'6px' }}>{s.icon}</div>
                 <div style={{ fontSize:'20px', fontWeight:800, color:'#fff', letterSpacing:'-0.5px' }}>{s.v}</div>
                 <div style={{ fontSize:'11px', color:'#a5b4fc', marginTop:'2px' }}>{s.l}</div>
               </div>
@@ -120,7 +129,7 @@ const RegisterPage = ({ onGuestLogin }) => {
           </div>
           {error && (
             <div style={{ marginBottom:'16px', padding:'12px 16px', borderRadius:'10px', background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', fontSize:'13px', display:'flex', alignItems:'center', gap:'8px' }}>
-              <span>⚠️</span> {error}
+              <span style={{ flexShrink:0 }}>⚠</span> {error}
             </div>
           )}
           <button className="gbtn" onClick={handleGoogle}
@@ -130,7 +139,7 @@ const RegisterPage = ({ onGuestLogin }) => {
           </button>
           <button className="guestbtn" onClick={onGuestLogin || (() => navigate('/guest'))}
             style={{ width:'100%', padding:'10px 16px', borderRadius:'10px', background:'#fff', border:'1.5px solid #e2e8f0', color:'#64748b', fontSize:'13px', fontWeight:600, cursor:'pointer', marginBottom:'18px', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
-            <span>👁️</span> Explorar como invitado
+            Explorar como invitado
           </button>
           <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
             <div style={{ flex:1, height:'1px', background:'#e2e8f0' }}/>
