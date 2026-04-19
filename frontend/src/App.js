@@ -21,7 +21,7 @@ import VerificarEmail from './pages/VerificarEmail';
 import ArenasPage from './pages/ArenasPage';
 import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
-
+import VerificarCertificado from './pages/VerificarCertificado';
 
 const GUEST_USER = {
   nombre: 'Invitado',
@@ -73,7 +73,7 @@ const AppRoutes = ({ onGuestLogin }) => {
       <Route path="/" element={<LandingPage onGuestLogin={onGuestLogin} />} />
       <Route path="/login"    element={user ? <Navigate to={getHome(user.rol)} /> : <LoginPage    onGuestLogin={onGuestLogin} />} />
       <Route path="/register" element={user ? <Navigate to={getHome(user.rol)} /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
-
+      <Route path="/verificar/:certId" element={<VerificarCertificado />} />   
       {/* ── Rutas analista ── */}
       <Route path="/dashboard"  element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
       <Route path="/arenas"     element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />

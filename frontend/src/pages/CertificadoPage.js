@@ -50,7 +50,7 @@ export default function CertificadoPage() {
   useEffect(() => {
     if (!userData) return;
     const certId  = userData._id?.slice(-12).toUpperCase() || 'CERT000000';
-    const verifyUrl = `https://socblast.vercel.app/verify/${certId}`;
+    const verifyUrl = `https://socblast.com/verificar/${certId}`;
     QRCode.toDataURL(verifyUrl, {
       width: 160,
       margin: 1,

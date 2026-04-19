@@ -302,6 +302,50 @@ async def update_xp(xp_delta: int, email: str = Depends(get_current_user)):
     return {"xp": nueva_xp, "tier": tier}
 
 
+# ── CERTIFICADO PÚBLICO ───────────────────────────────────────────────────────
+@router.get("/certificado/{cert_id}")
+async def verificar_certificado(cert_id: str):
+    """
+    Endpoint público sin autenticación para verificar un certificado.
+    cert_id = últimos 12 caracteres del _id de MongoDB en mayúsculas.
+    Accesible desde el QR del certificado en socblast.com/verificar/:certId
+    """
+    db = get_db()
+    cert_id_lower = cert_id.lower().strip()
+
+    if len(cert_id_lower) != 12:
+        raise HTTPException(status_code=400, detail="ID de certificado inválido (debe tener 12 caracteres)")
+
+    # Buscar usuario cuyo ObjectId termina en cert_id
+    users = await db.users.find(
+        {"rol": "analista"},
+        {"password": 0, "email": 0, "skills_streak_bad": 0,
+         "training_progreso": 0, "token_verificacion": 0}
+    ).to_list(50000)
+
+    user = None
+    for u in users:
+        uid = str(u["_id"])
+        if uid[-12:].lower() == cert_id_lower:
+            user = u
+            break
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Certificado no encontrado")
+
+    return {
+        "nombre":               user.get("nombre", ""),
+        "arena":                user.get("arena", "Bronce 3"),
+        "tier":                 user.get("tier", 1),
+        "xp":                   user.get("xp", 0),
+        "copas":                user.get("copas", 0),
+        "sesiones_completadas": user.get("sesiones_completadas", 0),
+        "skills":               user.get("skills", {}),
+        "fecha_registro":       user.get("fecha_registro", ""),
+        "cert_id":              cert_id.upper(),
+    }
+
+
 # ── SESIONES ──────────────────────────────────────────────────────────────────
 from sessions import generar_sesion, evaluar_respuesta
 
@@ -514,11 +558,6 @@ LAB_CONFIG_POR_NIVEL = {
 
 @router.post("/lab/generar")
 async def generar_lab(email: str = Depends(get_current_user)):
-    """
-    Genera un escenario de laboratorio SOC completo con IA.
-    El escenario incluye alertas SIEM, logs, mapa de red, IOCs y preguntas de investigación.
-    La solución y respuestas correctas se guardan en MongoDB — NO se envían al frontend.
-    """
     db   = get_db()
     user = await db.users.find_one({"email": email})
     if not user:
@@ -542,17 +581,16 @@ TTPs MITRE ATT&CK: {cfg['ttps']}
 4. IPs externas: rangos públicos reales como 185.220.x.x, 45.33.x.x, 94.102.x.x (NUNCA 192.168.x.x ni 10.x.x.x)
 5. Hostnames realistas: CORP-DC01, WEB-SRV-02, WORKSTATION-JSMITH, LAPTOP-MGARCIA, FILE-SRV-01
 6. Usuarios de dominio: CORP\\jsmith, CORP\\svc_backup, NT AUTHORITY\\SYSTEM, CORP\\administrator
-7. Timestamps en PROGRESIÓN LÓGICA mostrando la cadena del ataque (ej: 02:13 brute force → 02:18 login ok → 02:22 proceso malicioso → 02:31 movimiento lateral)
-8. Incluir 2-3 logs/alertas de RUIDO (actividad legítima) mezclados con los relevantes: backups nocturnos, actualizaciones, logins de usuarios normales
-9. Event IDs reales de Windows: 4625=login fallido, 4624=login exitoso, 4688=proceso creado, 4648=logon explicit credentials, 4776=NTLM auth, 7045=nuevo servicio instalado
-10. Si usas Sysmon: EventID 1=proceso creado, 3=conexión red, 11=archivo creado, 13=registry modificado
+7. Timestamps en PROGRESIÓN LÓGICA mostrando la cadena del ataque
+8. Incluir 2-3 logs/alertas de RUIDO (actividad legítima) marcados con "relevante": false
+9. Event IDs reales: 4625=login fallido, 4624=login exitoso, 4688=proceso creado, 4648=logon explicit, 7045=nuevo servicio
 
-Devuelve ÚNICAMENTE JSON válido con esta estructura exacta (sin texto adicional):
+Devuelve ÚNICAMENTE JSON válido:
 
 {{
-  "titulo": "Operación [NombreCreativo] — descripción corta del tipo de ataque",
-  "descripcion": "Contexto narrativo: nombre de la empresa víctima, sector, qué detectó el SOC inicialmente y cuándo comenzaron las alertas. 2-3 frases con detalles técnicos.",
-  "objetivo": "El analista debe reconstruir: [descripción completa de la cadena del ataque que debe descubrir]",
+  "titulo": "Operación [NombreCreativo] — descripción corta",
+  "descripcion": "Contexto narrativo 2-3 frases con detalles técnicos.",
+  "objetivo": "El analista debe reconstruir: [cadena completa del ataque]",
   "nivel": "{grupo}",
   "alertas_siem": [
     {{
@@ -562,12 +600,12 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta (sin texto adiciona
       "categoria": "Credential Access",
       "sistema": "CORP-DC01",
       "titulo": "Multiple Failed Logon Attempts - Possible Brute Force",
-      "descripcion": "Se han detectado 847 intentos de autenticación fallidos en los últimos 3 minutos desde una única IP externa. El patrón es consistente con un ataque de brute force automatizado.",
+      "descripcion": "Descripción técnica detallada.",
       "ip_origen": "185.220.101.47",
       "ip_destino": "10.0.0.5",
       "usuario": "CORP\\\\administrator",
       "proceso": "lsass.exe",
-      "regla_disparada": "SIGMA: Multiple Failed Authentications From Single Source (>500 en 5 min)"
+      "regla_disparada": "SIGMA: Multiple Failed Authentications From Single Source"
     }}
   ],
   "logs": [
@@ -578,18 +616,8 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta (sin texto adiciona
       "sistema": "CORP-DC01",
       "nivel": "WARNING",
       "event_id": "4625",
-      "mensaje": "An account failed to log on. Subject: Security ID: NULL SID Account Name: - Logon Type: 3 Failure Reason: Unknown user name or bad password Account For Which Logon Failed: Security ID: NULL SID Account Name: administrator Account Domain: CORP Failure Information: Failure Reason: Unknown user name or bad password Sub Status: 0xC000006A Logon Process: NtLmSsp Authentication Package: NTLM Workstation Name: - Source Network Address: 185.220.101.47 Source Port: 52341",
+      "mensaje": "Mensaje completo del log en formato realista.",
       "relevante": true
-    }},
-    {{
-      "id": "LOG-002",
-      "timestamp": "2024-03-15 01:58:00",
-      "fuente": "Windows Security",
-      "sistema": "CORP-DC01",
-      "nivel": "INFO",
-      "event_id": "4624",
-      "mensaje": "An account was successfully logged on. Subject: Security ID: SYSTEM Account Name: CORP-DC01$ Logon Type: 5 New Logon: Security ID: CORP\\\\svc_backup Account Name: svc_backup Account Domain: CORP Source Network Address: - (Logon de servicio legítimo de backup nocturno)",
-      "relevante": false
     }}
   ],
   "red": {{
@@ -601,8 +629,8 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta (sin texto adiciona
         "tipo": "Domain Controller",
         "os": "Windows Server 2019",
         "estado": "comprometido",
-        "servicios": ["LDAP:389", "DNS:53", "Kerberos:88", "SMB:445", "RDP:3389"],
-        "notas": "Punto de entrada inicial. Credenciales de CORP\\\\administrator comprometidas por brute force desde 185.220.101.47"
+        "servicios": ["LDAP:389", "DNS:53", "Kerberos:88", "SMB:445"],
+        "notas": "Descripción de qué ocurrió en este host."
       }}
     ],
     "conexiones": [
@@ -613,67 +641,41 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta (sin texto adiciona
         "protocolo": "SMB",
         "estado": "maliciosa",
         "bytes": 48320,
-        "timestamp": "2024-03-15 02:31:00",
-        "descripcion": "Movimiento lateral vía SMB con credenciales de CORP\\\\administrator robadas"
+        "timestamp": "2024-03-15 02:18:00",
+        "descripcion": "Descripción de la conexión."
       }}
     ]
   }},
   "iocs": {{
     "ips_maliciosas": ["185.220.101.47"],
-    "hashes_maliciosos": ["sha256:3f4a2b1c..."],
-    "dominios_maliciosos": ["update-corp.evil-domain.ru"],
-    "procesos_sospechosos": ["mimikatz.exe", "cmd.exe /c whoami /all"],
-    "usuarios_comprometidos": ["CORP\\\\administrator", "CORP\\\\jsmith"],
-    "regkeys_persistencia": ["HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\WindowsUpdateHelper"]
+    "hashes_maliciosos": ["sha256:a3f9..."],
+    "dominios_maliciosos": ["evil-c2.example.com"],
+    "procesos_sospechosos": ["mimikatz.exe"],
+    "usuarios_comprometidos": ["CORP\\\\jsmith"],
+    "regkeys_persistencia": ["HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\WindowsUpdate"]
   }},
   "preguntas": [
     {{
       "id": 1,
       "categoria": "Reconocimiento inicial",
-      "pregunta": "¿Cuál es la dirección IP externa desde la que se originó el ataque inicial?",
+      "pregunta": "¿Cuál es la dirección IP externa desde la que se originó el ataque?",
       "placeholder": "Ej: 185.220.101.47",
       "tipo": "texto_corto",
       "respuesta_correcta": "185.220.101.47",
-      "pista": "Filtra las alertas de severidad CRITICA relacionadas con autenticación y busca la IP origen. También visible en los logs con Event ID 4625."
-    }},
-    {{
-      "id": 2,
-      "categoria": "Técnica de ataque",
-      "pregunta": "¿Qué técnica MITRE ATT&CK utilizó el atacante para obtener acceso inicial? Indica el ID y el nombre.",
-      "placeholder": "Ej: T1110 - Brute Force",
-      "tipo": "texto_corto",
-      "respuesta_correcta": "T1110|brute force|fuerza bruta|t1110",
-      "pista": "Revisa el número de intentos de login fallidos antes del primer login exitoso. ¿Cuántos fueron?"
+      "pista": "Filtra las alertas de autenticación fallida y busca la IP origen."
     }}
   ],
   "solucion": {{
-    "resumen": "Explicación técnica completa del ataque de inicio a fin. Quién atacó, cómo entró, qué hizo dentro, cómo persistió y qué datos exfiltró. 4-5 frases detalladas.",
-    "cadena_ataque": [
-      "1. [02:13:55] Inicio de brute force automatizado desde 185.220.101.47 contra CORP-DC01 (RDP/SMB). 847 intentos fallidos en 3 minutos.",
-      "2. [02:18:22] Credenciales CORP\\\\administrator comprometidas. Login exitoso (EventID 4624, Logon Type 3).",
-      "3. [02:22:10] Ejecución de cmd.exe con whoami /all para reconocimiento de privilegios.",
-      "4. [02:25:33] Descarga y ejecución de mimikatz.exe para volcado de credenciales LSASS.",
-      "5. [02:31:00] Movimiento lateral a CORP-FS01 vía SMB usando credenciales robadas de CORP\\\\jsmith."
-    ],
-    "tecnicas_mitre": ["T1110 - Brute Force", "T1078 - Valid Accounts", "T1003.001 - LSASS Memory"],
-    "respuestas_correctas_explicadas": [
-      {{"id": 1, "respuesta": "185.220.101.47", "explicacion": "Visible en ALT-001 (campo ip_origen) y en LOG-001 a LOG-005 (campo Source Network Address)"}}
-    ],
-    "lecciones": "El SOC debería haber bloqueado la IP después de 10 intentos fallidos (política de lockout). Además, la cuenta de administrador no debería tener acceso RDP/SMB directo desde internet. Implementar MFA en cuentas privilegiadas habría impedido el acceso incluso con credenciales robadas."
+    "resumen": "Explicación técnica completa. 4-5 frases.",
+    "cadena_ataque": ["1. [timestamp] paso 1", "2. [timestamp] paso 2"],
+    "tecnicas_mitre": ["T1110 - Brute Force"],
+    "respuestas_correctas_explicadas": [{{"id": 1, "respuesta": "185.220.101.47", "explicacion": "Visible en ALT-001"}}],
+    "lecciones": "Cómo mejorar la detección."
   }}
 }}
 
-Genera exactamente {cfg['num_alertas']} alertas SIEM, {cfg['num_logs']} logs (incluyendo 2-3 de ruido marcados con "relevante": false), {cfg['num_hosts']} hosts en la red y {cfg['num_preguntas']} preguntas.
-
-Las preguntas DEBEN cubrir obligatoriamente en este orden:
-1. IP o fuente del ataque inicial
-2. Técnica MITRE de acceso inicial
-3. Credencial o usuario comprometido
-4. Herramienta o proceso malicioso principal
-5. Host objetivo o sistema afectado
-6+ (si hay más): movimiento lateral, persistencia, C2, exfiltración, remediación recomendada
-
-IMPORTANTE: Cada respuesta correcta DEBE ser verificable directamente en los datos del escenario (alertas, logs o IOCs). Si la respuesta es un ID MITRE, acepta también el nombre en texto en "respuesta_correcta" separando variantes con |."""
+Genera exactamente {cfg['num_alertas']} alertas SIEM, {cfg['num_logs']} logs, {cfg['num_hosts']} hosts y {cfg['num_preguntas']} preguntas.
+Preguntas en orden: IP ataque, técnica MITRE, credencial comprometida, herramienta maliciosa, host afectado, y más según nivel."""
 
     try:
         response = openai_client.chat.completions.create(
@@ -685,7 +687,6 @@ IMPORTANTE: Cada respuesta correcta DEBE ser verificable directamente en los dat
         )
         escenario = json.loads(response.choices[0].message.content)
 
-        # Guardar en MongoDB con solución y respuestas correctas (NO se envían al frontend)
         lab_doc = {
             "email_usuario": email,
             "arena":         arena,
@@ -698,7 +699,6 @@ IMPORTANTE: Cada respuesta correcta DEBE ser verificable directamente en los dat
         result = await db.labs.insert_one(lab_doc)
         lab_id = str(result.inserted_id)
 
-        # Preparar versión pública: eliminar solución y respuestas correctas
         escenario_publico = json.loads(json.dumps(escenario))
         escenario_publico.pop("solucion", None)
         for p in escenario_publico.get("preguntas", []):
@@ -715,10 +715,6 @@ IMPORTANTE: Cada respuesta correcta DEBE ser verificable directamente en los dat
 
 @router.post("/lab/evaluar")
 async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
-    """
-    Evalúa el análisis del analista con IA.
-    Recibe: lab_id, respuestas {id: texto}, informe_libre, queries_usadas[]
-    """
     from bson import ObjectId
     db = get_db()
 
@@ -737,7 +733,6 @@ async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
     escenario = lab["escenario"]
     grupo     = lab["grupo"]
 
-    # Construir bloque con preguntas + respuestas correctas + respuestas del analista
     preguntas_eval = []
     for p in escenario.get("preguntas", []):
         pid = str(p["id"])
@@ -749,82 +744,56 @@ async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
             "respuesta_usuario":  respuestas.get(pid, respuestas.get(p["id"], "")),
         })
 
-    # Contar queries únicas y categorizarlas
     cmds_terminal = [q for q in queries_usadas if q.startswith("CMD:")]
     apps_abiertas = [q for q in queries_usadas if q.startswith("OPEN:")]
     busquedas     = [q for q in queries_usadas if q.startswith("SEARCH:")]
 
-    prompt_eval = f"""Eres un evaluador experto SOC. Evalúa con criterio profesional las respuestas de este analista en un laboratorio de nivel {grupo}.
+    prompt_eval = f"""Eres un evaluador experto SOC. Evalúa las respuestas de este analista en un laboratorio de nivel {grupo}.
 
 ESCENARIO: {escenario.get('titulo', '')}
 {escenario.get('descripcion', '')}
-OBJETIVO: {escenario.get('objetivo', '')}
 
 PREGUNTAS CON RESPUESTAS CORRECTAS Y RESPUESTAS DEL ANALISTA:
 {json.dumps(preguntas_eval, ensure_ascii=False, indent=2)}
 
-INFORME LIBRE DEL ANALISTA:
-"{informe_libre}"
+INFORME LIBRE: "{informe_libre}"
 
-ACTIVIDAD DE INVESTIGACIÓN:
-- Total interacciones: {len(queries_usadas)}
-- Comandos de terminal ejecutados: {len(cmds_terminal)} ({', '.join(cmds_terminal[:8]) if cmds_terminal else 'ninguno'})
-- Aplicaciones abiertas: {', '.join(apps_abiertas) if apps_abiertas else 'ninguna'}
-- Búsquedas en logs: {len(busquedas)} ({', '.join(busquedas[:5]) if busquedas else 'ninguna'})
+ACTIVIDAD: {len(queries_usadas)} interacciones totales, {len(cmds_terminal)} comandos terminal, {len(busquedas)} búsquedas logs.
 
-═══ CRITERIOS DE PUNTUACIÓN POR PREGUNTA (0-10 puntos) ═══
-- Respuesta exacta o que contiene la keyword correcta: 10 pts
-- Mismo concepto, diferente formato (ej: "fuerza bruta" para T1110): 7-8 pts
-- Parcialmente correcta (identifica el vector pero falla el detalle): 4-6 pts
-- Incorrecta pero con razonamiento válido visible: 1-3 pts
-- Sin respuesta o completamente incorrecta: 0 pts
+CRITERIOS (0-10 por pregunta):
+- Exacta o keyword correcta: 10 pts
+- Mismo concepto diferente formato: 7-8 pts
+- Parcialmente correcta: 4-6 pts
+- Incorrecta con razonamiento: 1-3 pts
+- Sin respuesta: 0 pts
 
-═══ BONUS ═══
-- Informe libre demuestra comprensión global del ataque y menciona TTPs: hasta +10 pts
-- 5+ comandos de terminal distintos usados: +3 pts
-- 10+ interacciones totales: +5 pts
-- 15+ interacciones totales: +8 pts (en vez de +5)
+BONUS: informe detallado +10, 5+ comandos +3, 10+ interacciones +5, 15+ interacciones +8.
 
-═══ EVALUACIÓN DE SKILLS (específicas del lab) ═══
-Evalúa estas skills basándote en la calidad del análisis:
-- siem_queries: ¿Demostró conocimiento del SIEM? ¿Ejecutó queries/filtros relevantes?
-- forense_digital: ¿Correlacionó logs entre sistemas? ¿Construyó línea de tiempo del ataque?
-- threat_hunting: ¿Buscó IOCs proactivamente? ¿Identificó técnicas más allá de las alertas visibles?
-- analisis_logs: ¿Discriminó entre ruido y logs relevantes? ¿Extrajo los datos clave?
-- inteligencia_amenazas: ¿Identificó TTPs MITRE correctamente? ¿Reconoció el tipo de ataque/actor?
+SKILLS (delta 0.0-0.3, malo true/false):
+- siem_queries, forense_digital, threat_hunting, analisis_logs, inteligencia_amenazas
 
-Para cada skill: delta 0.0-0.3 (0.0=mal/no aplica, 0.1=básico, 0.2=bien, 0.3=excelente) y malo true/false.
-
-Devuelve ÚNICAMENTE JSON válido sin texto adicional:
+Devuelve ÚNICAMENTE JSON:
 {{
-  "puntuacion_preguntas": <suma de puntos de todas las preguntas>,
+  "puntuacion_preguntas": <suma>,
   "puntuacion_informe": <0-10>,
   "puntuacion_queries": <0-8>,
-  "puntuacion_total": <suma de los tres>,
-  "puntuacion_normalizada": <0-100, reescalado proporcional>,
-  "feedback_preguntas": [
-    {{
-      "id": 1,
-      "puntos": <0-10>,
-      "correcto": <true|false>,
-      "respuesta_correcta": "la respuesta correcta explicada con contexto (dónde se encontraba en el escenario)",
-      "feedback": "feedback específico para esta respuesta: qué acertó, qué falló y dónde estaba la evidencia"
-    }}
-  ],
-  "feedback_general": "Valoración global en 3-4 frases: qué hizo bien, dónde falló, consejo concreto para mejorar como analista SOC",
-  "cadena_ataque_descubierta": <0-100, porcentaje de la cadena del ataque que logró reconstruir>,
+  "puntuacion_total": <suma>,
+  "puntuacion_normalizada": <0-100>,
+  "feedback_preguntas": [{{"id":1,"puntos":0,"correcto":false,"respuesta_correcta":"...","feedback":"..."}}],
+  "feedback_general": "3-4 frases valoración global",
+  "cadena_ataque_descubierta": <0-100>,
   "skills_mejoradas": {{
-    "siem_queries":          {{"delta": 0.0, "malo": false}},
-    "forense_digital":       {{"delta": 0.0, "malo": false}},
-    "threat_hunting":        {{"delta": 0.0, "malo": false}},
-    "analisis_logs":         {{"delta": 0.0, "malo": false}},
-    "inteligencia_amenazas": {{"delta": 0.0, "malo": false}}
+    "siem_queries": {{"delta":0.0,"malo":false}},
+    "forense_digital": {{"delta":0.0,"malo":false}},
+    "threat_hunting": {{"delta":0.0,"malo":false}},
+    "analisis_logs": {{"delta":0.0,"malo":false}},
+    "inteligencia_amenazas": {{"delta":0.0,"malo":false}}
   }},
   "solucion_completa": {{
-    "resumen": "Explicación técnica completa del ataque de inicio a fin",
-    "cadena_ataque": ["1. [timestamp] paso 1 detallado", "2. [timestamp] paso 2", "..."],
-    "tecnicas_mitre": ["T1xxx - Nombre de la técnica"],
-    "lecciones": "Qué controles de seguridad habrían detectado o prevenido este ataque. Específico y práctico."
+    "resumen": "...",
+    "cadena_ataque": ["1. paso", "2. paso"],
+    "tecnicas_mitre": ["T1xxx - Nombre"],
+    "lecciones": "..."
   }}
 }}"""
 
@@ -838,11 +807,9 @@ Devuelve ÚNICAMENTE JSON válido sin texto adicional:
         )
         resultado = json.loads(response.choices[0].message.content)
 
-        # XP: 50 base + hasta 100 según puntuación = rango 50-150 XP por lab
         puntuacion = max(0, min(100, resultado.get("puntuacion_normalizada", 0)))
         xp_ganada  = round(50 + puntuacion)
 
-        # Aplicar mejoras de skills al usuario
         skills_mejora     = resultado.get("skills_mejoradas", {})
         user              = await db.users.find_one({"email": email})
         skills_actuales   = user.get("skills", {s: 0.0 for s in SKILLS_LIST})
@@ -861,7 +828,6 @@ Devuelve ÚNICAMENTE JSON válido sin texto adicional:
             "skills_streak_bad": nuevo_streak,
         }})
 
-        # Marcar lab como completado
         await db.labs.update_one(
             {"_id": ObjectId(lab_id)},
             {"$set": {
@@ -884,10 +850,6 @@ Devuelve ÚNICAMENTE JSON válido sin texto adicional:
 
 @router.get("/lab/activo")
 async def get_lab_activo(email: str = Depends(get_current_user)):
-    """
-    Devuelve el último lab activo del usuario (por si cierra la ventana por error).
-    Útil para recuperar un lab en progreso.
-    """
     db  = get_db()
     lab = await db.labs.find_one(
         {"email_usuario": email, "estado": "activo"},
@@ -897,7 +859,6 @@ async def get_lab_activo(email: str = Depends(get_current_user)):
         return {"lab_activo": False}
 
     escenario = lab.get("escenario", {})
-    # Eliminar solución antes de enviar al frontend
     escenario_publico = json.loads(json.dumps(escenario))
     escenario_publico.pop("solucion", None)
     for p in escenario_publico.get("preguntas", []):
@@ -910,7 +871,6 @@ async def get_lab_activo(email: str = Depends(get_current_user)):
 
 @router.get("/lab/historial")
 async def historial_labs(email: str = Depends(get_current_user)):
-    """Devuelve los últimos 10 labs completados del usuario."""
     db   = get_db()
     labs = await db.labs.find(
         {"email_usuario": email, "estado": "completado"},
