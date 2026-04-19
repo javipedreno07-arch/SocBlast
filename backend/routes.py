@@ -138,7 +138,10 @@ async def google_callback(request: Request):
                 "skills_streak_bad": skills_streak_inicial(),
                 "sesiones_completadas": 0, "training_progreso": {},
                 "fecha_registro": datetime.now().isoformat(),
-                "oauth_provider": "google", "email_verificado": True
+                "oauth_provider": "google", "email_verificado": True,
+                # Campos de perfil público
+                "nombre_completo": "", "edad": None, "ubicacion": "",
+                "preferencias": [], "foto_perfil": "", "perfil_publico": True,
             })
             rol = "analista"
         else:
@@ -148,6 +151,16 @@ async def google_callback(request: Request):
                 updates["skills.siem_queries"] = 0.0
             if "skills_streak_bad" not in existing:
                 updates["skills_streak_bad"] = skills_streak_inicial()
+            if "nombre_completo" not in existing:
+                updates["nombre_completo"] = ""
+            if "ubicacion" not in existing:
+                updates["ubicacion"] = ""
+            if "preferencias" not in existing:
+                updates["preferencias"] = []
+            if "foto_perfil" not in existing:
+                updates["foto_perfil"] = ""
+            if "perfil_publico" not in existing:
+                updates["perfil_publico"] = True
             if updates:
                 await db.users.update_one({"email": email}, {"$set": updates})
 
@@ -176,6 +189,9 @@ async def register(user: UserRegister):
         "sesiones_completadas": 0, "training_progreso": {},
         "fecha_registro": datetime.now().isoformat(),
         "email_verificado": True,
+        # Campos de perfil público
+        "nombre_completo": "", "edad": None, "ubicacion": "",
+        "preferencias": [], "foto_perfil": "", "perfil_publico": True,
     })
     return {"mensaje": "Registro exitoso. Ya puedes iniciar sesión."}
 
@@ -195,6 +211,16 @@ async def login(user: UserLogin):
         updates["skills.siem_queries"] = 0.0
     if "skills_streak_bad" not in db_user:
         updates["skills_streak_bad"] = skills_streak_inicial()
+    if "nombre_completo" not in db_user:
+        updates["nombre_completo"] = ""
+    if "ubicacion" not in db_user:
+        updates["ubicacion"] = ""
+    if "preferencias" not in db_user:
+        updates["preferencias"] = []
+    if "foto_perfil" not in db_user:
+        updates["foto_perfil"] = ""
+    if "perfil_publico" not in db_user:
+        updates["perfil_publico"] = True
     if updates:
         await db.users.update_one({"email": user.email}, {"$set": updates})
 
@@ -219,6 +245,57 @@ async def get_me(email: str = Depends(get_current_user)):
     user = await db.users.find_one({"email": email}, {"password": 0})
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user["_id"] = str(user["_id"])
+    return user
+
+
+# ── PERFIL PÚBLICO — actualizar datos personales ──────────────────────────────
+@router.put("/me/perfil")
+async def update_perfil(datos: dict, email: str = Depends(get_current_user)):
+    """
+    Actualiza los campos públicos del perfil del analista.
+    Campos aceptados: nombre_completo, edad, ubicacion, preferencias,
+                      foto_perfil (base64 o URL), perfil_publico (bool)
+    """
+    db = get_db()
+    campos_permitidos = {
+        "nombre_completo", "edad", "ubicacion",
+        "preferencias", "foto_perfil", "perfil_publico"
+    }
+    update = {k: v for k, v in datos.items() if k in campos_permitidos}
+    if not update:
+        raise HTTPException(status_code=400, detail="No hay campos válidos para actualizar")
+
+    # Validaciones básicas
+    if "edad" in update and update["edad"] is not None:
+        try:
+            update["edad"] = int(update["edad"])
+            if not (14 <= update["edad"] <= 99):
+                raise HTTPException(status_code=400, detail="Edad fuera de rango (14-99)")
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Edad debe ser un número")
+
+    if "nombre_completo" in update and len(str(update["nombre_completo"])) > 80:
+        raise HTTPException(status_code=400, detail="Nombre completo demasiado largo (máx 80 caracteres)")
+
+    if "ubicacion" in update and len(str(update["ubicacion"])) > 100:
+        raise HTTPException(status_code=400, detail="Ubicación demasiado larga (máx 100 caracteres)")
+
+    if "preferencias" in update:
+        if not isinstance(update["preferencias"], list):
+            raise HTTPException(status_code=400, detail="Preferencias debe ser una lista")
+        update["preferencias"] = update["preferencias"][:10]  # máximo 10 preferencias
+
+    if "foto_perfil" in update and update["foto_perfil"]:
+        foto = str(update["foto_perfil"])
+        # Aceptar base64 (data:image/...) o URL https
+        if not (foto.startswith("data:image/") or foto.startswith("https://")):
+            raise HTTPException(status_code=400, detail="Formato de foto inválido")
+        if len(foto) > 2_000_000:  # ~1.5MB base64
+            raise HTTPException(status_code=400, detail="Foto demasiado grande (máx ~1.5MB)")
+
+    await db.users.update_one({"email": email}, {"$set": update})
+    user = await db.users.find_one({"email": email}, {"password": 0})
     user["_id"] = str(user["_id"])
     return user
 
@@ -385,8 +462,15 @@ async def get_ranking(email: str = Depends(get_current_user)):
 # ── EMPRESA ───────────────────────────────────────────────────────────────────
 @router.get("/talent-pool")
 async def get_talent_pool(email: str = Depends(get_current_user)):
+    """
+    Devuelve analistas con perfil_publico=True.
+    Incluye nombre_completo, ubicacion, foto_perfil para las empresas.
+    """
     db = get_db()
-    analistas = await db.users.find({"rol": "analista"}, {"password": 0}).sort("copas", -1).to_list(100)
+    analistas = await db.users.find(
+        {"rol": "analista", "perfil_publico": {"$ne": False}},
+        {"password": 0, "email": 0, "skills_streak_bad": 0, "training_progreso": 0}
+    ).sort("copas", -1).to_list(100)
     for a in analistas:
         a["_id"] = str(a["_id"])
     return analistas
@@ -414,14 +498,11 @@ async def crear_simulacion_empresa(simulacion: dict, email: str = Depends(get_cu
 
 
 # ── LAB ───────────────────────────────────────────────────────────────────────
-
 LAB_CONFIG_POR_NIVEL = {
     "Bronce": {
         "dificultad": "básica",
         "descripcion": "Ataque directo con pocos pasos. Ideal para aprender el flujo de investigación SOC.",
-        "num_alertas": 4,
-        "num_logs": 10,
-        "num_hosts": 3,
+        "num_alertas": 4, "num_logs": 10, "num_hosts": 3,
         "amenazas": "brute force SSH/RDP, malware básico descargado por phishing, acceso no autorizado con credenciales robadas",
         "ttps": "T1110 (Brute Force), T1566 (Phishing), T1078 (Valid Accounts)",
         "num_preguntas": 5,
@@ -429,9 +510,7 @@ LAB_CONFIG_POR_NIVEL = {
     "Plata": {
         "dificultad": "intermedia",
         "descripcion": "Ataque multi-fase con movimiento lateral. Requiere correlación de eventos entre sistemas.",
-        "num_alertas": 6,
-        "num_logs": 16,
-        "num_hosts": 5,
+        "num_alertas": 6, "num_logs": 16, "num_hosts": 5,
         "amenazas": "spear phishing + payload, escalada de privilegios local, movimiento lateral con PsExec/WMI, C2 básico",
         "ttps": "T1566.001, T1059 (Command Scripting), T1021 (Remote Services), T1071 (C2 over HTTP)",
         "num_preguntas": 7,
@@ -439,9 +518,7 @@ LAB_CONFIG_POR_NIVEL = {
     "Oro": {
         "dificultad": "avanzada",
         "descripcion": "APT multi-fase con técnicas de evasión. Requiere threat hunting proactivo y análisis forense.",
-        "num_alertas": 8,
-        "num_logs": 22,
-        "num_hosts": 7,
+        "num_alertas": 8, "num_logs": 22, "num_hosts": 7,
         "amenazas": "APT con living-off-the-land, credential dumping (mimikatz/lsass), DNS tunneling C2, exfiltración cifrada, persistencia avanzada",
         "ttps": "T1003 (Credential Dumping), T1071.004 (DNS C2), T1055 (Process Injection), T1547 (Boot Persistence)",
         "num_preguntas": 9,
@@ -449,9 +526,7 @@ LAB_CONFIG_POR_NIVEL = {
     "Diamante": {
         "dificultad": "experta",
         "descripcion": "Simulación APT completa. El atacante usa técnicas de evasión activa y genera ruido deliberado.",
-        "num_alertas": 10,
-        "num_logs": 28,
-        "num_hosts": 9,
+        "num_alertas": 10, "num_logs": 28, "num_hosts": 9,
         "amenazas": "APT avanzado con zero-day exploit, supply chain o insider threat, exfiltración encubierta, anti-forensics, lateral movement masivo",
         "ttps": "T1190 (Exploit Public App), T1195 (Supply Chain), T1070 (Indicator Removal), T1036 (Masquerading), T1560 (Archive Collected Data)",
         "num_preguntas": 11,
@@ -461,11 +536,6 @@ LAB_CONFIG_POR_NIVEL = {
 
 @router.post("/lab/generar")
 async def generar_lab(email: str = Depends(get_current_user)):
-    """
-    Genera un escenario de laboratorio completo con IA según el nivel del usuario.
-    Devuelve alertas SIEM, logs, mapa de red y preguntas de investigación.
-    La solución y respuestas correctas se guardan en MongoDB — NO se envían al frontend.
-    """
     db   = get_db()
     user = await db.users.find_one({"email": email})
     if not user:
@@ -498,7 +568,6 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
   "descripcion": "Contexto narrativo: qué empresa, qué detectó el SOC inicialmente, cuándo empezó. 2-3 frases.",
   "objetivo": "El analista debe descubrir: [cadena completa del ataque en una frase]",
   "nivel": "{grupo}",
-
   "alertas_siem": [
     {{
       "id": "ALT-001",
@@ -515,7 +584,6 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
       "regla_disparada": "SIGMA: Multiple Failed Authentications From Single Source"
     }}
   ],
-
   "logs": [
     {{
       "id": "LOG-001",
@@ -528,7 +596,6 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
       "relevante": true
     }}
   ],
-
   "red": {{
     "hosts": [
       {{
@@ -555,7 +622,6 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
       }}
     ]
   }},
-
   "iocs": {{
     "ips_maliciosas": ["185.220.101.47"],
     "hashes_maliciosos": ["sha256:a3f9..."],
@@ -564,47 +630,29 @@ Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
     "usuarios_comprometidos": ["CORP\\\\jsmith"],
     "regkeys_persistencia": ["HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\WindowsUpdate"]
   }},
-
   "preguntas": [
     {{
       "id": 1,
-      "categoria": "🔍 Reconocimiento inicial",
+      "categoria": "Reconocimiento inicial",
       "pregunta": "¿Cuál es la dirección IP externa desde la que se originó el ataque?",
       "placeholder": "Ej: 185.220.101.47",
       "tipo": "texto_corto",
       "respuesta_correcta": "185.220.101.47",
       "pista": "Filtra las alertas de autenticación fallida y busca la IP origen"
-    }},
-    {{
-      "id": 2,
-      "categoria": "⚔️ Técnica de acceso inicial",
-      "pregunta": "¿Qué técnica MITRE ATT&CK utilizó el atacante para obtener acceso? Indica ID y nombre.",
-      "placeholder": "Ej: T1110 - Brute Force",
-      "tipo": "texto_corto",
-      "respuesta_correcta": "T1110|brute force|fuerza bruta",
-      "pista": "Revisa cuántos intentos de login fallidos hay antes del login exitoso"
     }}
   ],
-
   "solucion": {{
     "resumen": "Explicación técnica completa del ataque de inicio a fin. 4-5 frases detalladas.",
-    "cadena_ataque": [
-      "1. [timestamp] Atacante desde 185.220.101.47 ejecuta brute force contra RDP en CORP-DC01",
-      "2. [timestamp] Credenciales CORP\\\\jsmith comprometidas tras 847 intentos fallidos",
-      "..."
-    ],
-    "tecnicas_mitre": ["T1110 - Brute Force", "T1078 - Valid Accounts"],
+    "cadena_ataque": ["1. [timestamp] Paso 1", "2. [timestamp] Paso 2"],
+    "tecnicas_mitre": ["T1110 - Brute Force"],
     "respuestas_correctas_explicadas": [
-      {{"id": 1, "respuesta": "185.220.101.47", "explicacion": "Visible en ALT-001 y LOG-001 a LOG-005"}},
-      {{"id": 2, "respuesta": "T1110 - Brute Force", "explicacion": "847 intentos fallidos en 3 minutos"}}
+      {{"id": 1, "respuesta": "185.220.101.47", "explicacion": "Visible en ALT-001 y LOG-001"}}
     ],
     "lecciones": "Qué debería haber detectado el SOC antes y cómo mejorar la detección"
   }}
 }}
 
-Genera exactamente {cfg['num_alertas']} alertas SIEM, {cfg['num_logs']} logs, {cfg['num_hosts']} hosts y {cfg['num_preguntas']} preguntas.
-Las preguntas deben cubrir obligatoriamente: IP/fuente del ataque, técnica de acceso inicial, credencial comprometida, herramienta usada, host comprometido, movimiento lateral o persistencia (si aplica nivel), y al menos 1 pregunta de remediación.
-Cada pregunta debe tener respuesta verificable directamente en los datos del escenario."""
+Genera exactamente {cfg['num_alertas']} alertas SIEM, {cfg['num_logs']} logs, {cfg['num_hosts']} hosts y {cfg['num_preguntas']} preguntas."""
 
     try:
         response = openai_client.chat.completions.create(
@@ -616,21 +664,19 @@ Cada pregunta debe tener respuesta verificable directamente en los datos del esc
         )
         escenario = json.loads(response.choices[0].message.content)
 
-        # Guardar en MongoDB con solución y respuestas correctas (no se envían al frontend)
         lab_doc = {
             "email_usuario": email,
             "arena":         arena,
             "grupo":         grupo,
-            "escenario":     escenario,   # contiene solucion + respuestas_correctas
+            "escenario":     escenario,
             "estado":        "activo",
             "inicio":        time.time(),
             "respuestas":    {},
         }
-        result    = await db.labs.insert_one(lab_doc)
-        lab_id    = str(result.inserted_id)
+        result = await db.labs.insert_one(lab_doc)
+        lab_id = str(result.inserted_id)
 
-        # Preparar respuesta para el frontend: eliminar solución y respuestas correctas
-        escenario_publico = json.loads(json.dumps(escenario))  # deep copy
+        escenario_publico = json.loads(json.dumps(escenario))
         escenario_publico.pop("solucion", None)
         for p in escenario_publico.get("preguntas", []):
             p.pop("respuesta_correcta", None)
@@ -644,11 +690,6 @@ Cada pregunta debe tener respuesta verificable directamente en los datos del esc
 
 @router.post("/lab/evaluar")
 async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
-    """
-    Evalúa las respuestas del laboratorio con IA.
-    Recibe: lab_id, respuestas {id: texto}, informe_libre, queries_usadas[]
-    Devuelve: puntuación, feedback por pregunta, solución completa, XP y skills.
-    """
     from bson import ObjectId
     db = get_db()
 
@@ -667,7 +708,6 @@ async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
     escenario = lab["escenario"]
     grupo     = lab["grupo"]
 
-    # Construir bloque con preguntas + respuestas correctas + respuestas del usuario
     preguntas_eval = []
     for p in escenario.get("preguntas", []):
         pid = str(p["id"])
@@ -693,47 +733,24 @@ INFORME LIBRE DEL ANALISTA:
 QUERIES SIEM EJECUTADAS ({len(queries_usadas)} total):
 {json.dumps(queries_usadas[:15], ensure_ascii=False) if queries_usadas else "Ninguna"}
 
-═══ CRITERIOS DE PUNTUACIÓN ═══
-
-Por pregunta (0-10 puntos cada una):
-- Respuesta exacta o con keyword clave correcta: 10 pts
-- Mismo concepto, diferente formato (ej: "fuerza bruta" vs "T1110"): 7-8 pts
-- Parcialmente correcta (identifica el vector pero falla el detalle): 4-6 pts
-- Incorrecta pero con razonamiento visible: 1-3 pts
-- Sin respuesta o completamente incorrecta: 0 pts
-
-Bonus:
-- Informe libre demuestra comprensión global del ataque: hasta +10 pts
-- Más de 5 queries SIEM distintas ejecutadas: +5 pts
-- Más de 10 queries: +8 pts (en vez de +5)
-
-Skills a evaluar (específicas de laboratorio):
-- siem_queries: ¿Ejecutó queries relevantes? ¿Variadas? ¿Efectivas para el caso?
-- forense_digital: ¿Correlacionó logs entre sistemas? ¿Construyó línea de tiempo correcta?
-- threat_hunting: ¿Identificó IOCs proactivamente? ¿Buscó más allá de las alertas visibles?
-- analisis_logs: ¿Discriminó entre logs relevantes y ruido? ¿Extrajo los datos clave?
-- inteligencia_amenazas: ¿Identificó TTPs MITRE? ¿Reconoció el tipo de amenaza/actor?
-
-Para cada skill: delta 0.0-0.3 y malo true/false.
-
 Devuelve ÚNICAMENTE JSON válido:
 {{
   "puntuacion_preguntas": <suma puntos preguntas>,
   "puntuacion_informe": <0-10>,
   "puntuacion_queries": <0-8>,
   "puntuacion_total": <suma total>,
-  "puntuacion_normalizada": <0-100 reescalado>,
+  "puntuacion_normalizada": <0-100>,
   "feedback_preguntas": [
     {{
       "id": 1,
       "puntos": <0-10>,
       "correcto": <true|false>,
       "respuesta_correcta": "la respuesta correcta con explicación",
-      "feedback": "feedback específico: qué acertó/falló y dónde estaba la evidencia"
+      "feedback": "feedback específico"
     }}
   ],
-  "feedback_general": "valoración global en 3-4 frases: fortalezas, debilidades, consejo concreto de mejora",
-  "cadena_ataque_descubierta": <0-100 porcentaje de la cadena que descubrió>,
+  "feedback_general": "valoración global en 3-4 frases",
+  "cadena_ataque_descubierta": <0-100>,
   "skills_mejoradas": {{
     "siem_queries":          {{"delta": 0.0, "malo": false}},
     "forense_digital":       {{"delta": 0.0, "malo": false}},
@@ -743,7 +760,7 @@ Devuelve ÚNICAMENTE JSON válido:
   }},
   "solucion_completa": {{
     "resumen": "explicación técnica completa del ataque",
-    "cadena_ataque": ["paso 1 con timestamp", "paso 2", "..."],
+    "cadena_ataque": ["paso 1 con timestamp", "paso 2"],
     "tecnicas_mitre": ["T1xxx - Nombre"],
     "lecciones": "cómo mejorar la detección de este tipo de ataque"
   }}
@@ -759,11 +776,9 @@ Devuelve ÚNICAMENTE JSON válido:
         )
         resultado = json.loads(response.choices[0].message.content)
 
-        # XP: base 50 + hasta 100 según puntuación normalizada → rango 50-150 XP
         puntuacion = max(0, min(100, resultado.get("puntuacion_normalizada", 0)))
         xp_ganada  = round(50 + puntuacion)
 
-        # Aplicar skills
         skills_mejora     = resultado.get("skills_mejoradas", {})
         user              = await db.users.find_one({"email": email})
         skills_actuales   = user.get("skills", {s: 0.0 for s in SKILLS_LIST})
@@ -804,7 +819,6 @@ Devuelve ÚNICAMENTE JSON válido:
 
 @router.get("/lab/historial")
 async def historial_labs(email: str = Depends(get_current_user)):
-    """Devuelve los últimos 10 labs completados del usuario."""
     db   = get_db()
     labs = await db.labs.find(
         {"email_usuario": email, "estado": "completado"},
