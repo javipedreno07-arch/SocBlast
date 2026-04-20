@@ -82,7 +82,7 @@ const STEPS = [
           <div style={{ color:'#f87171', marginTop:2 }}>2024-03-15 02:18:33 mimikatz.exe PID:1337 CORP\jsmith</div>
           <div style={{ color:'#7ee787', marginTop:4 }}>analyst@soc:~$ netstat -an | grep ESTABLISHED</div>
           <div style={{ color:'#f87171', marginTop:2 }}>TCP 10.0.0.15:49832 → 185.220.101.47:4444 ESTABLISHED</div>
-          <div style={{ color:'#58a6ff', marginTop:4 }}>analyst@soc:~$ <span style={{ animation:'blink 1s infinite', display:'inline-block' }}>▌</span></div>
+          <div style={{ color:'#58a6ff', marginTop:4 }}>analyst@soc:~$ ▌</div>
         </div>
       </div>
     ),
@@ -105,7 +105,7 @@ const STEPS = [
           <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
             <span style={{ fontSize:10, color: s.weak ? '#ef4444' : '#94a3b8', width:130, flexShrink:0 }}>{s.label}</span>
             <div style={{ flex:1, height:6, background:'#1e293b', borderRadius:3 }}>
-              <div style={{ width:`${s.val*10}%`, height:'100%', borderRadius:3, background: s.weak ? '#ef4444' : s.color, transition:'width 1s ease' }}/>
+              <div style={{ width:`${s.val*10}%`, height:'100%', borderRadius:3, background: s.weak ? '#ef4444' : s.color }}/>
             </div>
             <span style={{ fontSize:10, fontWeight:700, color: s.weak ? '#ef4444' : s.color, width:28, textAlign:'right', fontFamily:'monospace' }}>{s.val}</span>
           </div>
@@ -148,12 +148,12 @@ const STEPS = [
 ];
 
 function OnboardingModal({ nombre, onFinish }) {
-  const [step, setStep]     = useState(0);
-  const [exiting, setExit]  = useState(false);
+  const [step, setStep]      = useState(0);
+  const [exiting, setExit]   = useState(false);
   const [entering, setEnter] = useState(false);
-  const s       = STEPS[step];
-  const isLast  = step === STEPS.length - 1;
-  const pct     = ((step + 1) / STEPS.length) * 100;
+  const s      = STEPS[step];
+  const isLast = step === STEPS.length - 1;
+  const pct    = ((step + 1) / STEPS.length) * 100;
 
   const goTo = (next) => {
     setExit(true);
@@ -161,14 +161,7 @@ function OnboardingModal({ nombre, onFinish }) {
   };
 
   return (
-    <div style={{
-      position:'fixed', inset:0, zIndex:9999,
-      background:'rgba(10,14,26,0.88)',
-      backdropFilter:'blur(8px)',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      fontFamily:"'Inter','Segoe UI',sans-serif",
-      padding:16,
-    }}>
+    <div style={{ position:'fixed',inset:0,zIndex:9999,background:'rgba(10,14,26,0.88)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter','Segoe UI',sans-serif",padding:16 }}>
       <style>{`
         @keyframes ob-in  { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
         @keyframes ob-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(-12px) scale(0.97); } }
@@ -176,130 +169,81 @@ function OnboardingModal({ nombre, onFinish }) {
         .ob-enter { animation: ob-in  0.3s ease forwards; }
         .ob-exit  { animation: ob-out 0.22s ease forwards; }
       `}</style>
-
-      <div style={{
-        background:'#fff', borderRadius:20, width:'100%', maxWidth:740,
-        boxShadow:'0 32px 80px rgba(0,0,0,0.45)',
-        overflow:'hidden', display:'flex', flexDirection:'column',
-      }}>
-        {/* Barra de progreso top */}
-        <div style={{ height:4, background:'#f1f5f9' }}>
-          <div style={{ height:'100%', background:`linear-gradient(90deg,${s.color}80,${s.color})`, width:`${pct}%`, transition:'width 0.4s ease, background 0.4s ease', borderRadius:4 }}/>
+      <div style={{ background:'#fff',borderRadius:20,width:'100%',maxWidth:740,boxShadow:'0 32px 80px rgba(0,0,0,0.45)',overflow:'hidden',display:'flex',flexDirection:'column' }}>
+        <div style={{ height:4,background:'#f1f5f9' }}>
+          <div style={{ height:'100%',background:`linear-gradient(90deg,${s.color}80,${s.color})`,width:`${pct}%`,transition:'width 0.4s ease, background 0.4s ease',borderRadius:4 }}/>
         </div>
-
-        {/* Header con paso y nombre */}
-        <div style={{ padding:'16px 28px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <div style={{ padding:'3px 10px', borderRadius:100, background:s.light, border:`1px solid ${s.color}33` }}>
-              <span style={{ fontSize:10, fontWeight:800, color:s.color, letterSpacing:'0.08em' }}>{s.tag}</span>
-            </div>
+        <div style={{ padding:'16px 28px 0',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+          <div style={{ padding:'3px 10px',borderRadius:100,background:s.light,border:`1px solid ${s.color}33` }}>
+            <span style={{ fontSize:10,fontWeight:800,color:s.color,letterSpacing:'0.08em' }}>{s.tag}</span>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:12, color:'#94a3b8' }}>{step + 1} / {STEPS.length}</span>
-            <button onClick={onFinish} style={{ background:'none', border:'1px solid #e2e8f0', color:'#94a3b8', fontSize:11, padding:'3px 10px', borderRadius:6, cursor:'pointer' }}>
-              Saltar →
-            </button>
+          <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+            <span style={{ fontSize:12,color:'#94a3b8' }}>{step + 1} / {STEPS.length}</span>
+            <button onClick={onFinish} style={{ background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',fontSize:11,padding:'3px 10px',borderRadius:6,cursor:'pointer' }}>Saltar →</button>
           </div>
         </div>
-
-        {/* Contenido */}
-        <div className={exiting ? 'ob-exit' : entering ? 'ob-enter' : ''} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:0 }}>
-          {/* Texto izquierda */}
+        <div className={exiting ? 'ob-exit' : entering ? 'ob-enter' : ''} style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:0 }}>
           <div style={{ padding:'28px 28px 24px' }}>
-            <div style={{ fontSize:40, marginBottom:14 }}>{s.icon}</div>
-            <h2 style={{ fontSize:22, fontWeight:900, color:'#0f172a', letterSpacing:'-0.6px', lineHeight:1.25, marginBottom:12 }}>
+            <div style={{ fontSize:40,marginBottom:14 }}>{s.icon}</div>
+            <h2 style={{ fontSize:22,fontWeight:900,color:'#0f172a',letterSpacing:'-0.6px',lineHeight:1.25,marginBottom:12 }}>
               {step === 0 ? <>Hola, <span style={{ color:s.color }}>{nombre}</span> 👋<br/>{s.title}</> : s.title}
             </h2>
-            <p style={{ fontSize:13, color:'#475569', lineHeight:1.85, marginBottom:24 }}>{s.desc}</p>
-
-            {/* Dots */}
-            <div style={{ display:'flex', gap:6, marginBottom:24 }}>
+            <p style={{ fontSize:13,color:'#475569',lineHeight:1.85,marginBottom:24 }}>{s.desc}</p>
+            <div style={{ display:'flex',gap:6,marginBottom:24 }}>
               {STEPS.map((_, i) => (
-                <button key={i} onClick={() => i !== step && goTo(i)} style={{
-                  width: i === step ? 24 : 8, height:8, borderRadius:4, border:'none', cursor:'pointer',
-                  background: i === step ? s.color : i < step ? s.color + '55' : '#e2e8f0',
-                  transition:'all 0.35s ease', padding:0,
-                }}/>
+                <button key={i} onClick={() => i !== step && goTo(i)} style={{ width:i===step?24:8,height:8,borderRadius:4,border:'none',cursor:'pointer',background:i===step?s.color:i<step?s.color+'55':'#e2e8f0',transition:'all 0.35s ease',padding:0 }}/>
               ))}
             </div>
-
-            {/* Botones */}
-            <div style={{ display:'flex', gap:8 }}>
+            <div style={{ display:'flex',gap:8 }}>
               {step > 0 && (
-                <button onClick={() => goTo(step - 1)} style={{
-                  padding:'11px 20px', borderRadius:10, border:'1px solid #e2e8f0',
-                  background:'#fff', color:'#64748b', fontSize:13, fontWeight:600, cursor:'pointer',
-                }}>← Anterior</button>
+                <button onClick={() => goTo(step - 1)} style={{ padding:'11px 20px',borderRadius:10,border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',fontSize:13,fontWeight:600,cursor:'pointer' }}>← Anterior</button>
               )}
-              <button onClick={() => isLast ? onFinish() : goTo(step + 1)} style={{
-                flex:1, padding:'12px 20px', borderRadius:10, border:'none',
-                background:`linear-gradient(135deg,${s.color},${s.color}cc)`,
-                color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer',
-                boxShadow:`0 4px 16px ${s.color}44`,
-                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-              }}>
+              <button onClick={() => isLast ? onFinish() : goTo(step + 1)} style={{ flex:1,padding:'12px 20px',borderRadius:10,border:'none',background:`linear-gradient(135deg,${s.color},${s.color}cc)`,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:`0 4px 16px ${s.color}44`,display:'flex',alignItems:'center',justifyContent:'center',gap:8 }}>
                 {isLast ? '🚀 ¡Empezar!' : 'Siguiente →'}
               </button>
             </div>
           </div>
-
-          {/* Visual derecha */}
-          <div style={{
-            background: step === 0 ? '#0f172a' : step === 1 ? '#020817' : step === 2 ? '#020817' : step === 3 ? '#0f172a' : '#f8fafc',
-            padding:'28px 24px',
-            display:'flex', flexDirection:'column', justifyContent:'center',
-            borderLeft:`1px solid ${step >= 4 ? '#e2e8f0' : '#1e293b'}`,
-          }}>
+          <div style={{ background:step===0?'#0f172a':step===1?'#020817':step===2?'#020817':step===3?'#0f172a':'#f8fafc',padding:'28px 24px',display:'flex',flexDirection:'column',justifyContent:'center',borderLeft:`1px solid ${step>=4?'#e2e8f0':'#1e293b'}` }}>
             {s.visual}
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ padding:'10px 28px 14px', borderTop:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ display:'flex', gap:6 }}>
+        <div style={{ padding:'10px 28px 14px',borderTop:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+          <div style={{ display:'flex',gap:6 }}>
             {['Sesiones','Labs','Skills','Progresión','Empleo'].map((l, i) => (
-              <span key={i} style={{
-                fontSize:10, padding:'2px 8px', borderRadius:5,
-                background: i === step ? s.light : '#f8fafc',
-                color: i === step ? s.color : '#94a3b8',
-                fontWeight: i === step ? 700 : 400,
-                border: `1px solid ${i === step ? s.color + '33' : '#f1f5f9'}`,
-                cursor:'pointer',
-              }} onClick={() => goTo(i)}>{l}</span>
+              <span key={i} style={{ fontSize:10,padding:'2px 8px',borderRadius:5,background:i===step?s.light:'#f8fafc',color:i===step?s.color:'#94a3b8',fontWeight:i===step?700:400,border:`1px solid ${i===step?s.color+'33':'#f1f5f9'}`,cursor:'pointer' }} onClick={() => goTo(i)}>{l}</span>
             ))}
           </div>
-          <span style={{ fontSize:11, color:'#cbd5e1' }}>SoCBlast · v2.0</span>
+          <span style={{ fontSize:11,color:'#cbd5e1' }}>SoCBlast · v2.0</span>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── RESTO DEL DASHBOARD (sin cambios) ───────────────────────────────────────
-
+// ─── ARENAS ───────────────────────────────────────────────────────────────────
 const ARENAS = [
-  { id:'bronce3', name:'Bronce III', tier:'bronce', div:3, min:0,    max:299,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#d97706', gradTo:'#92400e', colorRgb:'180,83,9'   },
-  { id:'bronce2', name:'Bronce II',  tier:'bronce', div:2, min:300,  max:599,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#f59e0b', gradTo:'#b45309', colorRgb:'180,83,9'   },
-  { id:'bronce1', name:'Bronce I',   tier:'bronce', div:1, min:600,  max:899,  color:'#92400e', colorLight:'#fef3c7', gradFrom:'#fbbf24', gradTo:'#d97706', colorRgb:'180,83,9'   },
-  { id:'plata3',  name:'Plata III',  tier:'plata',  div:3, min:900,  max:1199, color:'#475569', colorLight:'#f1f5f9', gradFrom:'#64748b', gradTo:'#334155', colorRgb:'71,85,105'  },
-  { id:'plata2',  name:'Plata II',   tier:'plata',  div:2, min:1200, max:1499, color:'#475569', colorLight:'#f1f5f9', gradFrom:'#94a3b8', gradTo:'#475569', colorRgb:'71,85,105'  },
-  { id:'plata1',  name:'Plata I',    tier:'plata',  div:1, min:1500, max:1799, color:'#334155', colorLight:'#f1f5f9', gradFrom:'#cbd5e1', gradTo:'#64748b', colorRgb:'71,85,105'  },
-  { id:'oro3',    name:'Oro III',    tier:'oro',    div:3, min:1800, max:2099, color:'#92400e', colorLight:'#fffbeb', gradFrom:'#d97706', gradTo:'#92400e', colorRgb:'146,64,14'  },
-  { id:'oro2',    name:'Oro II',     tier:'oro',    div:2, min:2100, max:2399, color:'#78350f', colorLight:'#fffbeb', gradFrom:'#f59e0b', gradTo:'#b45309', colorRgb:'146,64,14'  },
-  { id:'oro1',    name:'Oro I',      tier:'oro',    div:1, min:2400, max:2699, color:'#78350f', colorLight:'#fffbeb', gradFrom:'#fbbf24', gradTo:'#d97706', colorRgb:'146,64,14'  },
-  { id:'diamante3',name:'Diamante III',tier:'diamante',div:3,min:2700,max:2999,color:'#1e40af', colorLight:'#eff6ff', gradFrom:'#3b82f6', gradTo:'#1e40af', colorRgb:'59,130,246' },
-  { id:'diamante2',name:'Diamante II', tier:'diamante',div:2,min:3000,max:3299,color:'#1d4ed8', colorLight:'#eff6ff', gradFrom:'#60a5fa', gradTo:'#2563eb', colorRgb:'59,130,246' },
-  { id:'diamante1',name:'Diamante I',  tier:'diamante',div:1,min:3300,max:99999,color:'#1e3a8a',colorLight:'#eff6ff', gradFrom:'#93c5fd', gradTo:'#3b82f6', colorRgb:'59,130,246' },
+  { id:'bronce3',  name:'Bronce III',  tier:'bronce',   div:3, min:0,    max:299,   color:'#92400e', colorLight:'#fef3c7', gradFrom:'#d97706', gradTo:'#92400e',  colorRgb:'180,83,9'   },
+  { id:'bronce2',  name:'Bronce II',   tier:'bronce',   div:2, min:300,  max:599,   color:'#92400e', colorLight:'#fef3c7', gradFrom:'#f59e0b', gradTo:'#b45309',  colorRgb:'180,83,9'   },
+  { id:'bronce1',  name:'Bronce I',    tier:'bronce',   div:1, min:600,  max:899,   color:'#92400e', colorLight:'#fef3c7', gradFrom:'#fbbf24', gradTo:'#d97706',  colorRgb:'180,83,9'   },
+  { id:'plata3',   name:'Plata III',   tier:'plata',    div:3, min:900,  max:1199,  color:'#475569', colorLight:'#f1f5f9', gradFrom:'#64748b', gradTo:'#334155',  colorRgb:'71,85,105'  },
+  { id:'plata2',   name:'Plata II',    tier:'plata',    div:2, min:1200, max:1499,  color:'#475569', colorLight:'#f1f5f9', gradFrom:'#94a3b8', gradTo:'#475569',  colorRgb:'71,85,105'  },
+  { id:'plata1',   name:'Plata I',     tier:'plata',    div:1, min:1500, max:1799,  color:'#334155', colorLight:'#f1f5f9', gradFrom:'#cbd5e1', gradTo:'#64748b',  colorRgb:'71,85,105'  },
+  { id:'oro3',     name:'Oro III',     tier:'oro',      div:3, min:1800, max:2099,  color:'#92400e', colorLight:'#fffbeb', gradFrom:'#d97706', gradTo:'#92400e',  colorRgb:'146,64,14'  },
+  { id:'oro2',     name:'Oro II',      tier:'oro',      div:2, min:2100, max:2399,  color:'#78350f', colorLight:'#fffbeb', gradFrom:'#f59e0b', gradTo:'#b45309',  colorRgb:'146,64,14'  },
+  { id:'oro1',     name:'Oro I',       tier:'oro',      div:1, min:2400, max:2699,  color:'#78350f', colorLight:'#fffbeb', gradFrom:'#fbbf24', gradTo:'#d97706',  colorRgb:'146,64,14'  },
+  { id:'diamante3',name:'Diamante III',tier:'diamante', div:3, min:2700, max:2999,  color:'#1e40af', colorLight:'#eff6ff', gradFrom:'#3b82f6', gradTo:'#1e40af',  colorRgb:'59,130,246' },
+  { id:'diamante2',name:'Diamante II', tier:'diamante', div:2, min:3000, max:3299,  color:'#1d4ed8', colorLight:'#eff6ff', gradFrom:'#60a5fa', gradTo:'#2563eb',  colorRgb:'59,130,246' },
+  { id:'diamante1',name:'Diamante I',  tier:'diamante', div:1, min:3300, max:99999, color:'#1e3a8a', colorLight:'#eff6ff', gradFrom:'#93c5fd', gradTo:'#3b82f6',  colorRgb:'59,130,246' },
 ];
 
 const getArenaFromCopas = (copas) => ARENAS.find(a => copas >= a.min && copas <= a.max) || ARENAS[0];
 
 const Planet = ({ tier, size = 110 }) => {
   const p = {
-    bronce: (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="pb1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FDE68A"/><stop offset="40%" stopColor="#D97706"/><stop offset="100%" stopColor="#5C2E00"/></radialGradient><radialGradient id="pb2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.45)"/></radialGradient></defs><circle cx="60" cy="60" r="52" fill="url(#pb1)"/><ellipse cx="42" cy="38" rx="20" ry="7" fill="rgba(180,90,20,0.35)" transform="rotate(-25,42,38)"/><ellipse cx="72" cy="68" rx="24" ry="6" fill="rgba(90,40,5,0.3)" transform="rotate(12,72,68)"/><circle cx="60" cy="60" r="52" fill="url(#pb2)"/></svg>),
-    plata:  (<svg width={size} height={size} viewBox="0 0 150 120"><defs><radialGradient id="pp1" cx="35%" cy="30%"><stop offset="0%" stopColor="#F1F5F9"/><stop offset="45%" stopColor="#94A3B8"/><stop offset="100%" stopColor="#1E293B"/></radialGradient><radialGradient id="pp2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient><linearGradient id="pr1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="50%" stopColor="rgba(148,163,184,0.6)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient></defs><ellipse cx="75" cy="72" rx="70" ry="6" fill="url(#pr1)" opacity="0.7"/><circle cx="75" cy="60" r="48" fill="url(#pp1)"/><circle cx="75" cy="60" r="48" fill="url(#pp2)"/></svg>),
-    oro:    (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="po1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FEF08A"/><stop offset="35%" stopColor="#F59E0B"/><stop offset="100%" stopColor="#78350F"/></radialGradient><radialGradient id="po2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.38)"/></radialGradient></defs><circle cx="60" cy="60" r="54" fill="url(#po1)"/><ellipse cx="45" cy="42" rx="22" ry="9" fill="rgba(251,191,36,0.3)" transform="rotate(-15,45,42)"/><circle cx="60" cy="60" r="54" fill="url(#po2)"/></svg>),
-    diamante:(<svg width={size} height={size} viewBox="0 0 130 120"><defs><radialGradient id="pd1" cx="35%" cy="30%"><stop offset="0%" stopColor="#DBEAFE"/><stop offset="30%" stopColor="#93C5FD"/><stop offset="60%" stopColor="#3B82F6"/><stop offset="100%" stopColor="#1E3A8A"/></radialGradient><radialGradient id="pd2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient><linearGradient id="pdr" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(147,197,253,0)"/><stop offset="50%" stopColor="rgba(147,197,253,0.55)"/><stop offset="100%" stopColor="rgba(147,197,253,0)"/></linearGradient></defs><ellipse cx="65" cy="74" rx="64" ry="7" fill="url(#pdr)" opacity="0.6"/><circle cx="65" cy="60" r="52" fill="url(#pd1)"/><circle cx="65" cy="60" r="52" fill="url(#pd2)"/></svg>),
+    bronce:   (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="pb1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FDE68A"/><stop offset="40%" stopColor="#D97706"/><stop offset="100%" stopColor="#5C2E00"/></radialGradient><radialGradient id="pb2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.45)"/></radialGradient></defs><circle cx="60" cy="60" r="52" fill="url(#pb1)"/><ellipse cx="42" cy="38" rx="20" ry="7" fill="rgba(180,90,20,0.35)" transform="rotate(-25,42,38)"/><ellipse cx="72" cy="68" rx="24" ry="6" fill="rgba(90,40,5,0.3)" transform="rotate(12,72,68)"/><circle cx="60" cy="60" r="52" fill="url(#pb2)"/></svg>),
+    plata:    (<svg width={size} height={size} viewBox="0 0 150 120"><defs><radialGradient id="pp1" cx="35%" cy="30%"><stop offset="0%" stopColor="#F1F5F9"/><stop offset="45%" stopColor="#94A3B8"/><stop offset="100%" stopColor="#1E293B"/></radialGradient><radialGradient id="pp2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient><linearGradient id="pr1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(148,163,184,0)"/><stop offset="50%" stopColor="rgba(148,163,184,0.6)"/><stop offset="100%" stopColor="rgba(148,163,184,0)"/></linearGradient></defs><ellipse cx="75" cy="72" rx="70" ry="6" fill="url(#pr1)" opacity="0.7"/><circle cx="75" cy="60" r="48" fill="url(#pp1)"/><circle cx="75" cy="60" r="48" fill="url(#pp2)"/></svg>),
+    oro:      (<svg width={size} height={size} viewBox="0 0 120 120"><defs><radialGradient id="po1" cx="35%" cy="30%"><stop offset="0%" stopColor="#FEF08A"/><stop offset="35%" stopColor="#F59E0B"/><stop offset="100%" stopColor="#78350F"/></radialGradient><radialGradient id="po2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.38)"/></radialGradient></defs><circle cx="60" cy="60" r="54" fill="url(#po1)"/><ellipse cx="45" cy="42" rx="22" ry="9" fill="rgba(251,191,36,0.3)" transform="rotate(-15,45,42)"/><circle cx="60" cy="60" r="54" fill="url(#po2)"/></svg>),
+    diamante: (<svg width={size} height={size} viewBox="0 0 130 120"><defs><radialGradient id="pd1" cx="35%" cy="30%"><stop offset="0%" stopColor="#DBEAFE"/><stop offset="30%" stopColor="#93C5FD"/><stop offset="60%" stopColor="#3B82F6"/><stop offset="100%" stopColor="#1E3A8A"/></radialGradient><radialGradient id="pd2" cx="50%" cy="50%"><stop offset="0%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.4)"/></radialGradient><linearGradient id="pdr" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(147,197,253,0)"/><stop offset="50%" stopColor="rgba(147,197,253,0.55)"/><stop offset="100%" stopColor="rgba(147,197,253,0)"/></linearGradient></defs><ellipse cx="65" cy="74" rx="64" ry="7" fill="url(#pdr)" opacity="0.6"/><circle cx="65" cy="60" r="52" fill="url(#pd1)"/><circle cx="65" cy="60" r="52" fill="url(#pd2)"/></svg>),
   };
   return p[tier] || null;
 };
@@ -390,6 +334,7 @@ const IC = {
   network:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="6" height="6"/><rect x="16" y="2" width="6" height="6"/><rect x="9" y="16" width="6" height="6"/><path d="M5 8v4h14V8"/><path d="M12 12v4"/></svg>,
   search: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   bug:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>,
+  clock:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
 };
 
 const Icon = ({name, size=15, color='currentColor'}) => (
@@ -403,63 +348,57 @@ const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316'
 const ACC = '#4f46e5';
 
 const SKILLS = [
-  {key:'analisis_logs',         label:'Análisis de Logs',      icon:'search', color:'#3b82f6', desc:'Lectura e interpretación de logs del sistema'},
-  {key:'deteccion_amenazas',    label:'Detección de Amenazas', icon:'eye',    color:'#4f46e5', desc:'Identificación de IOCs y patrones maliciosos'},
-  {key:'respuesta_incidentes',  label:'Respuesta Incidentes',  icon:'bolt',   color:'#f59e0b', desc:'Contención, erradicación y recuperación'},
-  {key:'threat_hunting',        label:'Threat Hunting',        icon:'target', color:'#8b5cf6', desc:'Búsqueda proactiva de amenazas ocultas'},
-  {key:'forense_digital',       label:'Forense Digital',       icon:'bug',    color:'#ec4899', desc:'Análisis de evidencias y artefactos'},
-  {key:'gestion_vulnerabilidades',label:'Gestión de Vulns',    icon:'shield', color:'#f97316', desc:'Evaluación y priorización de vulnerabilidades'},
-  {key:'inteligencia_amenazas', label:'Intel. de Amenazas',    icon:'brain',  color:'#10b981', desc:'CTI, TTPs y fuentes de inteligencia'},
-  {key:'siem_queries',          label:'SIEM & Queries',        icon:'network',color:'#0891b2', desc:'Splunk, Elastic, reglas de correlación'},
+  {key:'analisis_logs',           label:'Análisis de Logs',      icon:'search',  color:'#3b82f6', desc:'Lectura e interpretación de logs del sistema'},
+  {key:'deteccion_amenazas',      label:'Detección de Amenazas', icon:'eye',     color:'#4f46e5', desc:'Identificación de IOCs y patrones maliciosos'},
+  {key:'respuesta_incidentes',    label:'Respuesta Incidentes',  icon:'bolt',    color:'#f59e0b', desc:'Contención, erradicación y recuperación'},
+  {key:'threat_hunting',          label:'Threat Hunting',        icon:'target',  color:'#8b5cf6', desc:'Búsqueda proactiva de amenazas ocultas'},
+  {key:'forense_digital',         label:'Forense Digital',       icon:'bug',     color:'#ec4899', desc:'Análisis de evidencias y artefactos'},
+  {key:'gestion_vulnerabilidades',label:'Gestión de Vulns',      icon:'shield',  color:'#f97316', desc:'Evaluación y priorización de vulnerabilidades'},
+  {key:'inteligencia_amenazas',   label:'Intel. de Amenazas',    icon:'brain',   color:'#10b981', desc:'CTI, TTPs y fuentes de inteligencia'},
+  {key:'siem_queries',            label:'SIEM & Queries',        icon:'network', color:'#0891b2', desc:'Splunk, Elastic, reglas de correlación'},
 ];
 
-const OFERTAS_MOCK = [
-  { empresa:'CiberShield S.L.', rol:'Analista SOC L1', ubicacion:'Madrid · Híbrido', salario:'24K–30K', arena:'Bronce I+', badge:'nueva', color:'#059669' },
-  { empresa:'TechDefend', rol:'SOC Analyst L2', ubicacion:'Remoto', salario:'32K–40K', arena:'Plata II+', badge:'', color:'#3b82f6' },
-  { empresa:'Grupo Securitas', rol:'Threat Hunter', ubicacion:'Barcelona · Onsite', salario:'40K–52K', arena:'Oro I+', badge:'urgente', color:'#ef4444' },
-];
-const CERTS_MOCK = [
-  { nombre:'CompTIA Security+', nivel:'Entrada', precio:'~380€', relevancia:95, url:'https://www.comptia.org/certifications/security', color:'#e11d48' },
-  { nombre:'CEH — Certified Ethical Hacker', nivel:'Intermedio', precio:'~1.200€', relevancia:88, url:'https://www.eccouncil.org/train-certify/certified-ethical-hacker-ceh/', color:'#7c3aed' },
-  { nombre:'GCIH — GIAC Incident Handler', nivel:'Avanzado', precio:'~2.500€', relevancia:82, url:'https://www.giac.org/certifications/certified-incident-handler-gcih/', color:'#0891b2' },
-  { nombre:'SC-200 Microsoft Sentinel', nivel:'Intermedio', precio:'~165€', relevancia:90, url:'https://learn.microsoft.com/certifications/exams/sc-200/', color:'#0078d4' },
-];
-const BOOTCAMPS_MOCK = [
-  { nombre:'Hack4U — SOC completo', tipo:'Bootcamp', duracion:'6 meses', precio:'Desde 297€', stars:4.9 },
-  { nombre:'OpenWebinars — Blue Team', tipo:'Curso', duracion:'40h', precio:'Suscripción', stars:4.7 },
-  { nombre:'TCM Security Practical SOC', tipo:'Bootcamp EN', duracion:'30h', precio:'~29€', stars:4.8 },
-];
-const RETOS_MOCK = [
-  { nombre:'TryHackMe — SOC Level 1', tipo:'Plataforma', gratis:true, url:'https://tryhackme.com/path/outline/soclevel1' },
-  { nombre:'Blue Team Labs Online', tipo:'Retos', gratis:true, url:'https://blueteamlabs.online/' },
-  { nombre:'CyberDefenders', tipo:'Challenges', gratis:true, url:'https://cyberdefenders.org/' },
-  { nombre:'LetsDefend', tipo:'SOC Simulator', gratis:false, url:'https://letsdefend.io/' },
-];
+// ─── COMPONENTE "PRÓXIMAMENTE" ────────────────────────────────────────────────
+function ComingSoon({ title, desc, icon, color = '#4f46e5' }) {
+  return (
+    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'64px 32px',textAlign:'center',background:'#fafafa',borderRadius:16,border:'2px dashed #e2e8f0',minHeight:280 }}>
+      <div style={{ width:64,height:64,borderRadius:20,background:`${color}10`,border:`1px solid ${color}25`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20 }}>
+        <Icon name={icon} size={28} color={color}/>
+      </div>
+      <div style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'4px 14px',borderRadius:100,background:`${color}10`,border:`1px solid ${color}25`,marginBottom:16 }}>
+        <Icon name="clock" size={11} color={color}/>
+        <span style={{ fontSize:11,fontWeight:700,color:color,letterSpacing:'1px' }}>PRÓXIMAMENTE</span>
+      </div>
+      <h3 style={{ fontSize:18,fontWeight:800,color:'#0f172a',marginBottom:8,letterSpacing:'-.3px' }}>{title}</h3>
+      <p style={{ fontSize:13,color:'#64748b',lineHeight:1.7,maxWidth:360 }}>{desc}</p>
+    </div>
+  );
+}
 
 export default function DashboardAnalista() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
-  const [arenaIdx, setArenaIdx] = useState(0);
-  const [termLines, setTermLines] = useState([]);
-  const [historial, setHistorial] = useState([]);
-  const [empleoTab, setEmpleoTab] = useState('ofertas');
-  const [ranking, setRanking] = useState([]);
-  const [carruselIdx, setCarruselIdx] = useState(0);
-  const [skillFocus, setSkillFocus] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userData,      setUserData]      = useState(null);
+  const [arenaIdx,      setArenaIdx]      = useState(0);
+  const [termLines,     setTermLines]     = useState([]);
+  const [historial,     setHistorial]     = useState([]);
+  const [empleoTab,     setEmpleoTab]     = useState('ofertas');
+  const [ranking,       setRanking]       = useState([]);
+  const [carruselIdx,   setCarruselIdx]   = useState(0);
+  const [skillFocus,    setSkillFocus]    = useState(null);
+  const [showOnboarding,setShowOnboarding]= useState(false);
   const sliderRef = useRef(null);
-  const startX = useRef(null);
+  const startX    = useRef(null);
 
   const TERM = [
-    {text:'$ iniciando sesión SOC...',color:'#94a3b8',delay:0},
-    {text:'⚠  ALERT   Brute force detected',color:'#ef4444',delay:400},
+    {text:'$ iniciando sesión SOC...',              color:'#94a3b8', delay:0},
+    {text:'⚠  ALERT   Brute force detected',        color:'#ef4444', delay:400},
     {text:'   →  src: 185.220.101.45   rate: 94/min',color:'#64748b',delay:800},
-    {text:'   →  target: CORP-DC01   port: 445/SMB',color:'#64748b',delay:1200},
-    {text:'$ correlating SIEM events...',color:'#94a3b8',delay:1600},
-    {text:'   →  T1078 Valid Accounts detected',color:'#f97316',delay:2000},
-    {text:'$ awaiting analyst action...',color:ACC,delay:2400},
-    {text:'▌',color:ACC,delay:2800},
+    {text:'   →  target: CORP-DC01   port: 445/SMB', color:'#64748b',delay:1200},
+    {text:'$ correlating SIEM events...',            color:'#94a3b8', delay:1600},
+    {text:'   →  T1078 Valid Accounts detected',     color:'#f97316', delay:2000},
+    {text:'$ awaiting analyst action...',            color:ACC,       delay:2400},
+    {text:'▌',                                       color:ACC,       delay:2800},
   ];
 
   useEffect(() => { fetchUser(); }, []);
@@ -471,10 +410,7 @@ export default function DashboardAnalista() {
     if (userData) {
       const idx = ARENAS.findIndex(a => userData.copas >= a.min && userData.copas <= a.max);
       setArenaIdx(idx >= 0 ? idx : 0);
-      // Mostrar onboarding solo si nunca se ha visto Y es la primera sesión del usuario
-      if (!localStorage.getItem(ONBOARDING_KEY)) {
-        setShowOnboarding(true);
-      }
+      if (!localStorage.getItem(ONBOARDING_KEY)) setShowOnboarding(true);
     }
   }, [userData]);
 
@@ -488,35 +424,35 @@ export default function DashboardAnalista() {
   };
 
   const handleTouchStart = e => { startX.current = e.touches[0].clientX; };
-  const handleTouchEnd = e => {
+  const handleTouchEnd   = e => {
     if (!startX.current) return;
     const d = startX.current - e.changedTouches[0].clientX;
-    if (Math.abs(d) > 50) { if (d > 0 && arenaIdx < ARENAS.length-1) setArenaIdx(i=>i+1); if (d < 0 && arenaIdx > 0) setArenaIdx(i=>i-1); }
+    if (Math.abs(d) > 50) { if (d>0&&arenaIdx<ARENAS.length-1) setArenaIdx(i=>i+1); if (d<0&&arenaIdx>0) setArenaIdx(i=>i-1); }
     startX.current = null;
   };
 
-  const copas = userData?.copas || 0;
-  const xp = userData?.xp || 0;
-  const tier = userData?.tier || 1;
+  const copas    = userData?.copas || 0;
+  const xp       = userData?.xp || 0;
+  const tier     = userData?.tier || 1;
   const sesiones = userData?.sesiones_completadas || 0;
-  const skills = userData?.skills || {};
-  const arena = ARENAS[arenaIdx];
-  const arenaActual = getArenaFromCopas(copas);
-  const XP_MAX = [0,500,1500,3000,5000,8000,12000,18000,99999];
-  const xpMin = XP_MAX[tier-1]||0;
-  const xpMax = XP_MAX[tier]||99999;
-  const pctXP = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
-  const pctCopas = arenaActual.max===99999 ? 100 : Math.min(((copas-arenaActual.min)/300)*100, 100);
-  const tierColor = TIER_CLR[tier] || '#64748b';
-  const siguienteArena = ARENAS[ARENAS.findIndex(a=>a.id===arenaActual.id)+1];
-  const streak = calcStreak(historial);
-  const tierGroups = ['bronce','plata','oro','diamante'];
-  const tierNames = {bronce:'Bronce',plata:'Plata',oro:'Oro',diamante:'Diamante'};
-  const tierColors = {bronce:'#d97706',plata:'#94a3b8',oro:'#f59e0b',diamante:'#3b82f6'};
-  const skillEntries = SKILLS.map(s => ({...s, val: skills?.[s.key]||0}));
-  const weakSkills = [...skillEntries].sort((a,b)=>a.val-b.val).slice(0,3);
-  const topSkills  = [...skillEntries].sort((a,b)=>b.val-a.val).slice(0,3);
-  const avgSkill   = Math.round(skillEntries.reduce((acc,s)=>acc+s.val,0)/skillEntries.length*10)/10;
+  const skills   = userData?.skills || {};
+  const arena    = ARENAS[arenaIdx];
+  const arenaActual   = getArenaFromCopas(copas);
+  const XP_MAX        = [0,500,1500,3000,5000,8000,12000,18000,99999];
+  const xpMin         = XP_MAX[tier-1]||0;
+  const xpMax         = XP_MAX[tier]||99999;
+  const pctXP         = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
+  const pctCopas      = arenaActual.max===99999?100:Math.min(((copas-arenaActual.min)/300)*100,100);
+  const tierColor     = TIER_CLR[tier]||'#64748b';
+  const siguienteArena= ARENAS[ARENAS.findIndex(a=>a.id===arenaActual.id)+1];
+  const streak        = calcStreak(historial);
+  const tierGroups    = ['bronce','plata','oro','diamante'];
+  const tierNames     = {bronce:'Bronce',plata:'Plata',oro:'Oro',diamante:'Diamante'};
+  const tierColors    = {bronce:'#d97706',plata:'#94a3b8',oro:'#f59e0b',diamante:'#3b82f6'};
+  const skillEntries  = SKILLS.map(s=>({...s,val:skills?.[s.key]||0}));
+  const weakSkills    = [...skillEntries].sort((a,b)=>a.val-b.val).slice(0,3);
+  const topSkills     = [...skillEntries].sort((a,b)=>b.val-a.val).slice(0,3);
+  const avgSkill      = Math.round(skillEntries.reduce((acc,s)=>acc+s.val,0)/skillEntries.length*10)/10;
 
   const css = `
     @keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -535,10 +471,6 @@ export default function DashboardAnalista() {
     .hist-row:hover{background:#f8fafc!important;}
     .arena-dot:hover{transform:scale(1.4);}
     .empleo-tab:hover{background:rgba(79,70,229,0.06)!important;}
-    .oferta-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.1)!important;}
-    .cert-row:hover{background:#f8faff!important;}
-    .reto-row:hover{background:#f0fdf4!important;}
-    .bootcamp-row:hover{background:#faf5ff!important;}
     .play-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
     .action-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
     *{transition:transform .2s ease,box-shadow .2s ease,border-color .15s ease,background .15s ease,filter .15s ease;}
@@ -555,15 +487,8 @@ export default function DashboardAnalista() {
     <>
       <style>{css}</style>
 
-      {/* ONBOARDING */}
       {showOnboarding && (
-        <OnboardingModal
-          nombre={user?.nombre || 'Analista'}
-          onFinish={() => {
-            localStorage.setItem(ONBOARDING_KEY, '1');
-            setShowOnboarding(false);
-          }}
-        />
+        <OnboardingModal nombre={user?.nombre||'Analista'} onFinish={() => { localStorage.setItem(ONBOARDING_KEY,'1'); setShowOnboarding(false); }}/>
       )}
 
       <div style={{position:'fixed',inset:0,background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',zIndex:-1}}/>
@@ -578,11 +503,11 @@ export default function DashboardAnalista() {
           </div>
           <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
             {[
-              {label:'Training',   icon:'book',   path:'/training'},
-              {label:'Ranking',    icon:'chart',  path:'/ranking'},
-              {label:'Certificado',icon:'award',  path:'/certificado'},
-              {label:'Perfil',     icon:'user',   path:'/perfil'},
-              {label:'Empleo',     icon:'users',  path:'#empleo'},
+              {label:'Training',    icon:'book',   path:'/training'},
+              {label:'Ranking',     icon:'chart',  path:'/ranking'},
+              {label:'Certificado', icon:'award',  path:'/certificado'},
+              {label:'Perfil',      icon:'user',   path:'/perfil'},
+              {label:'Empleo',      icon:'users',  path:'#empleo'},
             ].map((item,i)=>(
               <button key={i} className="nav-btn"
                 onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
@@ -611,12 +536,7 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:'12px',fontWeight:700,color:'#92400e'}}>{streak}</span>
               </div>
             )}
-            {/* Botón para relanzar onboarding */}
-            <button
-              onClick={() => { localStorage.removeItem(ONBOARDING_KEY); setShowOnboarding(true); }}
-              title="Ver tutorial"
-              style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 10px',borderRadius:'7px',fontSize:'13px',cursor:'pointer'}}
-            >?</button>
+            <button onClick={()=>{localStorage.removeItem(ONBOARDING_KEY);setShowOnboarding(true);}} title="Ver tutorial" style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 10px',borderRadius:'7px',fontSize:'13px',cursor:'pointer'}}>?</button>
             <button onClick={()=>{logout();navigate('/');}} style={{background:'none',border:'1px solid #e2e8f0',color:'#94a3b8',padding:'5px 12px',borderRadius:'7px',fontSize:'12px',cursor:'pointer'}}>Salir</button>
           </div>
         </nav>
@@ -653,7 +573,7 @@ export default function DashboardAnalista() {
                     <span style={{fontSize:'10px',color:ARENAS.find(a=>a.tier===t&&a.id===arenaActual.id)?tierColors[t]:'#cbd5e1',fontFamily:'monospace',fontWeight:700,letterSpacing:'1px'}}>{tierNames[t].toUpperCase()}</span>
                     {[3,2,1].map(d=>{
                       const a = ARENAS.find(x=>x.tier===t&&x.div===d);
-                      const isActive = a?.id === ARENAS[arenaIdx]?.id;
+                      const isActive  = a?.id === ARENAS[arenaIdx]?.id;
                       const isCurrent = a?.id === arenaActual.id;
                       return <button key={d} className="arena-dot" onClick={()=>setArenaIdx(ARENAS.findIndex(x=>x.id===a.id))} style={{width:isActive?'20px':'7px',height:'7px',borderRadius:'4px',backgroundColor:isActive?tierColors[t]:isCurrent?`${tierColors[t]}60`:'#e2e8f0',border:'none',cursor:'pointer',padding:0}}/>;
                     })}
@@ -728,10 +648,10 @@ export default function DashboardAnalista() {
           {/* STATS */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
             {[
-              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,             color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:'cup',    onClick:()=>navigate('/arenas')},
-              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`, color:'#4f46e5', light:'#eef2ff', icon:'bolt',   onClick:()=>navigate('/perfil')},
-              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                 color:'#059669', light:'#ecfdf5', icon:'target', onClick:null},
-              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                  color:tierColor,  light:'#f8fafc', icon:'shield', onClick:()=>navigate('/perfil')},
+              {label:'COPAS',    value:copas.toLocaleString(), sub:arenaActual.name,              color:tierColors[arenaActual.tier]||'#d97706', light:arenaActual.colorLight, icon:'cup',    onClick:()=>navigate('/arenas')},
+              {label:'XP TOTAL', value:xp.toLocaleString(),    sub:`${Math.round(pctXP)}% tier`,  color:'#4f46e5', light:'#eef2ff', icon:'bolt',   onClick:()=>navigate('/perfil')},
+              {label:'SESIONES', value:sesiones.toString(),    sub:'completadas',                  color:'#059669', light:'#ecfdf5', icon:'target', onClick:null},
+              {label:'TIER',     value:`T${tier}`,              sub:TIERS[tier],                   color:tierColor,  light:'#f8fafc', icon:'shield', onClick:()=>navigate('/perfil')},
             ].map((s,i)=>(
               <div key={i} className="stat-card" onClick={s.onClick||undefined}
                 style={{padding:'22px 20px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',cursor:s.onClick?'pointer':'default',boxShadow:'0 2px 10px rgba(0,0,0,.05)',position:'relative',overflow:'hidden'}}>
@@ -764,7 +684,7 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* CARRUSEL */}
+          {/* CARRUSEL MODOS */}
           <div style={{marginBottom:'28px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div>
@@ -782,6 +702,7 @@ export default function DashboardAnalista() {
             </div>
             <div style={{overflow:'hidden',borderRadius:'20px'}}>
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
+                {/* SESIONES */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.2),transparent)',pointerEvents:'none'}}/>
@@ -819,6 +740,7 @@ export default function DashboardAnalista() {
                     {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
+                {/* LABS */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'40px'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
@@ -910,7 +832,7 @@ export default function DashboardAnalista() {
               </div>
               <div style={{padding:'6px 0'}}>
                 {skillEntries.map((s,i)=>{
-                  const pct = Math.min((s.val/10)*100,100);
+                  const pct    = Math.min((s.val/10)*100,100);
                   const isWeak = s.val < 4;
                   const isTop  = s.val >= 7;
                   const isFocus= skillFocus===s.key;
@@ -918,7 +840,7 @@ export default function DashboardAnalista() {
                     <div key={i} className="skill-row"
                       onMouseEnter={()=>setSkillFocus(s.key)}
                       onMouseLeave={()=>setSkillFocus(null)}
-                      style={{display:'flex',alignItems:'center',gap:'14px',padding:'11px 20px',borderBottom:i<skillEntries.length-1?'1px solid #f8fafc':'none',cursor:'default',backgroundColor:isFocus?'#f8faff':'transparent',transition:'background .15s'}}>
+                      style={{display:'flex',alignItems:'center',gap:'14px',padding:'11px 20px',borderBottom:i<skillEntries.length-1?'1px solid #f8fafc':'none',cursor:'default',backgroundColor:isFocus?'#f8faff':'transparent'}}>
                       <div style={{width:'32px',height:'32px',borderRadius:'9px',backgroundColor:isWeak?'#fef2f2':isTop?'#f0fdf4':`${s.color}10`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${isWeak?'#fecaca':isTop?'#bbf7d0':`${s.color}20`}`}}>
                         <Icon name={s.icon} size={14} color={isWeak?'#ef4444':isTop?'#059669':s.color}/>
                       </div>
@@ -932,7 +854,7 @@ export default function DashboardAnalista() {
                           <span style={{fontSize:'12px',fontWeight:800,color:isWeak?'#ef4444':isTop?'#059669':s.color,fontFamily:'monospace'}}>{s.val}/10</span>
                         </div>
                         <div style={{height:'7px',borderRadius:'4px',backgroundColor:'#f1f5f9',overflow:'hidden'}}>
-                          <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'4px',background:isWeak?`linear-gradient(90deg,#fca5a5,#ef4444)`:isTop?`linear-gradient(90deg,#86efac,#059669)`:`linear-gradient(90deg,${s.color}60,${s.color})`}}/>
+                          <div className="skill-bar-fill" style={{width:`${pct}%`,height:'100%',borderRadius:'4px',background:isWeak?'linear-gradient(90deg,#fca5a5,#ef4444)':isTop?'linear-gradient(90deg,#86efac,#059669)':`linear-gradient(90deg,${s.color}60,${s.color})`}}/>
                         </div>
                         {isFocus && <p style={{fontSize:'10px',color:'#94a3b8',marginTop:'3px',lineHeight:1.4}}>{s.desc}</p>}
                       </div>
@@ -1040,12 +962,12 @@ export default function DashboardAnalista() {
               <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:'16px',fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 {[
-                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',    path:'/lab',         color:'#059669', light:'#ecfdf5', icon:'flask'},
-                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',   path:'/training',    color:'#7c3aed', light:'#f5f3ff', icon:'book'},
-                  {label:'Ranking Global',  desc:'Tu posición actual',      path:'/ranking',     color:'#d97706', light:'#fffbeb', icon:'chart'},
-                  {label:'Arenas',          desc:'Ver todas las divisiones',path:'/arenas',      color:'#0891b2', light:'#ecfeff', icon:'planet'},
-                  {label:'Mi Certificado',  desc:'QR verificable',          path:'/certificado', color:'#059669', light:'#ecfdf5', icon:'award'},
-                  {label:'Perfil & Tiers',  desc:'Stats y progresión',      path:'/perfil',      color:'#2563eb', light:'#eff6ff', icon:'user'},
+                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',     path:'/lab',         color:'#059669', light:'#ecfdf5', icon:'flask'},
+                  {label:'Training SOC',    desc:'12 módulos · 3 cursos',    path:'/training',    color:'#7c3aed', light:'#f5f3ff', icon:'book'},
+                  {label:'Ranking Global',  desc:'Tu posición actual',       path:'/ranking',     color:'#d97706', light:'#fffbeb', icon:'chart'},
+                  {label:'Arenas',          desc:'Ver todas las divisiones', path:'/arenas',      color:'#0891b2', light:'#ecfeff', icon:'planet'},
+                  {label:'Mi Certificado',  desc:'QR verificable',           path:'/certificado', color:'#059669', light:'#ecfdf5', icon:'award'},
+                  {label:'Perfil & Tiers',  desc:'Stats y progresión',       path:'/perfil',      color:'#2563eb', light:'#eff6ff', icon:'user'},
                 ].map((item,i)=>(
                   <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
                     style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 13px',borderRadius:'11px',backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
@@ -1063,8 +985,10 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* EMPLEO */}
+          {/* ── EMPLEO ─────────────────────────────────────────────────────── */}
           <div id="empleo-section">
+
+            {/* Header empleo */}
             <div style={{position:'relative',borderRadius:'20px',overflow:'hidden',marginBottom:'20px',padding:'36px 48px',background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%)'}}>
               <div style={{position:'absolute',top:'-60px',right:'-60px',width:'300px',height:'300px',borderRadius:'50%',background:'radial-gradient(circle,rgba(79,70,229,0.2),transparent)',pointerEvents:'none'}}/>
               <div style={{position:'relative',zIndex:1,display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'32px'}}>
@@ -1074,15 +998,21 @@ export default function DashboardAnalista() {
                     <div style={{height:'1px',flex:1,background:'linear-gradient(90deg,rgba(129,140,248,0.4),transparent)'}}/>
                   </div>
                   <h2 style={{fontSize:'28px',fontWeight:900,color:'#fff',letterSpacing:'-1px',marginBottom:'10px',lineHeight:1.1}}>Tu próximo paso<br/><span style={{color:'#818cf8'}}>en ciberseguridad.</span></h2>
-                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:'520px'}}>Ofertas reales, certificaciones recomendadas, bootcamps y retos gratuitos.</p>
+                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:'520px'}}>Ofertas reales, certificaciones recomendadas, bootcamps y retos. Próximamente disponible.</p>
                 </div>
                 <div style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(79,70,229,0.15)',border:'1px solid rgba(99,102,241,0.25)',textAlign:'center',flexShrink:0}}>
-                  <div style={{fontSize:'24px',fontWeight:900,color:'#a5b4fc'}}>{OFERTAS_MOCK.length}</div>
-                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>ofertas activas</div>
+                  <div style={{fontSize:'13px',fontWeight:700,color:'#a5b4fc',marginBottom:4}}>🚀 En desarrollo</div>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.4)'}}>Muy pronto</div>
                 </div>
               </div>
+              {/* Tabs */}
               <div style={{position:'relative',zIndex:1,display:'flex',gap:'6px',marginTop:'24px'}}>
-                {[{id:'ofertas',label:'Ofertas'},{id:'certs',label:'Certificaciones'},{id:'bootcamps',label:'Bootcamps'},{id:'retos',label:'Retos gratuitos'}].map(tab=>(
+                {[
+                  {id:'ofertas',    label:'Ofertas'},
+                  {id:'certs',      label:'Certificaciones'},
+                  {id:'bootcamps',  label:'Bootcamps'},
+                  {id:'retos',      label:'Retos gratuitos'},
+                ].map(tab=>(
                   <button key={tab.id} className="empleo-tab" onClick={()=>setEmpleoTab(tab.id)}
                     style={{padding:'8px 18px',borderRadius:'9px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:600,background:empleoTab===tab.id?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.06)',color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.45)',borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent'}}>
                     {tab.label}
@@ -1090,96 +1020,44 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             </div>
-            {empleoTab==='ofertas' && (
-              <div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'14px',marginBottom:'16px'}}>
-                  {OFERTAS_MOCK.map((o,i)=>(
-                    <div key={i} className="oferta-card" style={{padding:'24px',borderRadius:'16px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',position:'relative',overflow:'hidden',cursor:'pointer'}}>
-                      <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',backgroundColor:o.color}}/>
-                      {o.badge&&<span style={{position:'absolute',top:'14px',right:'14px',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'5px',background:o.badge==='nueva'?'#ecfdf5':'#fef2f2',color:o.badge==='nueva'?'#059669':'#ef4444',border:`1px solid ${o.badge==='nueva'?'#a7f3d0':'#fecaca'}`}}>{o.badge.toUpperCase()}</span>}
-                      <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${o.color}15`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px'}}><Icon name="users" size={18} color={o.color}/></div>
-                      <div style={{fontSize:'11px',color:'#94a3b8',marginBottom:'4px'}}>{o.empresa}</div>
-                      <div style={{fontSize:'16px',fontWeight:800,color:'#0f172a',marginBottom:'8px',lineHeight:1.2}}>{o.rol}</div>
-                      <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'16px'}}>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>📍 {o.ubicacion}</div>
-                        <div style={{fontSize:'12px',color:'#64748b'}}>💰 {o.salario}</div>
-                      </div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                        <span style={{fontSize:'10px',fontWeight:700,color:o.color,padding:'3px 8px',borderRadius:'5px',background:`${o.color}12`}}>Req: {o.arena}</span>
-                        <button style={{padding:'7px 14px',borderRadius:'8px',background:o.color,border:'none',color:'#fff',fontSize:'12px',fontWeight:700,cursor:'pointer'}}>Aplicar →</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{padding:'16px 20px',borderRadius:'12px',background:'linear-gradient(135deg,#eef2ff,#f5f3ff)',border:'1px solid #c7d2fe',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                  <div>
-                    <div style={{fontSize:'13px',fontWeight:700,color:'#3730a3',marginBottom:'2px'}}>¿Eres empresa? Publica tus ofertas aquí</div>
-                    <div style={{fontSize:'12px',color:'#6366f1'}}>Accede al talent pool de analistas verificados</div>
-                  </div>
-                  <button onClick={()=>navigate('/company')} style={{padding:'10px 20px',borderRadius:'9px',background:ACC,border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',flexShrink:0}}>Acceso empresas →</button>
-                </div>
-              </div>
+
+            {/* Contenido tabs — todos muestran "próximamente" */}
+            {empleoTab === 'ofertas' && (
+              <ComingSoon
+                title="Ofertas de empleo SOC"
+                desc="Pronto podrás ver y aplicar a ofertas reales de empresas que buscan analistas SOC verificados por SoCBlast. Tu arena y skills hablarán por ti."
+                icon="users"
+                color="#4f46e5"
+              />
             )}
-            {empleoTab==='certs' && (
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-                {CERTS_MOCK.map((c,i)=>(
-                  <div key={i} className="cert-row" onClick={()=>window.open(c.url,'_blank')}
-                    style={{display:'flex',alignItems:'center',gap:'16px',padding:'20px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer',position:'relative',overflow:'hidden'}}>
-                    <div style={{position:'absolute',left:0,top:0,bottom:0,width:'3px',backgroundColor:c.color}}/>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:`${c.color}15`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="award" size={20} color={c.color}/></div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'3px'}}>{c.nombre}</div>
-                      <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-                        <span style={{fontSize:'11px',color:'#64748b',padding:'2px 7px',borderRadius:'4px',background:'#f8fafc',border:'1px solid #e2e8f0'}}>{c.nivel}</span>
-                        <span style={{fontSize:'11px',color:'#94a3b8'}}>{c.precio}</span>
-                      </div>
-                    </div>
-                    <div style={{textAlign:'center',flexShrink:0}}>
-                      <div style={{fontSize:'18px',fontWeight:900,color:c.color}}>{c.relevancia}%</div>
-                      <div style={{fontSize:'10px',color:'#94a3b8'}}>relevancia</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {empleoTab === 'certs' && (
+              <ComingSoon
+                title="Certificaciones recomendadas"
+                desc="Recibirás recomendaciones personalizadas de certificaciones SOC (CompTIA, CEH, GCIH, SC-200...) según tu nivel actual de skills y arena."
+                icon="award"
+                color="#7c3aed"
+              />
             )}
-            {empleoTab==='bootcamps' && (
-              <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-                {BOOTCAMPS_MOCK.map((b,i)=>(
-                  <div key={i} className="bootcamp-row" style={{display:'flex',alignItems:'center',gap:'16px',padding:'18px 22px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#f5f3ff,#ede9fe)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="book" size={20} color="#7c3aed"/></div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:'14px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{b.nombre}</div>
-                      <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-                        <span style={{fontSize:'11px',color:'#7c3aed',padding:'2px 7px',borderRadius:'4px',background:'#f5f3ff'}}>{b.tipo}</span>
-                        <span style={{fontSize:'11px',color:'#64748b'}}>{b.duracion}</span>
-                        <span style={{fontSize:'11px',color:'#059669',fontWeight:600}}>{b.precio}</span>
-                      </div>
-                    </div>
-                    <span style={{fontSize:'13px',fontWeight:700,color:'#f59e0b'}}>{b.stars} ★</span>
-                    <button style={{padding:'8px 16px',borderRadius:'8px',background:'#f5f3ff',border:'1px solid #ddd6fe',color:'#7c3aed',fontSize:'12px',fontWeight:700,cursor:'pointer',flexShrink:0}}>Ver →</button>
-                  </div>
-                ))}
-              </div>
+            {empleoTab === 'bootcamps' && (
+              <ComingSoon
+                title="Bootcamps y cursos SOC"
+                desc="Una selección curada de los mejores bootcamps y cursos de ciberseguridad defensiva, ordenados por relevancia para tu perfil actual."
+                icon="book"
+                color="#0891b2"
+              />
             )}
-            {empleoTab==='retos' && (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'12px'}}>
-                {RETOS_MOCK.map((r,i)=>(
-                  <div key={i} className="reto-row" onClick={()=>window.open(r.url,'_blank')}
-                    style={{display:'flex',alignItems:'center',gap:'14px',padding:'18px 20px',borderRadius:'14px',backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,.05)',cursor:'pointer'}}>
-                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="shield" size={18} color="#059669"/></div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:'13px',fontWeight:700,color:'#0f172a',marginBottom:'4px'}}>{r.nombre}</div>
-                      <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
-                        <span style={{fontSize:'10px',color:'#059669',padding:'2px 6px',borderRadius:'4px',background:'#ecfdf5'}}>{r.tipo}</span>
-                        {r.gratis&&<span style={{fontSize:'10px',color:'#059669',fontWeight:700}}>Gratis</span>}
-                      </div>
-                    </div>
-                    <Icon name="trend" size={14} color="#94a3b8"/>
-                  </div>
-                ))}
-              </div>
+            {empleoTab === 'retos' && (
+              <ComingSoon
+                title="Retos y plataformas externas"
+                desc="Links directos a TryHackMe, Blue Team Labs, CyberDefenders y más. Todo integrado con tu perfil SoCBlast para llevar el seguimiento."
+                icon="shield"
+                color="#059669"
+              />
             )}
+
           </div>
+          {/* ── FIN EMPLEO ── */}
+
         </div>
       </div>
     </>
