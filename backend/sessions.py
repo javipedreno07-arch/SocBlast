@@ -410,3 +410,4 @@ Devuelve SOLO JSON válido:
     result["skills_mejoradas"] = skills_normalizadas
 
     return result
+# redeploy
