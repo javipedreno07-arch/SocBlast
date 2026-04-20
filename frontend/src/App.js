@@ -22,6 +22,15 @@ import ArenasPage from './pages/ArenasPage';
 import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
 import VerificarCertificado from './pages/VerificarCertificado';
+import MaintenancePage from './pages/MaintenancePage';
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  🔧 MODO MANTENIMIENTO
+//  Pon MAINTENANCE_MODE = true para activar la página de mantenimiento.
+//  La ruta /verificar/:certId SIEMPRE queda accesible (QR de certificados).
+//  Cuando vuelva la app, pon MAINTENANCE_MODE = false y haz push.
+// ══════════════════════════════════════════════════════════════════════════════
+const MAINTENANCE_MODE = false;
 
 const GUEST_USER = {
   nombre: 'Invitado',
@@ -33,16 +42,18 @@ const GUEST_USER = {
   arena: 'Plata 3',
   sesiones_completadas: 3,
   isGuest: true,
-  skills: { analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2, threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1 }
+  skills: {
+    analisis_logs: 3, deteccion_amenazas: 2, respuesta_incidentes: 2,
+    threat_hunting: 1, forense_digital: 1, gestion_vulnerabilidades: 1, inteligencia_amenazas: 1,
+  }
 };
 
 const safeLS = {
-  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
-  remove: (k) => { try { localStorage.removeItem(k); } catch {} },
+  get:    (k)    => { try { return localStorage.getItem(k); }    catch { return null; } },
+  set:    (k, v) => { try { localStorage.setItem(k, v); }        catch {} },
+  remove: (k)    => { try { localStorage.removeItem(k); }        catch {} },
 };
 
-// ── empresa y company son el mismo rol, normalizamos a "empresa" ──
 const isEmpresa = (rol) => rol === 'empresa' || rol === 'company';
 
 const PrivateRoute = ({ children, rol }) => {
@@ -53,7 +64,6 @@ const PrivateRoute = ({ children, rol }) => {
     </div>
   );
   if (!user) return <Navigate to="/login" />;
-  // si se pide rol "empresa" aceptamos tanto "empresa" como "company"
   if (rol === 'empresa' && !isEmpresa(user.rol)) return <Navigate to="/" />;
   if (rol && rol !== 'empresa' && user.rol !== rol) return <Navigate to="/" />;
   return children;
@@ -66,6 +76,16 @@ const getHome = (rol) => {
   return '/';
 };
 
+// ── Rutas en modo MANTENIMIENTO ───────────────────────────────────────────────
+// Solo /verificar/:certId queda accesible (los QR de certificados deben funcionar siempre)
+const MaintenanceRoutes = () => (
+  <Routes>
+    <Route path="/verificar/:certId" element={<VerificarCertificado />} />
+    <Route path="*" element={<MaintenancePage />} />
+  </Routes>
+);
+
+// ── Rutas normales ────────────────────────────────────────────────────────────
 const AppRoutes = ({ onGuestLogin }) => {
   const { user } = useAuth();
   return (
@@ -73,28 +93,29 @@ const AppRoutes = ({ onGuestLogin }) => {
       <Route path="/" element={<LandingPage onGuestLogin={onGuestLogin} />} />
       <Route path="/login"    element={user ? <Navigate to={getHome(user.rol)} /> : <LoginPage    onGuestLogin={onGuestLogin} />} />
       <Route path="/register" element={user ? <Navigate to={getHome(user.rol)} /> : <RegisterPage onGuestLogin={onGuestLogin} />} />
-      <Route path="/verificar/:certId" element={<VerificarCertificado />} />   
-      {/* ── Rutas analista ── */}
-      <Route path="/dashboard"  element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
-      <Route path="/arenas"     element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
-      <Route path="/sesion"     element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
-      <Route path="/training"   element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
-      <Route path="/ranking"    element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
-      <Route path="/perfil"     element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
-      <Route path="/certificado"element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
-      <Route path="/lab"        element={<LabPage />} />
+      <Route path="/verificar/:certId" element={<VerificarCertificado />} />
 
-      {/* ── Rutas empresa — acepta "empresa" y "company" ── */}
-      <Route path="/company"           element={<PrivateRoute rol="empresa"><DashboardCompany /></PrivateRoute>} />
-      <Route path="/talent-pool"       element={<PrivateRoute rol="empresa"><TalentPoolPage /></PrivateRoute>} />
-      <Route path="/simulacion-empresa"element={<PrivateRoute rol="empresa"><SimulacionPage /></PrivateRoute>} />
-      <Route path="/ofertas"           element={<PrivateRoute rol="empresa"><OfertasPage /></PrivateRoute>} />
+      {/* ── Rutas analista ── */}
+      <Route path="/dashboard"   element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
+      <Route path="/arenas"      element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
+      <Route path="/sesion"      element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
+      <Route path="/training"    element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
+      <Route path="/ranking"     element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
+      <Route path="/perfil"      element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
+      <Route path="/certificado" element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
+      <Route path="/lab"         element={<LabPage />} />
+
+      {/* ── Rutas empresa ── */}
+      <Route path="/company"            element={<PrivateRoute rol="empresa"><DashboardCompany /></PrivateRoute>} />
+      <Route path="/talent-pool"        element={<PrivateRoute rol="empresa"><TalentPoolPage /></PrivateRoute>} />
+      <Route path="/simulacion-empresa" element={<PrivateRoute rol="empresa"><SimulacionPage /></PrivateRoute>} />
+      <Route path="/ofertas"            element={<PrivateRoute rol="empresa"><OfertasPage /></PrivateRoute>} />
 
       {/* ── Misc ── */}
-      <Route path="/oauth/callback"  element={<OAuthCallback />} />
-      <Route path="/registro-exitoso"element={<RegistroExitoso />} />
-      <Route path="/verificar-email" element={<VerificarEmail />} />
-      <Route path="/guest"           element={<DashboardGuest />} />
+      <Route path="/oauth/callback"   element={<OAuthCallback />} />
+      <Route path="/registro-exitoso" element={<RegistroExitoso />} />
+      <Route path="/verificar-email"  element={<VerificarEmail />} />
+      <Route path="/guest"            element={<DashboardGuest />} />
     </Routes>
   );
 };
@@ -107,6 +128,15 @@ function App() {
     safeLS.set('user', JSON.stringify(GUEST_USER));
     window.location.href = '/dashboard';
   };
+
+  // ── Modo mantenimiento: sin splash, sin auth, solo la página de mantenimiento ──
+  if (MAINTENANCE_MODE) {
+    return (
+      <Router>
+        <MaintenanceRoutes />
+      </Router>
+    );
+  }
 
   return (
     <>
