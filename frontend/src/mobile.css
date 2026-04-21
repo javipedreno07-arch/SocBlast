@@ -1,0 +1,305 @@
+/* ─── SOCBLAST MOBILE FIX ─────────────────────────────────────────────────── */
+/* Solo afecta a pantallas ≤768px — no toca nada del diseño desktop */
+
+@media (max-width: 768px) {
+
+  /* ── BASE ── */
+  * { box-sizing: border-box !important; }
+
+  body { overflow-x: hidden !important; }
+
+  img { max-width: 100% !important; }
+
+  /* ── NAVBAR GENERAL ── */
+  nav {
+    padding: 0 12px !important;
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 52px !important;
+  }
+
+  nav button { font-size: 11px !important; padding: 4px 8px !important; }
+
+  /* ── GRIDS → 1 columna ── */
+  [style*="grid-template-columns: repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="grid-template-columns: repeat(3"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: 1fr 1fr"]  { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: 1fr 300px"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="gridTemplateColumns: 'repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="gridTemplateColumns: 'repeat(3"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 1fr'"]  { grid-template-columns: 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 300px'"] { grid-template-columns: 1fr !important; }
+
+  /* ── PADDING GLOBAL ── */
+  [style*="padding: '24px 40px'"] { padding: 12px 14px !important; }
+  [style*="padding: '36px 48px'"] { padding: 20px 16px !important; }
+  [style*="padding: '44px 28px'"] { padding: 20px 16px !important; }
+  [style*="padding: '48px'"]      { padding: 24px 16px !important; }
+  [style*="padding: '40px'"]      { padding: 20px 16px !important; }
+  [style*="padding: '36px 28px'"] { padding: 20px 14px !important; }
+  [style*="padding: '28px'"]      { padding: 16px !important; }
+
+  /* ── MAX WIDTH ── */
+  [style*="maxWidth: '1200px'"] { max-width: 100% !important; padding: 12px 14px 48px !important; }
+  [style*="maxWidth: '960px'"]  { max-width: 100% !important; padding: 12px 14px 48px !important; }
+  [style*="maxWidth: '760px'"]  { max-width: 100% !important; padding: 12px 14px !important; }
+  [style*="maxWidth: '740px'"]  { max-width: 100% !important; padding: 12px 14px !important; }
+  [style*="maxWidth: '680px'"]  { max-width: 100% !important; padding: 12px 14px !important; }
+  [style*="maxWidth: '600px'"]  { max-width: 100% !important; }
+  [style*="maxWidth: '520px'"]  { max-width: 100% !important; }
+  [style*="maxWidth: '860px'"]  { max-width: 100% !important; padding: 12px 14px !important; }
+
+  /* ── FUENTES ── */
+  h1[style*="fontSize: '48px'"] { font-size: 32px !important; }
+  h1[style*="fontSize: '36px'"] { font-size: 26px !important; }
+  h1[style*="fontSize: '28px'"] { font-size: 22px !important; }
+  h2[style*="fontSize: '28px'"] { font-size: 20px !important; }
+  h2[style*="fontSize: '22px'"] { font-size: 18px !important; }
+
+  /* ── DASHBOARD NAVBAR ── */
+  nav [style*="display:'flex',gap:'2px'"] {
+    display: none !important;
+  }
+
+  /* Ocultar nav links en móvil, dejar solo sesiones y labs */
+  nav > div > button:not(:last-child):not(:nth-last-child(2)) {
+    display: none !important;
+  }
+
+  /* ── DASHBOARD ARENA CARD ── */
+  [style*="clamp(38px,4.5vw,60px)"] { font-size: 32px !important; }
+
+  /* Planeta más pequeño en móvil */
+  .planet-anim svg { width: 80px !important; height: 80px !important; }
+
+  /* ── STATS CARDS ── */
+  [style*="fontSize: '26px'"][style*="fontWeight: 900"] { font-size: 20px !important; }
+
+  /* ── CARRUSEL ── */
+  [style*="padding: '36px 44px'"] { padding: 20px 16px !important; }
+  [style*="gridTemplateColumns: '1fr auto'"] { grid-template-columns: 1fr !important; }
+
+  /* Ocultar mini preview en carrusel en móvil */
+  [style*="width: '200px'"][style*="display:'grid'"] { display: none !important; }
+
+  /* ── SESION PAGE NAVBAR ── */
+  [style*="padding: '0 28px'"][style*="height: '52px'"] {
+    padding: 0 10px !important;
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 48px !important;
+    gap: 4px !important;
+  }
+
+  /* Etapas en móvil — más compactas */
+  [style*="padding: '3px 8px'"][style*="fontSize: '9px'"] {
+    padding: 2px 5px !important;
+    font-size: 8px !important;
+  }
+
+  /* ── SESION ALERTAS ── */
+  [style*="display: 'flex'"][style*="gap: '16px'"][style*="alignItems: 'flex-start'"][style*="justifyContent: 'space-between'"] {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  /* Botones severidad en fila en móvil */
+  [style*="display: 'flex'"][style*="flexDirection: 'column'"][style*="gap: '5px'"][style*="flexShrink: 0"] {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* ── LOGS GRID ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '10px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── DIAGNÓSTICO ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '11px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── ACCIONES ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '10px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── BRIEFING ── */
+  [style*="padding: '40px'"][style*="borderRadius: '22px'"] {
+    padding: 20px 16px !important;
+  }
+
+  [style*="gridTemplateColumns: 'repeat(3,1fr)'"][style*="gap: '12px'"] {
+    grid-template-columns: 1fr 1fr 1fr !important;
+  }
+
+  /* ── FEEDBACK / RESULTADO ── */
+  [style*="fontSize: '54px'"][style*="fontWeight: 900"] { font-size: 36px !important; }
+
+  [style*="gridTemplateColumns: 'repeat(3,1fr)'"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── INTRO SESION ── */
+  [style*="gridTemplateColumns: 'repeat(4,1fr)'"][style*="gap: '12px'"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── LAB PAGE — escritorio oculto en móvil ── */
+  /* El lab no es compatible con móvil — mostrar mensaje */
+  .lab-desktop-only {
+    display: none !important;
+  }
+
+  /* ── RANKING ── */
+  [style*="padding: '0 40px'"] { padding: 0 14px !important; }
+
+  /* ── CERTIFICADO ── */
+  [style*="padding: '60px 80px'"] { padding: 24px 16px !important; }
+  [style*="padding: '60px'"]      { padding: 24px 16px !important; }
+
+  [style*="gridTemplateColumns: '1fr 1fr 1fr 1fr'"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── PERFIL ── */
+  [style*="gridTemplateColumns: '280px 1fr'"] { grid-template-columns: 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 1fr 1fr 1fr'"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── LANDING PAGE ── */
+  [style*="fontSize: '64px'"] { font-size: 36px !important; }
+  [style*="fontSize: '56px'"] { font-size: 32px !important; }
+  [style*="fontSize: '72px'"] { font-size: 38px !important; }
+
+  [style*="gridTemplateColumns: 'repeat(3,1fr)'"][style*="gap: '24px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [style*="gridTemplateColumns: 'repeat(4,1fr)'"][style*="gap: '16px'"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── LOGIN / REGISTER ── */
+  [style*="maxWidth: '480px'"] { max-width: 100% !important; margin: 0 14px !important; }
+  [style*="maxWidth: '440px'"] { max-width: 100% !important; margin: 0 14px !important; }
+
+  /* ── EMPLEO TABS ── */
+  [style*="display: 'flex'"][style*="gap: '6px'"][style*="marginTop: '24px'"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* ── ACTIVIDAD HEATMAP ── */
+  [style*="overflowX: 'auto'"] { overflow-x: auto !important; }
+
+  /* ── HISTORIAL + ACCESOS GRID ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '12px'"][style*="marginBottom: '28px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── ACTIVIDAD + RANKING GRID ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '14px'"][style*="marginBottom: '14px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── SKILLS GRID ── */
+  [style*="gridTemplateColumns: 'repeat(3,1fr)'"][style*="gap: '10px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── ARENA DOTS NAV ── */
+  [style*="display: 'flex'"][style*="gap: '12px'"][style*="marginBottom: '10px'"][style*="alignItems: 'center'"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* ── BOTONES GRANDES ── */
+  button[style*="padding: '20px'"] { padding: 14px !important; font-size: 14px !important; }
+  button[style*="padding: '17px'"] { padding: 13px !important; }
+  button[style*="padding: '16px'"] { padding: 12px !important; }
+
+  /* ── OVERFLOW HORIZONTAL GENERAL ── */
+  .fade-up { overflow-x: hidden !important; }
+
+  /* ── MODAL SALIR ── */
+  [style*="maxWidth: '400px'"][style*="padding: '36px'"] {
+    max-width: calc(100vw - 32px) !important;
+    padding: 24px 16px !important;
+  }
+
+  /* ── TERMINAL EN SESION ── */
+  [style*="minHeight: '220px'"] { min-height: 160px !important; }
+
+  /* ── CARRUSEL GRID CON AUTO ── */
+  [style*="gridTemplateColumns: '1fr auto'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ocultar el elemento auto (preview) */
+  [style*="gridTemplateColumns: '1fr auto'"] > *:last-child {
+    display: none !important;
+  }
+
+  /* ── INTRO LAB ── */
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: 0"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── FILA 1 DASHBOARD ── */
+  [style*="gridTemplateColumns: '1fr 300px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Terminal mini en dashboard — ocultar en móvil */
+  [style*="gridTemplateColumns: '1fr 300px'"] > div:last-child {
+    display: none !important;
+  }
+
+  /* ── RESULTADO SESION TABS ── */
+  [style*="display: 'flex'"][style*="gap: '6px'"][style*="marginBottom: '14px'"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* ── ONBOARDING MODAL ── */
+  [style*="maxWidth: 740"][style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [style*="maxWidth: 740"] > div > div[style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Visual derecha del onboarding — ocultar en móvil */
+  [style*="maxWidth: 740"] > div > div > div:last-child[style*="background"] {
+    display: none !important;
+  }
+
+  /* ── CERTIFICADO QR ── */
+  [style*="display: 'grid'"][style*="gridTemplateColumns: '1fr 1fr 1fr 1fr'"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+}
+
+/* ── EXTRA PEQUEÑO ≤480px ── */
+@media (max-width: 480px) {
+
+  [style*="gridTemplateColumns: 'repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 1fr'"] { grid-template-columns: 1fr !important; }
+
+  [style*="fontSize: '22px'"][style*="fontWeight: 900"] { font-size: 17px !important; }
+  [style*="fontSize: '18px'"][style*="fontWeight: 900"] { font-size: 15px !important; }
+
+  [style*="padding: '22px 20px'"] { padding: 14px 12px !important; }
+  [style*="padding: '20px 22px'"] { padding: 14px 12px !important; }
+  [style*="padding: '18px 20px'"] { padding: 12px 10px !important; }
+  [style*="padding: '16px 18px'"] { padding: 12px 10px !important; }
+
+  /* Navbar aún más compacto */
+  nav { padding: 0 8px !important; }
+  nav img { height: 22px !important; }
+
+  /* Arena card más pequeña */
+  [style*="padding: '30px 38px'"] { padding: 16px 14px !important; }
+
+  /* Stats en 2 columnas */
+  [style*="gridTemplateColumns: 'repeat(4,1fr)'"] { grid-template-columns: 1fr 1fr !important; }
+
+}
