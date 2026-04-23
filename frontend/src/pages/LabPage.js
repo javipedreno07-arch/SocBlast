@@ -987,61 +987,141 @@ export default function LabPage() {
   if (showBoot) return <BootScreen onDone={() => { setShowBoot(false); setFase('lab'); }} />;
 
   /* ── intro ── */
+  /* ── INTRO — pega esto en LabPage.js reemplazando el bloque if (fase === 'intro') ── */
   if (fase === 'intro') return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', fontFamily: "'Inter','Segoe UI',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)', fontFamily:"'Inter',sans-serif", display:'flex', flexDirection:'column' }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .tool-card:hover{transform:translateY(-3px)!important;box-shadow:0 8px 28px rgba(0,0,0,0.1)!important;}
+        .start-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
+      `}</style>
 
-      <div style={{ maxWidth: 560, width: '100%', animation: 'fadeUp .4s ease' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 100, background: 'rgba(0,120,212,.15)', border: '1px solid rgba(0,120,212,.3)', marginBottom: 20 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0078d4', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 11, color: '#7dd3fc', fontWeight: 700, letterSpacing: '.08em' }}>LABORATORIO SOC — FORENSICS</span>
-          </div>
-          <h1 style={{ fontSize: 36, fontWeight: 900, color: '#f1f5f9', margin: '0 0 12px', letterSpacing: '-1px', lineHeight: 1.1 }}>
-            Investiga una máquina<br /><span style={{ color: '#0078d4' }}>comprometida</span>
-          </h1>
-          <p style={{ fontSize: 15, color: '#94a3b8', lineHeight: 1.7, margin: 0, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
-            La IA genera un incidente real adaptado a tu nivel. Usa las herramientas del SOC para reconstruir el ataque.
-          </p>
+      {/* navbar */}
+      <nav style={{ height:56, background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderBottom:'1px solid #e8eaf0', boxShadow:'0 1px 12px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 40px', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }} onClick={() => navigate('/')}>
+          <img src="/logosoc.png" alt="SocBlast" style={{ height:28 }}/>
+          <span style={{ fontSize:15, fontWeight:800, color:'#0f172a' }}>Soc<span style={{ color:'#4f46e5' }}>Blast</span></span>
         </div>
+        <button onClick={() => navigate('/dashboard')}
+          style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'1px solid #e2e8f0', color:'#64748b', padding:'6px 14px', borderRadius:8, fontSize:13, cursor:'pointer', fontWeight:500 }}>
+          ← Dashboard
+        </button>
+      </nav>
 
-        <div style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)', borderRadius: 16, border: '1px solid rgba(255,255,255,.08)', overflow: 'hidden', marginBottom: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+      {/* contenido */}
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
+        <div style={{ maxWidth:700, width:'100%', animation:'fadeUp .4s ease' }}>
+
+          {/* header */}
+          <div style={{ textAlign:'center', marginBottom:36 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:100, background:'rgba(5,150,105,0.08)', border:'1px solid rgba(5,150,105,0.2)', marginBottom:20 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'#059669', animation:'pulse 2s infinite' }}/>
+              <span style={{ fontSize:11, color:'#059669', fontWeight:700, letterSpacing:2, textTransform:'uppercase' }}>Laboratorio Forense SOC</span>
+            </div>
+            <h1 style={{ fontSize:40, fontWeight:900, color:'#0f172a', margin:'0 0 14px', letterSpacing:'-1.5px', lineHeight:1.1 }}>
+              Investiga el ataque.<br/>
+              <span style={{ color:'#059669' }}>Reconstruye lo que pasó.</span>
+            </h1>
+            <p style={{ fontSize:15, color:'#64748b', lineHeight:1.75, margin:'0 auto', maxWidth:500 }}>
+              El ataque ya ocurrió. Llegas después. Tienes tiempo ilimitado para analizar la evidencia y escribir tu informe forense profesional.
+            </p>
+          </div>
+
+          {/* sesiones vs labs */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+            <div style={{ padding:'18px 20px', borderRadius:14, background:'#fff', border:'1px solid #e8eaf0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(37,99,235,0.08)', border:'1px solid rgba(37,99,235,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Sesiones</div>
+                  <div style={{ fontSize:11, color:'#94a3b8' }}>SOC en tiempo real</div>
+                </div>
+              </div>
+              <p style={{ fontSize:12, color:'#64748b', lineHeight:1.65, margin:0 }}>Timer activo, presión, copas y ranking. Mide tu reacción ante un incidente en curso.</p>
+            </div>
+            <div style={{ padding:'18px 20px', borderRadius:14, background:'rgba(5,150,105,0.03)', border:'2px solid rgba(5,150,105,0.22)', boxShadow:'0 2px 12px rgba(5,150,105,0.07)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(5,150,105,0.1)', border:'1px solid rgba(5,150,105,0.22)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#059669' }}>Labs — ahora</div>
+                  <div style={{ fontSize:11, color:'#059669', opacity:.7 }}>Forense post-mortem</div>
+                </div>
+              </div>
+              <p style={{ fontSize:12, color:'#475569', lineHeight:1.65, margin:0 }}>Sin timer. Profundidad real. Reconstruye el ataque e informe evaluado por IA.</p>
+            </div>
+          </div>
+
+          {/* herramientas */}
+          <div style={{ background:'#fff', borderRadius:16, border:'1px solid #e8eaf0', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.06)', marginBottom:20 }}>
+            <div style={{ padding:'14px 20px', borderBottom:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#94a3b8', letterSpacing:2, textTransform:'uppercase' }}>Herramientas del laboratorio</span>
+              <div style={{ display:'flex', gap:5 }}>
+                {['Ctrl+1','Ctrl+2','Ctrl+3','Ctrl+4','Ctrl+5'].map(k=>(
+                  <span key={k} style={{ fontSize:9, padding:'2px 6px', borderRadius:4, background:'#f1f5f9', color:'#64748b', fontFamily:'monospace', border:'1px solid #e2e8f0' }}>{k}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)' }}>
+              {[
+                { label:'SIEM Alerts',     desc:'Alertas y timeline',   color:'#2563eb',
+                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+                { label:'Log Explorer',    desc:'Logs con highlight',    color:'#7c3aed',
+                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+                { label:'Network Map',     desc:'Hosts y conexiones',    color:'#059669',
+                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
+                { label:'Terminal',        desc:'20+ comandos',          color:'#0891b2',
+                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> },
+                { label:'Informe Forense', desc:'Evaluado por IA',       color:'#ef4444',
+                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> },
+              ].map((t,i) => (
+                <div key={i} className="tool-card" style={{ padding:'18px 12px', textAlign:'center', borderRight:i<4?'1px solid #f1f5f9':'none', transition:'all .2s ease', cursor:'default' }}>
+                  <div style={{ width:48, height:48, borderRadius:13, background:`${t.color}08`, border:`1px solid ${t.color}18`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
+                    {t.icon}
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#0f172a', marginBottom:3 }}>{t.label}</div>
+                  <div style={{ fontSize:11, color:'#94a3b8', lineHeight:1.4 }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* badges info */}
+          <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
             {[
-              { icon: '🖥️', label: 'SIEM Alerts',      desc: 'Alertas con filtros y timeline',      color: '#3b82f6' },
-              { icon: '📋', label: 'Log Explorer',     desc: 'Logs filtrables con highlight',        color: '#8b5cf6' },
-              { icon: '🌐', label: 'Network Monitor',  desc: 'Mapa de red y conexiones',             color: '#10b981' },
-              { icon: '💻', label: 'Terminal',          desc: '20+ comandos Windows reales',          color: '#f59e0b' },
-              { icon: '📝', label: 'Incident Report',  desc: 'Preguntas evaluadas por IA',           color: '#ef4444' },
-              { icon: '⏱', label: 'Sin límite',        desc: 'Investiga a tu ritmo',                 color: '#64748b' },
-            ].map(({ icon, label, desc, color }, i) => (
-              <div key={label} style={{ padding: '16px 18px', borderBottom: i < 4 ? '1px solid rgba(255,255,255,.06)' : 'none', borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,.06)' : 'none', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{icon}</div>
-                <div><div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>{label}</div><div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>{desc}</div></div>
+              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, text:'Sin límite de tiempo', color:'#059669' },
+              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, text:'Sube skills de forense e intel', color:'#4f46e5' },
+              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, text:'Adaptado a tu arena actual', color:'#f59e0b' },
+            ].map((b,i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 14px', borderRadius:9, background:'#fff', border:'1px solid #e8eaf0', fontSize:12, color:'#475569', fontWeight:500, boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
+                <span style={{ color:b.color, display:'flex' }}>{b.svg}</span>{b.text}
               </div>
             ))}
           </div>
-          <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,.06)', background: 'rgba(0,0,0,.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, color: '#475569', fontWeight: 600 }}>ATAJOS:</span>
-            {['Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5'].map(k => (
-              <span key={k} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,.06)', color: '#64748b', fontFamily: 'monospace', border: '1px solid rgba(255,255,255,.08)' }}>{k}</span>
-            ))}
-          </div>
+
+          {!token && (
+            <div style={{ marginBottom:12, padding:'10px 14px', borderRadius:8, background:'#fef2f2', border:'1px solid #fecaca', fontSize:13, color:'#dc2626', textAlign:'center' }}>
+              No hay sesión activa — <button onClick={() => navigate('/login')} style={{ background:'none', border:'none', color:'#2563eb', cursor:'pointer', textDecoration:'underline', fontSize:13 }}>inicia sesión</button>
+            </div>
+          )}
+
+          <button className="start-btn" onClick={iniciarLab} disabled={loading || !token}
+            style={{ width:'100%', padding:'16px 0', borderRadius:12, border:'none', background:loading||!token?'#e2e8f0':'linear-gradient(135deg,#059669,#10b981)', color:loading||!token?'#94a3b8':'#fff', fontSize:15, fontWeight:700, cursor:loading||!token?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10, boxShadow:loading||!token?'none':'0 4px 20px rgba(5,150,105,0.4)', transition:'all .2s' }}>
+            {loading ? '⏳ Generando escenario forense (~20s)...' : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Iniciar investigación forense
+              </>
+            )}
+          </button>
+
+          {error && <div style={{ marginTop:10, padding:'10px 14px', borderRadius:8, background:'#fef2f2', border:'1px solid #fecaca', fontSize:12, color:'#dc2626' }}>⚠ {error}</div>}
+          <p style={{ textAlign:'center', fontSize:11, color:'#94a3b8', marginTop:14 }}>Solo XP y habilidades · Sin copas · Escenario generado por IA</p>
         </div>
-
-        {!token && (
-          <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', fontSize: 13, color: '#f87171', textAlign: 'center' }}>
-            ⚠ No hay sesión activa — <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: '#7dd3fc', cursor: 'pointer', textDecoration: 'underline', fontSize: 13 }}>inicia sesión</button>
-          </div>
-        )}
-
-        <button onClick={iniciarLab} disabled={loading || !token}
-          style={{ width: '100%', padding: '16px 0', borderRadius: 12, border: 'none', background: loading || !token ? 'rgba(255,255,255,.05)' : 'linear-gradient(135deg,#0078d4,#106ebe)', color: loading || !token ? '#475569' : '#fff', fontSize: 15, fontWeight: 700, cursor: loading || !token ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: loading || !token ? 'none' : '0 4px 20px rgba(0,120,212,.4)' }}>
-          {loading ? '⏳ Generando escenario con IA (~20s)...' : '⚡ Iniciar Laboratorio'}
-        </button>
-
-        {error && <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 8, background: 'rgba(220,38,38,.1)', border: '1px solid rgba(220,38,38,.3)', fontSize: 12, color: '#f87171' }}>⚠ {error}</div>}
-        <div style={{ textAlign: 'center', fontSize: 11, color: '#374151', marginTop: 14 }}>Solo XP y habilidades · Sin copas · Escenario adaptado a tu arena</div>
       </div>
     </div>
   );
