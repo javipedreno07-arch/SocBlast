@@ -23,13 +23,8 @@ import DashboardGuest from './pages/DashboardGuest';
 import LabPage from './pages/LabPage';
 import VerificarCertificado from './pages/VerificarCertificado';
 import MaintenancePage from './pages/MaintenancePage';
+import AnalystCardPage from './pages/AnalystCardPage';
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  🔧 MODO MANTENIMIENTO
-//  Pon MAINTENANCE_MODE = true para activar la página de mantenimiento.
-//  La ruta /verificar/:certId SIEMPRE queda accesible (QR de certificados).
-//  Cuando vuelva la app, pon MAINTENANCE_MODE = false y haz push.
-// ══════════════════════════════════════════════════════════════════════════════
 const MAINTENANCE_MODE = false;
 
 const GUEST_USER = {
@@ -76,8 +71,6 @@ const getHome = (rol) => {
   return '/';
 };
 
-// ── Rutas en modo MANTENIMIENTO ───────────────────────────────────────────────
-// Solo /verificar/:certId queda accesible (los QR de certificados deben funcionar siempre)
 const MaintenanceRoutes = () => (
   <Routes>
     <Route path="/verificar/:certId" element={<VerificarCertificado />} />
@@ -85,7 +78,6 @@ const MaintenanceRoutes = () => (
   </Routes>
 );
 
-// ── Rutas normales ────────────────────────────────────────────────────────────
 const AppRoutes = ({ onGuestLogin }) => {
   const { user } = useAuth();
   return (
@@ -96,14 +88,15 @@ const AppRoutes = ({ onGuestLogin }) => {
       <Route path="/verificar/:certId" element={<VerificarCertificado />} />
 
       {/* ── Rutas analista ── */}
-      <Route path="/dashboard"   element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
-      <Route path="/arenas"      element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
-      <Route path="/sesion"      element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
-      <Route path="/training"    element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
-      <Route path="/ranking"     element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
-      <Route path="/perfil"      element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
-      <Route path="/certificado" element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
-      <Route path="/lab"         element={<LabPage />} />
+      <Route path="/dashboard"    element={<PrivateRoute rol="analista"><DashboardAnalista /></PrivateRoute>} />
+      <Route path="/arenas"       element={<PrivateRoute rol="analista"><ArenasPage /></PrivateRoute>} />
+      <Route path="/sesion"       element={<PrivateRoute rol="analista"><SesionPage /></PrivateRoute>} />
+      <Route path="/training"     element={<PrivateRoute rol="analista"><TrainingPage /></PrivateRoute>} />
+      <Route path="/ranking"      element={<PrivateRoute rol="analista"><RankingPage /></PrivateRoute>} />
+      <Route path="/perfil"       element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
+      <Route path="/certificado"  element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
+      <Route path="/analyst-card" element={<PrivateRoute rol="analista"><AnalystCardPage /></PrivateRoute>} />
+      <Route path="/lab"          element={<LabPage />} />
 
       {/* ── Rutas empresa ── */}
       <Route path="/company"            element={<PrivateRoute rol="empresa"><DashboardCompany /></PrivateRoute>} />
@@ -129,7 +122,6 @@ function App() {
     window.location.href = '/dashboard';
   };
 
-  // ── Modo mantenimiento: sin splash, sin auth, solo la página de mantenimiento ──
   if (MAINTENANCE_MODE) {
     return (
       <Router>
