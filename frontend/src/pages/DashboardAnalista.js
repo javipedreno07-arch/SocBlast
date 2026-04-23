@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
-const ONBOARDING_KEY = 'socblast_onboarding_done';
 const ACC = '#4f46e5';
 
 const SKILL_ABBR = [
@@ -28,15 +27,6 @@ const ARENA_THEMES = {
 const TIERS = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
 
-function getArenaGroup(arena) {
-  if (!arena) return 'bronce';
-  const a = arena.toLowerCase();
-  if (a.includes('diamante')) return 'diamante';
-  if (a.includes('oro'))      return 'oro';
-  if (a.includes('plata'))    return 'plata';
-  return 'bronce';
-}
-
 const ARENAS_CONFIG = [
   { id:'bronce3',  name:'Bronce III',  tier:'bronce',   min:0,    max:299   },
   { id:'bronce2',  name:'Bronce II',   tier:'bronce',   min:300,  max:599   },
@@ -54,75 +44,135 @@ const ARENAS_CONFIG = [
 
 const getArenaFromCopas = c => ARENAS_CONFIG.find(a => c >= a.min && c <= a.max) || ARENAS_CONFIG[0];
 
-/* ── ANALYST CARD FIFA ──────────────────────────────────────────────── */
+function getArenaGroup(arena) {
+  if (!arena) return 'bronce';
+  const a = arena.toLowerCase();
+  if (a.includes('diamante')) return 'diamante';
+  if (a.includes('oro'))      return 'oro';
+  if (a.includes('plata'))    return 'plata';
+  return 'bronce';
+}
+
+/* ── ANALYST CARD FIFA ── */
 function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
-  const group   = getArenaGroup(arena);
-  const theme   = ARENA_THEMES[group];
+  const group     = getArenaGroup(arena);
+  const theme     = ARENA_THEMES[group];
   const skillVals = SKILL_ABBR.map(s => ({ ...s, val: Math.round((skills?.[s.key] || 0) * 10) }));
-  const ovr     = Math.round(skillVals.reduce((a, s) => a + s.val, 0) / skillVals.length);
-  const initials= nombre ? nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SO';
+  const ovr       = Math.round(skillVals.reduce((a, s) => a + s.val, 0) / skillVals.length);
+  const initials  = nombre ? nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SO';
   const W = size === 'lg' ? 240 : size === 'md' ? 190 : 150;
-  const H = Math.round(W * 1.54);
+  const H = Math.round(W * 1.56);
+  const F = `'Bebas Neue','Impact','Arial Narrow',sans-serif`;
 
   return (
-    <div onClick={onClick}
-      style={{ width:W, height:H, borderRadius:W*0.07, position:'relative', overflow:'hidden', fontFamily:"'Inter',sans-serif", boxShadow:`0 20px 50px ${theme.main}50`, flexShrink:0, cursor:onClick?'pointer':'default' }}>
+    <div onClick={onClick} style={{
+      width:W, height:H, borderRadius:W*0.07, position:'relative', overflow:'hidden',
+      boxShadow:`0 24px 56px ${theme.main}55, 0 4px 16px rgba(0,0,0,0.5)`,
+      flexShrink:0, cursor:onClick?'pointer':'default',
+    }}>
+      {/* fondo */}
       <div style={{ position:'absolute', inset:0, background:theme.bg }}/>
-      <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg,${theme.shine} 0%,transparent 50%,rgba(0,0,0,0.1) 100%)`, pointerEvents:'none' }}/>
+      {/* líneas diagonales decorativas */}
+      <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+        <div style={{ position:'absolute', top:'-40%', right:'-15%', width:'55%', height:'200%', background:'rgba(255,255,255,0.022)', transform:'rotate(18deg)' }}/>
+        <div style={{ position:'absolute', top:'-40%', right:'15%',  width:'18%', height:'200%', background:'rgba(255,255,255,0.012)', transform:'rotate(18deg)' }}/>
+      </div>
+      {/* brillo */}
+      <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg,${theme.shine} 0%,transparent 55%,rgba(0,0,0,0.18) 100%)`, pointerEvents:'none' }}/>
+
       <div style={{ position:'relative', zIndex:2, height:'100%', display:'flex', flexDirection:'column', padding:`${W*0.06}px ${W*0.07}px` }}>
-        {/* top */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.02 }}>
+
+        {/* top: OVR + logo */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.005 }}>
           <div>
-            <div style={{ fontFamily:"'Bebas Neue','Impact','Arial Narrow',sans-serif", fontSize:W*0.22, lineHeight:1, color:theme.accent, letterSpacing:1 }}>{ovr}</div>
-            <div style={{ fontSize:W*0.055, fontWeight:800, color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:1 }}>ANALYST</div>
-            <div style={{ fontSize:W*0.04, fontWeight:800, color:theme.accent, letterSpacing:1, textTransform:'uppercase', marginTop:W*0.018, padding:`2px ${W*0.03}px`, borderRadius:20, background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>{arena}</div>
+            <div style={{ fontFamily:F, fontSize:W*0.25, lineHeight:1, color:theme.accent, letterSpacing:-1, textShadow:`0 0 40px ${theme.accent}50` }}>{ovr}</div>
+            <div style={{ fontFamily:F, fontSize:W*0.075, color:theme.accent, letterSpacing:4, opacity:.85, marginTop:-W*0.01 }}>ANALYST</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, color:theme.accent, letterSpacing:1, marginTop:W*0.02,
+              padding:`2px ${W*0.03}px`, borderRadius:20,
+              background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>
+              {arena ? arena.toUpperCase() : 'BRONCE III'}
+            </div>
           </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:W*0.035, fontWeight:800, letterSpacing:2, color:`${theme.accent}50`, textTransform:'uppercase', marginBottom:3 }}>SOCBLAST</div>
-            <div style={{ width:W*0.14, height:W*0.14, borderRadius:W*0.04, background:`${theme.accent}10`, border:`1px solid ${theme.accent}25`, display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto' }}>
-              <svg width={W*0.07} height={W*0.07} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div style={{ textAlign:'right', paddingTop:2 }}>
+            <div style={{ fontFamily:F, fontSize:W*0.052, letterSpacing:3, color:`${theme.accent}40` }}>SOCBLAST</div>
+            <div style={{ width:W*0.13, height:W*0.13, borderRadius:W*0.03,
+              background:`${theme.accent}10`, border:`1px solid ${theme.accent}22`,
+              display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto', marginTop:3 }}>
+              <svg width={W*0.07} height={W*0.07} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
             </div>
           </div>
         </div>
-        {/* avatar */}
-        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ width:W*0.36, height:W*0.36, borderRadius:'50%', background:`${theme.accent}10`, border:`2px solid ${theme.accent}38`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bebas Neue','Impact',sans-serif", fontSize:W*0.13, color:theme.accent, letterSpacing:1 }}>{initials}</div>
+
+        {/* avatar hexagonal */}
+        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+          <svg width={W*0.55} height={W*0.55} viewBox="0 0 100 100" style={{ position:'absolute' }}>
+            <polygon points="50,3 94,27 94,73 50,97 6,73 6,27"
+              fill={`${theme.accent}07`} stroke={theme.accent} strokeWidth="1.8" strokeOpacity="0.3"/>
+            <polygon points="50,12 86,32 86,68 50,88 14,68 14,32"
+              fill={`${theme.accent}04`} stroke={theme.accent} strokeWidth="0.6" strokeOpacity="0.15"/>
+          </svg>
+          <div style={{
+            fontFamily:F, fontSize:W*0.18, color:theme.accent, letterSpacing:3, zIndex:1,
+            textShadow:`0 2px 16px ${theme.accent}90`,
+          }}>{initials}</div>
         </div>
+
         {/* nombre */}
-        <div style={{ textAlign:'center', marginBottom:W*0.022 }}>
-          <div style={{ fontFamily:"'Bebas Neue','Impact','Arial Narrow',sans-serif", fontSize:W*0.11, letterSpacing:2, color:theme.light, textTransform:'uppercase', lineHeight:1 }}>{nombre?.split(' ')[0] || 'Analyst'}</div>
-          <div style={{ fontSize:W*0.04, fontWeight:700, color:theme.accent, letterSpacing:1.5, textTransform:'uppercase', marginTop:2, opacity:.75 }}>{TIERS[tier]||'SOC Rookie'}</div>
+        <div style={{ textAlign:'center', marginBottom:W*0.018 }}>
+          <div style={{ fontFamily:F, fontSize:W*0.135, letterSpacing:3, color:theme.light,
+            textTransform:'uppercase', lineHeight:1, textShadow:'0 1px 8px rgba(0,0,0,0.6)' }}>
+            {nombre?.split(' ')[0] || 'ANALYST'}
+          </div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700,
+            color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>
+            {TIERS[tier]||'SOC ROOKIE'}
+          </div>
         </div>
-        {/* sep */}
-        <div style={{ height:1, background:theme.accent, opacity:.2, marginBottom:W*0.028 }}/>
-        {/* stats */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1px 1fr', gap:0, marginBottom:W*0.018 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.018 }}>
+
+        {/* separador con diamante */}
+        <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:W*0.022 }}>
+          <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
+          <div style={{ width:5, height:5, background:theme.accent, opacity:.5, transform:'rotate(45deg)', flexShrink:0 }}/>
+          <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
+        </div>
+
+        {/* stats 4+4 */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1px 1fr', gap:0, marginBottom:W*0.012 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
             {skillVals.slice(0,4).map(s=>(
-              <div key={s.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:W*0.04, fontWeight:800, letterSpacing:1, color:theme.light, opacity:.6 }}>{s.abbr}</span>
-                <span style={{ fontFamily:"'Bebas Neue','Impact',sans-serif", fontSize:W*0.078, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
+              <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
           </div>
-          <div style={{ background:theme.accent, opacity:.18, margin:`0 ${W*0.04}px` }}/>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.018 }}>
+          <div style={{ background:theme.accent, opacity:.14, margin:`0 ${W*0.042}px` }}/>
+          <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
             {skillVals.slice(4).map(s=>(
-              <div key={s.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:W*0.04, fontWeight:800, letterSpacing:1, color:theme.light, opacity:.6 }}>{s.abbr}</span>
-                <span style={{ fontFamily:"'Bebas Neue','Impact',sans-serif", fontSize:W*0.078, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
+              <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
           </div>
         </div>
+
         {/* footer */}
-        <div style={{ textAlign:'center', fontSize:W*0.033, fontWeight:700, letterSpacing:2, color:theme.accent, textTransform:'uppercase', opacity:.4 }}>{copas.toLocaleString()} copas</div>
+        <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+          <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
+          <span style={{ fontFamily:F, fontSize:W*0.036, letterSpacing:2, color:theme.accent, opacity:.4 }}>
+            {copas.toLocaleString()} COPAS
+          </span>
+          <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── PARTICLES ──────────────────────────────────────────────────────── */
+/* ── PARTICLES ── */
 const ParticleCanvas = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -143,7 +193,7 @@ const ParticleCanvas = () => {
   return <canvas ref={ref} style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none'}}/>;
 };
 
-/* ── ACTIVITY ───────────────────────────────────────────────────────── */
+/* ── ACTIVITY ── */
 const ActivityHeatmap = ({ historial }) => {
   const days=90, today=new Date();
   const cells=Array.from({length:days},(_,i)=>{ const d=new Date(today); d.setDate(today.getDate()-(days-1-i)); const ds=d.toISOString().split('T')[0]; return { date:d, count:historial.filter(s=>new Date(s.inicio*1000).toISOString().split('T')[0]===ds).length }; });
@@ -172,7 +222,6 @@ const calcStreak = hist => {
   return streak;
 };
 
-/* ── ICONS ──────────────────────────────────────────────────────────── */
 const IC = {
   cup:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
   flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
@@ -187,7 +236,6 @@ const IC = {
   chart:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   planet: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="7"/><path d="M3 12c0 0 5-8 18 0"/><path d="M3 12c0 0 5 8 18 0"/></svg>,
   fire:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
-  brain:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
   clock:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
 };
 const Icon = ({name,size=15,color='currentColor'}) => (
@@ -212,15 +260,15 @@ function ComingSoon({ title, desc, icon, color='#4f46e5' }) {
   );
 }
 
-/* ── MAIN ───────────────────────────────────────────────────────────── */
+/* ── MAIN ── */
 export default function DashboardAnalista() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [userData,       setUserData]       = useState(null);
-  const [historial,      setHistorial]      = useState([]);
-  const [empleoTab,      setEmpleoTab]      = useState('ofertas');
-  const [ranking,        setRanking]        = useState([]);
-  const [carruselIdx,    setCarruselIdx]    = useState(0);
+  const [userData,    setUserData]    = useState(null);
+  const [historial,   setHistorial]   = useState([]);
+  const [empleoTab,   setEmpleoTab]   = useState('ofertas');
+  const [ranking,     setRanking]     = useState([]);
+  const [carruselIdx, setCarruselIdx] = useState(0);
 
   useEffect(() => { fetchUser(); }, []);
 
@@ -233,36 +281,35 @@ export default function DashboardAnalista() {
     } catch { logout(); navigate('/login'); }
   };
 
-  const copas       = userData?.copas || 0;
-  const xp          = userData?.xp || 0;
-  const tier        = userData?.tier || 1;
-  const sesiones    = userData?.sesiones_completadas || 0;
-  const skills      = userData?.skills || {};
-  const arena       = userData?.arena || 'Bronce 3';
-  const arenaObj    = getArenaFromCopas(copas);
-  const group       = getArenaGroup(arena);
-  const theme       = ARENA_THEMES[group];
-  const XP_MAX      = [0,500,1500,3000,5000,8000,12000,18000,99999];
-  const xpMin       = XP_MAX[tier-1]||0;
-  const xpMax       = XP_MAX[tier]||99999;
-  const pctXP       = Math.min(((xp-xpMin)/(xpMax-xpMin))*100,100);
-  const tierColor   = TIER_CLR[tier]||'#64748b';
-  const streak      = calcStreak(historial);
-  const skillVals   = SKILL_ABBR.map(s=>({...s,val:Math.round((skills?.[s.key]||0)*10)}));
-  const ovr         = Math.round(skillVals.reduce((a,s)=>a+s.val,0)/skillVals.length);
-  const weakSkills  = [...skillVals].sort((a,b)=>a.val-b.val).slice(0,3);
+  const copas     = userData?.copas || 0;
+  const xp        = userData?.xp || 0;
+  const tier      = userData?.tier || 1;
+  const sesiones  = userData?.sesiones_completadas || 0;
+  const skills    = userData?.skills || {};
+  const arena     = userData?.arena || 'Bronce 3';
+  const arenaObj  = getArenaFromCopas(copas);
+  const group     = getArenaGroup(arena);
+  const theme     = ARENA_THEMES[group];
+  const XP_MAX    = [0,500,1500,3000,5000,8000,12000,18000,99999];
+  const xpMin     = XP_MAX[tier-1]||0;
+  const xpMax     = XP_MAX[tier]||99999;
+  const pctXP     = Math.min(((xp-xpMin)/(xpMax-xpMin))*100,100);
+  const tierColor = TIER_CLR[tier]||'#64748b';
+  const streak    = calcStreak(historial);
+  const skillVals = SKILL_ABBR.map(s=>({...s,val:Math.round((skills?.[s.key]||0)*10)}));
+  const ovr       = Math.round(skillVals.reduce((a,s)=>a+s.val,0)/skillVals.length);
+  const weakSkills= [...skillVals].sort((a,b)=>a.val-b.val).slice(0,3);
   const siguienteArena = ARENAS_CONFIG[ARENAS_CONFIG.findIndex(a=>a.id===arenaObj.id)+1];
 
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;700;800;900&display=swap');
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-    @keyframes cardFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+    @keyframes cardFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-10px) rotate(1deg);}}
     @keyframes spin{to{transform:rotate(360deg)}}
     .fade-up{animation:fadeUp .4s ease forwards;}
-    .card-float{animation:cardFloat 5s ease-in-out infinite;}
+    .card-float{animation:cardFloat 6s ease-in-out infinite;}
     .nav-btn:hover{background:#f1f5f9!important;color:#0f172a!important;}
-    .play-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
+    .play-btn:hover{filter:brightness(1.1);transform:translateY(-2px)!important;}
     .quick-btn:hover{background:#f0f4ff!important;border-color:#c7d2fe!important;}
     .hist-row:hover{background:#f8fafc!important;}
     .empleo-tab:hover{background:rgba(79,70,229,0.06)!important;}
@@ -323,49 +370,44 @@ export default function DashboardAnalista() {
 
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'32px 40px 72px'}}>
 
-          {/* ── HERO: CARTA + INFO ── */}
-          <div className="fade-up" style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:40,alignItems:'center',marginBottom:32,padding:'32px 36px',borderRadius:24,background:'linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.7))',border:'1px solid rgba(255,255,255,0.8)',boxShadow:'0 8px 32px rgba(0,0,0,0.06)',backdropFilter:'blur(20px)'}}>
+          {/* ── HERO ── */}
+          <div className="fade-up" style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:44,alignItems:'center',marginBottom:32,padding:'36px 40px',borderRadius:24,background:'linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,255,255,0.75))',border:'1px solid rgba(255,255,255,0.85)',boxShadow:'0 8px 40px rgba(0,0,0,0.07)',backdropFilter:'blur(20px)'}}>
 
-            {/* carta flotando */}
-            <div className="card-float">
+            {/* carta */}
+            <div className="card-float" style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
               <FifaCard nombre={user?.nombre} tier={tier} skills={skills} copas={copas} arena={arena} size="lg"
                 onClick={()=>navigate('/analyst-card')}/>
-              <div style={{textAlign:'center',marginTop:8,fontSize:11,color:'#94a3b8'}}>
-                <span style={{cursor:'pointer',textDecoration:'underline'}} onClick={()=>navigate('/analyst-card')}>ver detalle completo →</span>
-              </div>
+              <span style={{fontSize:11,color:'#94a3b8',cursor:'pointer'}} onClick={()=>navigate('/analyst-card')}>
+                ver detalle completo →
+              </span>
             </div>
 
-            {/* info derecha */}
+            {/* info */}
             <div>
-              {/* saludo */}
-              <div style={{marginBottom:20}}>
-                <h1 style={{fontSize:28,fontWeight:900,color:'#0f172a',letterSpacing:'-1px',marginBottom:4}}>
-                  Hola, <span style={{color:ACC}}>{user?.nombre}</span>
-                </h1>
-                <p style={{fontSize:13,color:'#94a3b8',fontFamily:'monospace'}}>
-                  {arenaObj.name} · {TIERS[tier]} · {sesiones} sesiones completadas
-                </p>
-              </div>
+              <h1 style={{fontSize:30,fontWeight:900,color:'#0f172a',letterSpacing:'-1px',marginBottom:4}}>
+                Hola, <span style={{color:ACC}}>{user?.nombre}</span>
+              </h1>
+              <p style={{fontSize:13,color:'#94a3b8',fontFamily:'monospace',marginBottom:22}}>
+                {arenaObj.name} · {TIERS[tier]} · {sesiones} sesiones completadas
+              </p>
 
-              {/* OVR + copas prominentes */}
-              <div style={{display:'flex',gap:14,marginBottom:20}}>
-                <div style={{padding:'16px 22px',borderRadius:14,background:`${theme.main}10`,border:`1px solid ${theme.main}25`,textAlign:'center',minWidth:90}}>
-                  <div style={{fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:44,lineHeight:1,color:theme.main,letterSpacing:-1}}>{ovr}</div>
-                  <div style={{fontSize:10,fontWeight:800,color:'#64748b',letterSpacing:2,textTransform:'uppercase',marginTop:2}}>OVR</div>
-                </div>
-                <div style={{padding:'16px 22px',borderRadius:14,background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.2)',textAlign:'center',minWidth:90}}>
-                  <div style={{fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:44,lineHeight:1,color:'#f59e0b',letterSpacing:-1}}>{copas.toLocaleString()}</div>
-                  <div style={{fontSize:10,fontWeight:800,color:'#64748b',letterSpacing:2,textTransform:'uppercase',marginTop:2}}>COPAS</div>
-                </div>
-                <div style={{padding:'16px 22px',borderRadius:14,background:'rgba(79,70,229,0.06)',border:'1px solid rgba(79,70,229,0.15)',textAlign:'center',minWidth:90}}>
-                  <div style={{fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:44,lineHeight:1,color:ACC,letterSpacing:-1}}>{sesiones}</div>
-                  <div style={{fontSize:10,fontWeight:800,color:'#64748b',letterSpacing:2,textTransform:'uppercase',marginTop:2}}>SESIONES</div>
-                </div>
+              {/* OVR + copas + sesiones */}
+              <div style={{display:'flex',gap:12,marginBottom:20}}>
+                {[
+                  {val:ovr,  label:'OVR',     color:theme.main,  bg:`${theme.main}10`,  border:`${theme.main}25`},
+                  {val:copas.toLocaleString(), label:'COPAS', color:'#f59e0b', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.2)'},
+                  {val:sesiones, label:'SESIONES', color:ACC, bg:`${ACC}08`, border:`${ACC}18`},
+                ].map((s,i)=>(
+                  <div key={i} style={{padding:'14px 20px',borderRadius:14,background:s.bg,border:`1px solid ${s.border}`,textAlign:'center',minWidth:85}}>
+                    <div style={{fontFamily:"'Bebas Neue','Impact','Arial Narrow',sans-serif",fontSize:42,lineHeight:1,color:s.color,letterSpacing:-1}}>{s.val}</div>
+                    <div style={{fontSize:9,fontWeight:800,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginTop:2}}>{s.label}</div>
+                  </div>
+                ))}
               </div>
 
               {/* XP bar */}
-              <div style={{marginBottom:20}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#94a3b8',marginBottom:6}}>
+              <div style={{marginBottom:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#94a3b8',marginBottom:5}}>
                   <span style={{fontWeight:700,color:tierColor}}>{TIERS[tier]}</span>
                   {tier<8&&<span>→ {TIERS[tier+1]}</span>}
                   <span style={{fontFamily:'monospace'}}>{xp.toLocaleString()} XP</span>
@@ -375,9 +417,9 @@ export default function DashboardAnalista() {
                 </div>
               </div>
 
-              {/* copas hacia siguiente arena */}
-              {siguienteArena && (
-                <div style={{marginBottom:20,padding:'10px 14px',borderRadius:10,background:`${theme.main}08`,border:`1px solid ${theme.main}18`,display:'flex',alignItems:'center',gap:10}}>
+              {/* siguiente arena */}
+              {siguienteArena&&(
+                <div style={{marginBottom:18,padding:'10px 14px',borderRadius:10,background:`${theme.main}08`,border:`1px solid ${theme.main}18`,display:'flex',alignItems:'center',gap:10}}>
                   <Icon name="target" size={14} color={theme.main}/>
                   <span style={{fontSize:12,color:'#374151'}}><strong style={{color:theme.main}}>{(siguienteArena.min-copas).toLocaleString()} copas</strong> para {siguienteArena.name}</span>
                   <div style={{flex:1,height:4,borderRadius:2,background:'rgba(0,0,0,0.06)',overflow:'hidden'}}>
@@ -386,21 +428,21 @@ export default function DashboardAnalista() {
                 </div>
               )}
 
-              {/* botones jugar */}
+              {/* botones */}
               <div style={{display:'flex',gap:10}}>
                 <button className="play-btn" onClick={()=>navigate('/sesion')}
-                  style={{flex:1,padding:'14px',borderRadius:12,background:'linear-gradient(135deg,#2563eb,#3b82f6)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 16px rgba(37,99,235,0.35)'}}>
+                  style={{flex:1,padding:'14px',borderRadius:12,background:'linear-gradient(135deg,#1d4ed8,#3b82f6)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 20px rgba(37,99,235,0.4)'}}>
                   <Icon name="bolt" size={15} color="#fff"/> Jugar sesión
                 </button>
                 <button className="play-btn" onClick={()=>navigate('/lab')}
-                  style={{flex:1,padding:'14px',borderRadius:12,background:'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 16px rgba(5,150,105,0.35)'}}>
+                  style={{flex:1,padding:'14px',borderRadius:12,background:'linear-gradient(135deg,#047857,#10b981)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 20px rgba(5,150,105,0.4)'}}>
                   <Icon name="flask" size={15} color="#fff"/> Entrar al lab
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ── CARRUSEL MODOS ── */}
+          {/* ── CARRUSEL ── */}
           <div style={{marginBottom:28}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
               <div>
@@ -418,7 +460,6 @@ export default function DashboardAnalista() {
             </div>
             <div style={{overflow:'hidden',borderRadius:'20px'}}>
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
-                {/* SESIONES */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.2),transparent)',pointerEvents:'none'}}/>
@@ -439,7 +480,6 @@ export default function DashboardAnalista() {
                     {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
-                {/* LABS */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.12)'}}>
                   <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.18),transparent)',pointerEvents:'none'}}/>
@@ -449,7 +489,7 @@ export default function DashboardAnalista() {
                         <span style={{fontSize:'10px',color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>LABORATORIO SOC — BETA</span>
                       </div>
                       <h2 style={{fontSize:'26px',fontWeight:900,color:'#fff',letterSpacing:'-0.8px',marginBottom:'10px',lineHeight:1.1}}>Investiga sin límite.<br/><span style={{color:'#6ee7b7'}}>Profundidad real. Mejora tu carta.</span></h2>
-                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,marginBottom:'20px'}}>SIEM, Log Explorer, Network Map, Terminal y evaluación IA. Cada lab sube skills específicas de tu carta.</p>
+                      <p style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.75,marginBottom:'20px'}}>SIEM, Log Explorer, Network Map y evaluación IA. Cada lab sube skills específicas de tu carta.</p>
                       <button className="play-btn" onClick={()=>navigate('/lab')}
                         style={{padding:'13px 32px',borderRadius:'100px',background:'linear-gradient(135deg,#10b981,#059669)',border:'none',color:'#fff',fontSize:'14px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 20px rgba(16,185,129,0.5)',display:'inline-flex',alignItems:'center',gap:'8px'}}>
                         <Icon name="flask" size={15} color="#fff"/> Entrar al Lab →
@@ -464,7 +504,7 @@ export default function DashboardAnalista() {
             </div>
           </div>
 
-          {/* ── ACTIVIDAD + RANKING + SKILL A MEJORAR ── */}
+          {/* ── ACTIVIDAD + RANKING ── */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
             <div style={{padding:'20px 22px',borderRadius:16,backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 10px rgba(0,0,0,.05)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
@@ -532,7 +572,7 @@ export default function DashboardAnalista() {
                   <button onClick={()=>navigate('/sesion')} style={{marginTop:10,padding:'8px 16px',borderRadius:8,backgroundColor:ACC,border:'none',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Empezar</button>
                 </div>
               ):historial.slice(0,5).map((s,i)=>{
-                const res=s.resultado, copasGan=res?.copas_ganadas||0, media=res?.media_puntuacion||0, pos=copasGan>=0;
+                const res=s.resultado,copasGan=res?.copas_ganadas||0,media=res?.media_puntuacion||0,pos=copasGan>=0;
                 return (
                   <div key={i} className="hist-row" style={{display:'flex',alignItems:'center',gap:10,padding:'9px 11px',borderRadius:10,backgroundColor:'#f8fafc',border:'1px solid #f1f5f9',marginBottom:6}}>
                     <div style={{width:30,height:30,borderRadius:8,backgroundColor:pos?'#ecfdf5':'#fef2f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -551,12 +591,12 @@ export default function DashboardAnalista() {
               <p style={{fontSize:'10px',color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:16,fontFamily:'monospace'}}>ACCESOS RÁPIDOS</p>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {[
-                  {label:'Mi Analyst Card', desc:'OVR · Skills · Carta FIFA',  path:'/analyst-card', color:theme.main, light:theme.light,   icon:'award'},
-                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',        path:'/lab',          color:'#059669',  light:'#ecfdf5',      icon:'flask'},
-                  {label:'Training SOC',   desc:'Módulos · Cursos',            path:'/training',     color:'#7c3aed',  light:'#f5f3ff',      icon:'book'},
-                  {label:'Ranking Global', desc:'Tu posición actual',          path:'/ranking',      color:'#d97706',  light:'#fffbeb',      icon:'chart'},
-                  {label:'Mi Certificado', desc:'QR verificable',              path:'/certificado',  color:'#059669',  light:'#ecfdf5',      icon:'award'},
-                  {label:'Perfil & Tiers', desc:'Stats y progresión',          path:'/perfil',       color:'#2563eb',  light:'#eff6ff',      icon:'user'},
+                  {label:'Mi Analyst Card', desc:'OVR · Skills · Carta FIFA',  path:'/analyst-card', color:theme.main, light:theme.light, icon:'award'},
+                  {label:'Laboratorio SOC', desc:'SIEM · Forense · XP',        path:'/lab',          color:'#059669', light:'#ecfdf5',   icon:'flask'},
+                  {label:'Training SOC',   desc:'Módulos · Cursos',            path:'/training',     color:'#7c3aed', light:'#f5f3ff',   icon:'book'},
+                  {label:'Ranking Global', desc:'Tu posición actual',          path:'/ranking',      color:'#d97706', light:'#fffbeb',   icon:'chart'},
+                  {label:'Mi Certificado', desc:'QR verificable',              path:'/certificado',  color:'#059669', light:'#ecfdf5',   icon:'award'},
+                  {label:'Perfil & Tiers', desc:'Stats y progresión',          path:'/perfil',       color:'#2563eb', light:'#eff6ff',   icon:'user'},
                 ].map((item,i)=>(
                   <div key={i} className="quick-btn" onClick={()=>navigate(item.path)}
                     style={{display:'flex',alignItems:'center',gap:10,padding:'10px 13px',borderRadius:11,backgroundColor:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}}>
@@ -594,7 +634,7 @@ export default function DashboardAnalista() {
               </div>
               <div style={{position:'relative',zIndex:1,display:'flex',gap:'6px',marginTop:'24px'}}>
                 {[{id:'ofertas',label:'Ofertas'},{id:'certs',label:'Certificaciones'},{id:'bootcamps',label:'Bootcamps'},{id:'retos',label:'Retos gratuitos'}].map(tab=>(
-                  <button key={tab.id} className="empleo-tab" onClick={()=>setEmpleoTab(tab.id)}
+                  <button key={tab.id} onClick={()=>setEmpleoTab(tab.id)}
                     style={{padding:'8px 18px',borderRadius:'9px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:600,background:empleoTab===tab.id?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.06)',color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.45)',borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent'}}>
                     {tab.label}
                   </button>
