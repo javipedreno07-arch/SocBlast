@@ -6,6 +6,17 @@ import axios from 'axios';
 const API = 'https://socblast-production.up.railway.app';
 const ACC = '#4f46e5';
 
+const BEBAS_FONT = `
+  @font-face {
+    font-family: 'Bebas Neue';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://fonts.gstatic.com/s/bebasneuepro/v7/cn-0JQpLcfrYpW_8EHjZB57HmOFJSlRDgJe8nA.woff2') format('woff2'),
+         url('https://fonts.gstatic.com/s/bebasneuepro/v7/cn-0JQpLcfrYpW_8EHjZB57HmOFJSlRDgJe8.woff') format('woff');
+  }
+`;
+
 const SKILL_ABBR = [
   { key:'analisis_logs',           abbr:'LOG', color:'#3b82f6' },
   { key:'deteccion_amenazas',      abbr:'DET', color:'#6366f1' },
@@ -24,7 +35,7 @@ const ARENA_THEMES = {
   diamante: { main:'#3b82f6', accent:'#93c5fd', light:'#dbeafe', bg:'linear-gradient(160deg,#020817 0%,#0c1f4a 30%,#1a3a8a 60%,#0c1f4a 80%,#020817 100%)', shine:'rgba(147,197,253,0.15)' },
 };
 
-const TIERS = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
+const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
 
 const ARENAS_CONFIG = [
@@ -53,12 +64,18 @@ function getArenaGroup(arena) {
   return 'bronce';
 }
 
+function calcOVR(skills) {
+  const vals = SKILL_ABBR.map(s => Math.round((skills?.[s.key] || 0) * 10));
+  const avg  = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  return Math.max(50, avg);
+}
+
 /* ── ANALYST CARD FIFA ── */
 function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
   const group     = getArenaGroup(arena);
   const theme     = ARENA_THEMES[group];
-  const skillVals = SKILL_ABBR.map(s => ({ ...s, val: Math.round((skills?.[s.key] || 0) * 10) }));
-  const ovr       = Math.round(skillVals.reduce((a, s) => a + s.val, 0) / skillVals.length);
+  const skillVals = SKILL_ABBR.map(s => ({ ...s, val: Math.max(50, Math.round((skills?.[s.key] || 0) * 10)) }));
+  const ovr       = calcOVR(skills);
   const initials  = nombre ? nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SO';
   const W = size === 'lg' ? 240 : size === 'md' ? 190 : 150;
   const H = Math.round(W * 1.56);
@@ -70,80 +87,56 @@ function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
       boxShadow:`0 24px 56px ${theme.main}55, 0 4px 16px rgba(0,0,0,0.5)`,
       flexShrink:0, cursor:onClick?'pointer':'default',
     }}>
-      {/* fondo */}
       <div style={{ position:'absolute', inset:0, background:theme.bg }}/>
-      {/* líneas diagonales decorativas */}
       <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
         <div style={{ position:'absolute', top:'-40%', right:'-15%', width:'55%', height:'200%', background:'rgba(255,255,255,0.022)', transform:'rotate(18deg)' }}/>
         <div style={{ position:'absolute', top:'-40%', right:'15%',  width:'18%', height:'200%', background:'rgba(255,255,255,0.012)', transform:'rotate(18deg)' }}/>
       </div>
-      {/* brillo */}
       <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg,${theme.shine} 0%,transparent 55%,rgba(0,0,0,0.18) 100%)`, pointerEvents:'none' }}/>
-
       <div style={{ position:'relative', zIndex:2, height:'100%', display:'flex', flexDirection:'column', padding:`${W*0.06}px ${W*0.07}px` }}>
-
-        {/* top: OVR + logo */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.005 }}>
           <div>
             <div style={{ fontFamily:F, fontSize:W*0.25, lineHeight:1, color:theme.accent, letterSpacing:-1, textShadow:`0 0 40px ${theme.accent}50` }}>{ovr}</div>
             <div style={{ fontFamily:F, fontSize:W*0.075, color:theme.accent, letterSpacing:4, opacity:.85, marginTop:-W*0.01 }}>ANALYST</div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, color:theme.accent, letterSpacing:1, marginTop:W*0.02,
-              padding:`2px ${W*0.03}px`, borderRadius:20,
-              background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>
+              padding:`2px ${W*0.03}px`, borderRadius:20, background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>
               {arena ? arena.toUpperCase() : 'BRONCE III'}
             </div>
           </div>
           <div style={{ textAlign:'right', paddingTop:2 }}>
             <div style={{ fontFamily:F, fontSize:W*0.052, letterSpacing:3, color:`${theme.accent}40` }}>SOCBLAST</div>
-            <div style={{ width:W*0.13, height:W*0.13, borderRadius:W*0.03,
-              background:`${theme.accent}10`, border:`1px solid ${theme.accent}22`,
-              display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto', marginTop:3 }}>
+            <div style={{ width:W*0.13, height:W*0.13, borderRadius:W*0.03, background:`${theme.accent}10`, border:`1px solid ${theme.accent}22`, display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto', marginTop:3 }}>
               <svg width={W*0.07} height={W*0.07} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
             </div>
           </div>
         </div>
-
-        {/* avatar hexagonal */}
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
           <svg width={W*0.55} height={W*0.55} viewBox="0 0 100 100" style={{ position:'absolute' }}>
-            <polygon points="50,3 94,27 94,73 50,97 6,73 6,27"
-              fill={`${theme.accent}07`} stroke={theme.accent} strokeWidth="1.8" strokeOpacity="0.3"/>
-            <polygon points="50,12 86,32 86,68 50,88 14,68 14,32"
-              fill={`${theme.accent}04`} stroke={theme.accent} strokeWidth="0.6" strokeOpacity="0.15"/>
+            <polygon points="50,3 94,27 94,73 50,97 6,73 6,27" fill={`${theme.accent}07`} stroke={theme.accent} strokeWidth="1.8" strokeOpacity="0.3"/>
+            <polygon points="50,12 86,32 86,68 50,88 14,68 14,32" fill={`${theme.accent}04`} stroke={theme.accent} strokeWidth="0.6" strokeOpacity="0.15"/>
           </svg>
-          <div style={{
-            fontFamily:F, fontSize:W*0.18, color:theme.accent, letterSpacing:3, zIndex:1,
-            textShadow:`0 2px 16px ${theme.accent}90`,
-          }}>{initials}</div>
+          <div style={{ fontFamily:F, fontSize:W*0.18, color:theme.accent, letterSpacing:3, zIndex:1, textShadow:`0 2px 16px ${theme.accent}90` }}>{initials}</div>
         </div>
-
-        {/* nombre */}
         <div style={{ textAlign:'center', marginBottom:W*0.018 }}>
-          <div style={{ fontFamily:F, fontSize:W*0.135, letterSpacing:3, color:theme.light,
-            textTransform:'uppercase', lineHeight:1, textShadow:'0 1px 8px rgba(0,0,0,0.6)' }}>
+          <div style={{ fontFamily:F, fontSize:W*0.135, letterSpacing:3, color:theme.light, textTransform:'uppercase', lineHeight:1, textShadow:'0 1px 8px rgba(0,0,0,0.6)' }}>
             {nombre?.split(' ')[0] || 'ANALYST'}
           </div>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700,
-            color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700, color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>
             {TIERS[tier]||'SOC ROOKIE'}
           </div>
         </div>
-
-        {/* separador con diamante */}
         <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:W*0.022 }}>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
           <div style={{ width:5, height:5, background:theme.accent, opacity:.5, transform:'rotate(45deg)', flexShrink:0 }}/>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
         </div>
-
-        {/* stats 4+4 */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1px 1fr', gap:0, marginBottom:W*0.012 }}>
           <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
             {skillVals.slice(0,4).map(s=>(
               <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.6 }}>{s.abbr}</span>
                 <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
@@ -152,19 +145,15 @@ function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
           <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
             {skillVals.slice(4).map(s=>(
               <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.6 }}>{s.abbr}</span>
                 <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
           </div>
         </div>
-
-        {/* footer */}
         <div style={{ display:'flex', alignItems:'center', gap:5 }}>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
-          <span style={{ fontFamily:F, fontSize:W*0.036, letterSpacing:2, color:theme.accent, opacity:.4 }}>
-            {copas.toLocaleString()} COPAS
-          </span>
+          <span style={{ fontFamily:F, fontSize:W*0.036, letterSpacing:2, color:theme.accent, opacity:.4 }}>{copas.toLocaleString()} COPAS</span>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
         </div>
       </div>
@@ -193,7 +182,6 @@ const ParticleCanvas = () => {
   return <canvas ref={ref} style={{position:'fixed',inset:0,zIndex:0,pointerEvents:'none'}}/>;
 };
 
-/* ── ACTIVITY ── */
 const ActivityHeatmap = ({ historial }) => {
   const days=90, today=new Date();
   const cells=Array.from({length:days},(_,i)=>{ const d=new Date(today); d.setDate(today.getDate()-(days-1-i)); const ds=d.toISOString().split('T')[0]; return { date:d, count:historial.filter(s=>new Date(s.inicio*1000).toISOString().split('T')[0]===ds).length }; });
@@ -260,7 +248,6 @@ function ComingSoon({ title, desc, icon, color='#4f46e5' }) {
   );
 }
 
-/* ── MAIN ── */
 export default function DashboardAnalista() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
@@ -296,12 +283,13 @@ export default function DashboardAnalista() {
   const pctXP     = Math.min(((xp-xpMin)/(xpMax-xpMin))*100,100);
   const tierColor = TIER_CLR[tier]||'#64748b';
   const streak    = calcStreak(historial);
-  const skillVals = SKILL_ABBR.map(s=>({...s,val:Math.round((skills?.[s.key]||0)*10)}));
-  const ovr       = Math.round(skillVals.reduce((a,s)=>a+s.val,0)/skillVals.length);
+  const ovr       = calcOVR(skills);
+  const skillVals = SKILL_ABBR.map(s=>({...s,val:Math.max(50,Math.round((skills?.[s.key]||0)*10))}));
   const weakSkills= [...skillVals].sort((a,b)=>a.val-b.val).slice(0,3);
   const siguienteArena = ARENAS_CONFIG[ARENAS_CONFIG.findIndex(a=>a.id===arenaObj.id)+1];
 
   const css = `
+    ${BEBAS_FONT}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
     @keyframes cardFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-10px) rotate(1deg);}}
@@ -372,17 +360,10 @@ export default function DashboardAnalista() {
 
           {/* ── HERO ── */}
           <div className="fade-up" style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:44,alignItems:'center',marginBottom:32,padding:'36px 40px',borderRadius:24,background:'linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,255,255,0.75))',border:'1px solid rgba(255,255,255,0.85)',boxShadow:'0 8px 40px rgba(0,0,0,0.07)',backdropFilter:'blur(20px)'}}>
-
-            {/* carta */}
             <div className="card-float" style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-              <FifaCard nombre={user?.nombre} tier={tier} skills={skills} copas={copas} arena={arena} size="lg"
-                onClick={()=>navigate('/analyst-card')}/>
-              <span style={{fontSize:11,color:'#94a3b8',cursor:'pointer'}} onClick={()=>navigate('/analyst-card')}>
-                ver detalle completo →
-              </span>
+              <FifaCard nombre={user?.nombre} tier={tier} skills={skills} copas={copas} arena={arena} size="lg" onClick={()=>navigate('/analyst-card')}/>
+              <span style={{fontSize:11,color:'#94a3b8',cursor:'pointer'}} onClick={()=>navigate('/analyst-card')}>ver detalle completo →</span>
             </div>
-
-            {/* info */}
             <div>
               <h1 style={{fontSize:30,fontWeight:900,color:'#0f172a',letterSpacing:'-1px',marginBottom:4}}>
                 Hola, <span style={{color:ACC}}>{user?.nombre}</span>
@@ -390,11 +371,9 @@ export default function DashboardAnalista() {
               <p style={{fontSize:13,color:'#94a3b8',fontFamily:'monospace',marginBottom:22}}>
                 {arenaObj.name} · {TIERS[tier]} · {sesiones} sesiones completadas
               </p>
-
-              {/* OVR + copas + sesiones */}
               <div style={{display:'flex',gap:12,marginBottom:20}}>
                 {[
-                  {val:ovr,  label:'OVR',     color:theme.main,  bg:`${theme.main}10`,  border:`${theme.main}25`},
+                  {val:ovr, label:'OVR', color:theme.main, bg:`${theme.main}10`, border:`${theme.main}25`},
                   {val:copas.toLocaleString(), label:'COPAS', color:'#f59e0b', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.2)'},
                   {val:sesiones, label:'SESIONES', color:ACC, bg:`${ACC}08`, border:`${ACC}18`},
                 ].map((s,i)=>(
@@ -404,8 +383,6 @@ export default function DashboardAnalista() {
                   </div>
                 ))}
               </div>
-
-              {/* XP bar */}
               <div style={{marginBottom:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#94a3b8',marginBottom:5}}>
                   <span style={{fontWeight:700,color:tierColor}}>{TIERS[tier]}</span>
@@ -416,8 +393,6 @@ export default function DashboardAnalista() {
                   <div className="skill-bar-fill" style={{width:`${pctXP}%`,height:'100%',borderRadius:4,background:`linear-gradient(90deg,${tierColor}80,${tierColor})`}}/>
                 </div>
               </div>
-
-              {/* siguiente arena */}
               {siguienteArena&&(
                 <div style={{marginBottom:18,padding:'10px 14px',borderRadius:10,background:`${theme.main}08`,border:`1px solid ${theme.main}18`,display:'flex',alignItems:'center',gap:10}}>
                   <Icon name="target" size={14} color={theme.main}/>
@@ -427,8 +402,6 @@ export default function DashboardAnalista() {
                   </div>
                 </div>
               )}
-
-              {/* botones */}
               <div style={{display:'flex',gap:10}}>
                 <button className="play-btn" onClick={()=>navigate('/sesion')}
                   style={{flex:1,padding:'14px',borderRadius:12,background:'linear-gradient(135deg,#1d4ed8,#3b82f6)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 20px rgba(37,99,235,0.4)'}}>
