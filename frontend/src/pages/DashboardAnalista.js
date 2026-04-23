@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
 const ACC = '#4f46e5';
+const F = `'Rajdhani','Arial Narrow','Impact',sans-serif`;
 
 const SKILL_ABBR = [
   { key:'analisis_logs',           abbr:'LOG' },
@@ -26,23 +27,22 @@ const ARENA_THEMES = {
 
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
 const TIER_CLR = ['','#64748b','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444','#8b5cf6'];
+const TIER_COLORS = { bronce:'#d97706', plata:'#94a3b8', oro:'#f59e0b', diamante:'#3b82f6' };
 
 const ARENAS_CONFIG = [
-  { id:'bronce3',  name:'Bronce III',  tier:'bronce',   min:0,    max:299,   short:'B3' },
-  { id:'bronce2',  name:'Bronce II',   tier:'bronce',   min:300,  max:599,   short:'B2' },
-  { id:'bronce1',  name:'Bronce I',    tier:'bronce',   min:600,  max:899,   short:'B1' },
-  { id:'plata3',   name:'Plata III',   tier:'plata',    min:900,  max:1199,  short:'P3' },
-  { id:'plata2',   name:'Plata II',    tier:'plata',    min:1200, max:1499,  short:'P2' },
-  { id:'plata1',   name:'Plata I',     tier:'plata',    min:1500, max:1799,  short:'P1' },
-  { id:'oro3',     name:'Oro III',     tier:'oro',      min:1800, max:2099,  short:'O3' },
-  { id:'oro2',     name:'Oro II',      tier:'oro',      min:2100, max:2399,  short:'O2' },
-  { id:'oro1',     name:'Oro I',       tier:'oro',      min:2400, max:2699,  short:'O1' },
-  { id:'diamante3',name:'Diamante III',tier:'diamante', min:2700, max:2999,  short:'D3' },
-  { id:'diamante2',name:'Diamante II', tier:'diamante', min:3000, max:3299,  short:'D2' },
-  { id:'diamante1',name:'Diamante I',  tier:'diamante', min:3300, max:99999, short:'D1' },
+  { id:'bronce3',  name:'Bronce III',  tier:'bronce',   min:0,    max:299   },
+  { id:'bronce2',  name:'Bronce II',   tier:'bronce',   min:300,  max:599   },
+  { id:'bronce1',  name:'Bronce I',    tier:'bronce',   min:600,  max:899   },
+  { id:'plata3',   name:'Plata III',   tier:'plata',    min:900,  max:1199  },
+  { id:'plata2',   name:'Plata II',    tier:'plata',    min:1200, max:1499  },
+  { id:'plata1',   name:'Plata I',     tier:'plata',    min:1500, max:1799  },
+  { id:'oro3',     name:'Oro III',     tier:'oro',      min:1800, max:2099  },
+  { id:'oro2',     name:'Oro II',      tier:'oro',      min:2100, max:2399  },
+  { id:'oro1',     name:'Oro I',       tier:'oro',      min:2400, max:2699  },
+  { id:'diamante3',name:'Diamante III',tier:'diamante', min:2700, max:2999  },
+  { id:'diamante2',name:'Diamante II', tier:'diamante', min:3000, max:3299  },
+  { id:'diamante1',name:'Diamante I',  tier:'diamante', min:3300, max:99999 },
 ];
-
-const TIER_COLORS = { bronce:'#d97706', plata:'#94a3b8', oro:'#f59e0b', diamante:'#3b82f6' };
 
 const getArenaFromCopas = c => ARENAS_CONFIG.find(a => c >= a.min && c <= a.max) || ARENAS_CONFIG[0];
 
@@ -60,7 +60,7 @@ function calcOVR(skills) {
   return Math.max(50, Math.round(vals.reduce((a, b) => a + b, 0) / vals.length));
 }
 
-/* ── MINI ARENAS PROGRESS ── */
+/* ── MINI ARENAS ── */
 function MiniArenas({ copas, arenaActual }) {
   const grupos = [
     { label:'B', tier:'bronce',   ids:['bronce3','bronce2','bronce1'] },
@@ -69,7 +69,6 @@ function MiniArenas({ copas, arenaActual }) {
     { label:'D', tier:'diamante', ids:['diamante3','diamante2','diamante1'] },
   ];
   const currentIdx = ARENAS_CONFIG.findIndex(a => a.id === arenaActual.id);
-
   return (
     <div style={{ display:'flex', alignItems:'center', gap:6 }}>
       {grupos.map((g, gi) => {
@@ -77,25 +76,15 @@ function MiniArenas({ copas, arenaActual }) {
         const isCurrentGroup = arenaActual.tier === g.tier;
         return (
           <div key={gi} style={{ display:'flex', alignItems:'center', gap:3 }}>
-            <span style={{ fontSize:9, fontWeight:700, color: isCurrentGroup ? color : '#94a3b8', letterSpacing:1, width:10 }}>{g.label}</span>
+            <span style={{ fontSize:9, fontWeight:700, color:isCurrentGroup?color:'#94a3b8', letterSpacing:1, width:10 }}>{g.label}</span>
             <div style={{ display:'flex', gap:2 }}>
               {g.ids.map((id, di) => {
                 const aIdx = ARENAS_CONFIG.findIndex(a => a.id === id);
-                const done    = aIdx < currentIdx;
-                const current = aIdx === currentIdx;
-                return (
-                  <div key={id} style={{
-                    width: current ? 14 : 7,
-                    height: 7,
-                    borderRadius: 4,
-                    background: done ? color : current ? color : `${color}25`,
-                    border: current ? `1px solid ${color}` : 'none',
-                    transition: 'all .3s',
-                  }}/>
-                );
+                const done = aIdx < currentIdx, current = aIdx === currentIdx;
+                return <div key={id} style={{ width:current?14:7, height:7, borderRadius:4, background:done?color:current?color:`${color}25`, border:current?`1px solid ${color}`:'none', transition:'all .3s' }}/>;
               })}
             </div>
-            {gi < grupos.length - 1 && <div style={{ width:4, height:1, background:'#e2e8f0', marginLeft:2 }}/>}
+            {gi < grupos.length-1 && <div style={{ width:4, height:1, background:'#e2e8f0', marginLeft:2 }}/>}
           </div>
         );
       })}
@@ -103,7 +92,7 @@ function MiniArenas({ copas, arenaActual }) {
   );
 }
 
-/* ── ANALYST CARD FIFA ── */
+/* ── ANALYST CARD FIFA con Rajdhani ── */
 function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
   const group     = getArenaGroup(arena);
   const theme     = ARENA_THEMES[group];
@@ -112,7 +101,6 @@ function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
   const initials  = nombre ? nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SO';
   const W = size === 'lg' ? 240 : size === 'md' ? 190 : 150;
   const H = Math.round(W * 1.56);
-  const F = `'Bebas Neue','Impact','Arial Narrow',sans-serif`;
 
   return (
     <div onClick={onClick} style={{ width:W, height:H, borderRadius:W*0.07, position:'relative', overflow:'hidden', boxShadow:`0 24px 56px ${theme.main}55, 0 4px 16px rgba(0,0,0,0.5)`, flexShrink:0, cursor:onClick?'pointer':'default' }}>
@@ -123,59 +111,75 @@ function FifaCard({ nombre, tier, skills, copas, arena, size='lg', onClick }) {
       </div>
       <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg,${theme.shine} 0%,transparent 55%,rgba(0,0,0,0.18) 100%)`, pointerEvents:'none' }}/>
       <div style={{ position:'relative', zIndex:2, height:'100%', display:'flex', flexDirection:'column', padding:`${W*0.06}px ${W*0.07}px` }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.005 }}>
+
+        {/* top */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.01 }}>
           <div>
-            <div style={{ fontFamily:F, fontSize:W*0.25, lineHeight:1, color:theme.accent, letterSpacing:-1, textShadow:`0 0 40px ${theme.accent}50` }}>{ovr}</div>
-            <div style={{ fontFamily:F, fontSize:W*0.075, color:theme.accent, letterSpacing:4, opacity:.85, marginTop:-W*0.01 }}>ANALYST</div>
+            <div style={{ fontFamily:F, fontSize:W*0.28, lineHeight:.9, color:theme.accent, fontWeight:700, letterSpacing:-1 }}>{ovr}</div>
+            <div style={{ fontFamily:F, fontSize:W*0.08, color:theme.accent, letterSpacing:3, fontWeight:700, opacity:.85 }}>ANALYST</div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, color:theme.accent, letterSpacing:1, marginTop:W*0.02, padding:`2px ${W*0.03}px`, borderRadius:20, background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>
               {arena ? arena.toUpperCase() : 'BRONCE III'}
             </div>
           </div>
           <div style={{ textAlign:'right', paddingTop:2 }}>
-            <div style={{ fontFamily:F, fontSize:W*0.052, letterSpacing:3, color:`${theme.accent}40` }}>SOCBLAST</div>
+            <div style={{ fontFamily:F, fontSize:W*0.055, letterSpacing:3, color:`${theme.accent}40`, fontWeight:600 }}>SOCBLAST</div>
             <div style={{ width:W*0.13, height:W*0.13, borderRadius:W*0.03, background:`${theme.accent}10`, border:`1px solid ${theme.accent}22`, display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto', marginTop:3 }}>
               <svg width={W*0.07} height={W*0.07} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
           </div>
         </div>
+
+        {/* avatar hexagonal */}
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
           <svg width={W*0.55} height={W*0.55} viewBox="0 0 100 100" style={{ position:'absolute' }}>
             <polygon points="50,3 94,27 94,73 50,97 6,73 6,27" fill={`${theme.accent}07`} stroke={theme.accent} strokeWidth="1.8" strokeOpacity="0.3"/>
             <polygon points="50,12 86,32 86,68 50,88 14,68 14,32" fill={`${theme.accent}04`} stroke={theme.accent} strokeWidth="0.6" strokeOpacity="0.15"/>
           </svg>
-          <div style={{ fontFamily:F, fontSize:W*0.18, color:theme.accent, letterSpacing:3, zIndex:1, textShadow:`0 2px 16px ${theme.accent}90` }}>{initials}</div>
+          <div style={{ fontFamily:F, fontSize:W*0.2, color:theme.accent, fontWeight:700, letterSpacing:3, zIndex:1 }}>{initials}</div>
         </div>
+
+        {/* nombre */}
         <div style={{ textAlign:'center', marginBottom:W*0.018 }}>
-          <div style={{ fontFamily:F, fontSize:W*0.135, letterSpacing:3, color:theme.light, textTransform:'uppercase', lineHeight:1, textShadow:'0 1px 8px rgba(0,0,0,0.6)' }}>{nombre?.split(' ')[0] || 'ANALYST'}</div>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700, color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>{TIERS[tier]||'SOC ROOKIE'}</div>
+          <div style={{ fontFamily:F, fontSize:W*0.15, letterSpacing:2, color:theme.light, textTransform:'uppercase', lineHeight:1, fontWeight:700 }}>
+            {nombre?.split(' ')[0] || 'ANALYST'}
+          </div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700, color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>
+            {TIERS[tier]||'SOC ROOKIE'}
+          </div>
         </div>
+
+        {/* sep */}
         <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:W*0.022 }}>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
           <div style={{ width:5, height:5, background:theme.accent, opacity:.5, transform:'rotate(45deg)', flexShrink:0 }}/>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
         </div>
+
+        {/* stats */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1px 1fr', gap:0, marginBottom:W*0.012 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:W*0.01 }}>
             {skillVals.slice(0,4).map(s=>(
               <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.6 }}>{s.abbr}</span>
-                <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:F, fontSize:W*0.1, color:theme.accent, fontWeight:700, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
           </div>
           <div style={{ background:theme.accent, opacity:.14, margin:`0 ${W*0.042}px` }}/>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.013 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:W*0.01 }}>
             {skillVals.slice(4).map(s=>(
               <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.6 }}>{s.abbr}</span>
-                <span style={{ fontFamily:F, fontSize:W*0.092, color:theme.accent, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
+                <span style={{ fontFamily:F, fontSize:W*0.1, color:theme.accent, fontWeight:700, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* footer */}
         <div style={{ display:'flex', alignItems:'center', gap:5 }}>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
-          <span style={{ fontFamily:F, fontSize:W*0.036, letterSpacing:2, color:theme.accent, opacity:.4 }}>{copas.toLocaleString()} COPAS</span>
+          <span style={{ fontFamily:F, fontSize:W*0.04, letterSpacing:2, color:theme.accent, fontWeight:600, opacity:.4 }}>{copas.toLocaleString()} COPAS</span>
           <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
         </div>
       </div>
@@ -207,11 +211,7 @@ const ActivityHeatmap = ({ historial }) => {
   const gc=c=>c===0?'rgba(79,70,229,0.07)':c===1?'rgba(79,70,229,0.3)':c===2?'rgba(79,70,229,0.55)':'rgba(79,70,229,0.85)';
   return (
     <div style={{display:'flex',gap:'3px'}}>
-      {weeks.map((wk,wi)=>(
-        <div key={wi} style={{display:'flex',flexDirection:'column',gap:'3px'}}>
-          {wk.map((d,di)=>(<div key={di} title={`${d.date.toLocaleDateString('es-ES')} · ${d.count}`} style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:gc(d.count),cursor:'default'}} onMouseEnter={e=>e.target.style.transform='scale(1.4)'} onMouseLeave={e=>e.target.style.transform='scale(1)'}/>))}
-        </div>
-      ))}
+      {weeks.map((wk,wi)=>(<div key={wi} style={{display:'flex',flexDirection:'column',gap:'3px'}}>{wk.map((d,di)=>(<div key={di} title={`${d.date.toLocaleDateString('es-ES')} · ${d.count}`} style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:gc(d.count)}} onMouseEnter={e=>e.target.style.transform='scale(1.4)'} onMouseLeave={e=>e.target.style.transform='scale(1)'}/>))}</div>))}
     </div>
   );
 };
@@ -226,7 +226,7 @@ const calcStreak = hist => {
 
 const IC = {
   cup:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
-  flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
+  flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
   bolt:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   shield: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   target: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
@@ -239,6 +239,7 @@ const IC = {
   planet: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="7"/><path d="M3 12c0 0 5-8 18 0"/><path d="M3 12c0 0 5 8 18 0"/></svg>,
   fire:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
   clock:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  brain:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
 };
 const Icon = ({name,size=15,color='currentColor'}) => (
   <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',color,width:size,height:size,flexShrink:0}}>
@@ -262,41 +263,39 @@ function ComingSoon({ title, desc, icon, color='#4f46e5' }) {
   );
 }
 
-/* ── ICONOS SVG PARA CARRUSEL ── */
 const SesionIllustration = () => (
-  <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="20" y="30" width="140" height="90" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(147,197,253,0.2)" strokeWidth="1"/>
-    <rect x="30" y="42" width="120" height="8" rx="4" fill="rgba(239,68,68,0.5)"/>
-    <rect x="30" y="55" width="85" height="6" rx="3" fill="rgba(249,115,22,0.4)"/>
-    <rect x="30" y="66" width="100" height="6" rx="3" fill="rgba(234,179,8,0.3)"/>
-    <rect x="30" y="80" width="60" height="5" rx="2.5" fill="rgba(255,255,255,0.1)"/>
-    <rect x="30" y="89" width="80" height="5" rx="2.5" fill="rgba(255,255,255,0.08)"/>
-    <rect x="30" y="98" width="50" height="5" rx="2.5" fill="rgba(255,255,255,0.06)"/>
-    <circle cx="148" cy="42" r="20" fill="rgba(37,99,235,0.25)" stroke="rgba(147,197,253,0.4)" strokeWidth="1.5"/>
-    <text x="148" y="48" textAnchor="middle" fontFamily="'Bebas Neue','Impact',sans-serif" fontSize="16" fill="#93c5fd">72</text>
-    <rect x="20" y="130" width="65" height="28" rx="8" fill="rgba(37,99,235,0.35)" stroke="rgba(147,197,253,0.3)" strokeWidth="1"/>
-    <rect x="95" y="130" width="65" height="28" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-    <text x="52" y="149" textAnchor="middle" fontFamily="'Inter',sans-serif" fontSize="9" fontWeight="700" fill="#93c5fd">TRIAJE</text>
-    <text x="127" y="149" textAnchor="middle" fontFamily="'Inter',sans-serif" fontSize="9" fontWeight="700" fill="rgba(255,255,255,0.4)">LOGS</text>
+  <svg width="170" height="170" viewBox="0 0 170 170" fill="none">
+    <rect x="15" y="25" width="140" height="88" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(147,197,253,0.2)" strokeWidth="1"/>
+    <rect x="25" y="38" width="120" height="8" rx="4" fill="rgba(239,68,68,0.5)"/>
+    <rect x="25" y="51" width="85" height="6" rx="3" fill="rgba(249,115,22,0.4)"/>
+    <rect x="25" y="62" width="100" height="6" rx="3" fill="rgba(234,179,8,0.3)"/>
+    <rect x="25" y="75" width="60" height="5" rx="2.5" fill="rgba(255,255,255,0.1)"/>
+    <rect x="25" y="84" width="80" height="5" rx="2.5" fill="rgba(255,255,255,0.07)"/>
+    <circle cx="142" cy="40" r="18" fill="rgba(37,99,235,0.25)" stroke="rgba(147,197,253,0.4)" strokeWidth="1.5"/>
+    <text x="142" y="46" textAnchor="middle" fontFamily="Rajdhani,sans-serif" fontSize="15" fontWeight="700" fill="#93c5fd">72</text>
+    <rect x="15" y="123" width="62" height="26" rx="7" fill="rgba(37,99,235,0.35)" stroke="rgba(147,197,253,0.3)" strokeWidth="1"/>
+    <rect x="88" y="123" width="62" height="26" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+    <text x="46" y="141" textAnchor="middle" fontFamily="Rajdhani,sans-serif" fontSize="10" fontWeight="700" fill="#93c5fd">TRIAJE</text>
+    <text x="119" y="141" textAnchor="middle" fontFamily="Rajdhani,sans-serif" fontSize="10" fontWeight="700" fill="rgba(255,255,255,0.35)">LOGS</text>
   </svg>
 );
 
 const LabIllustration = () => (
-  <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="15" y="25" width="150" height="100" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(110,231,183,0.15)" strokeWidth="1"/>
-    <rect x="15" y="25" width="150" height="18" rx="8" fill="rgba(255,255,255,0.06)"/>
-    <circle cx="27" cy="34" r="4" fill="#FF5F57"/>
-    <circle cx="39" cy="34" r="4" fill="#FEBC2E"/>
-    <circle cx="51" cy="34" r="4" fill="#28C840"/>
-    <text x="25" y="60" fontFamily="'Courier New',monospace" fontSize="8" fill="#6ee7b7">$ grep "mimikatz" sysmon.log</text>
-    <text x="25" y="72" fontFamily="'Courier New',monospace" fontSize="8" fill="#f87171">mimikatz.exe  PID:1337  SYSTEM</text>
-    <text x="25" y="84" fontFamily="'Courier New',monospace" fontSize="8" fill="#6ee7b7">$ netstat -an | grep EST</text>
-    <text x="25" y="96" fontFamily="'Courier New',monospace" fontSize="8" fill="#f87171">10.0.0.15 → 185.220.101.47:4444</text>
-    <text x="25" y="110" fontFamily="'Courier New',monospace" fontSize="8" fill="#58a6ff">$ _</text>
-    <rect x="15" y="135" width="70" height="22" rx="6" fill="rgba(16,185,129,0.15)" stroke="rgba(110,231,183,0.3)" strokeWidth="1"/>
-    <rect x="95" y="135" width="70" height="22" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-    <text x="50" y="150" textAnchor="middle" fontFamily="'Inter',sans-serif" fontSize="8" fontWeight="700" fill="#6ee7b7">SIEM</text>
-    <text x="130" y="150" textAnchor="middle" fontFamily="'Inter',sans-serif" fontSize="8" fontWeight="700" fill="rgba(255,255,255,0.3)">NETWORK</text>
+  <svg width="170" height="170" viewBox="0 0 170 170" fill="none">
+    <rect x="10" y="20" width="150" height="105" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(110,231,183,0.15)" strokeWidth="1"/>
+    <rect x="10" y="20" width="150" height="18" rx="8" fill="rgba(255,255,255,0.06)"/>
+    <circle cx="22" cy="29" r="4" fill="#FF5F57"/>
+    <circle cx="34" cy="29" r="4" fill="#FEBC2E"/>
+    <circle cx="46" cy="29" r="4" fill="#28C840"/>
+    <text x="20" y="54" fontFamily="Courier New,monospace" fontSize="8" fill="#6ee7b7">$ grep "mimikatz" sysmon.log</text>
+    <text x="20" y="66" fontFamily="Courier New,monospace" fontSize="8" fill="#f87171">mimikatz.exe PID:1337 SYSTEM</text>
+    <text x="20" y="78" fontFamily="Courier New,monospace" fontSize="8" fill="#6ee7b7">$ netstat -an | grep EST</text>
+    <text x="20" y="90" fontFamily="Courier New,monospace" fontSize="8" fill="#f87171">10.0.0.15 → 185.220.101.47:4444</text>
+    <text x="20" y="106" fontFamily="Courier New,monospace" fontSize="8" fill="#58a6ff">$ _</text>
+    <rect x="10" y="135" width="68" height="22" rx="6" fill="rgba(16,185,129,0.15)" stroke="rgba(110,231,183,0.3)" strokeWidth="1"/>
+    <rect x="90" y="135" width="68" height="22" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+    <text x="44" y="150" textAnchor="middle" fontFamily="Rajdhani,sans-serif" fontSize="10" fontWeight="700" fill="#6ee7b7">SIEM</text>
+    <text x="124" y="150" textAnchor="middle" fontFamily="Rajdhani,sans-serif" fontSize="10" fontWeight="700" fill="rgba(255,255,255,0.3)">NETWORK</text>
   </svg>
 );
 
@@ -391,7 +390,6 @@ export default function DashboardAnalista() {
             </button>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-            {/* ARENAS MINI */}
             <div style={{padding:'5px 12px',borderRadius:'8px',backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:10}}>
               <MiniArenas copas={copas} arenaActual={arenaObj}/>
               <div style={{width:1,height:14,background:'#e2e8f0'}}/>
@@ -433,7 +431,7 @@ export default function DashboardAnalista() {
                   {val:sesiones, label:'SESIONES', color:ACC, bg:`${ACC}08`, border:`${ACC}18`},
                 ].map((s,i)=>(
                   <div key={i} style={{padding:'14px 20px',borderRadius:14,background:s.bg,border:`1px solid ${s.border}`,textAlign:'center',minWidth:85}}>
-                    <div style={{fontFamily:"'Bebas Neue','Impact','Arial Narrow',sans-serif",fontSize:42,lineHeight:1,color:s.color,letterSpacing:-1}}>{s.val}</div>
+                    <div style={{fontFamily:F,fontSize:42,lineHeight:1,color:s.color,fontWeight:700,letterSpacing:-1}}>{s.val}</div>
                     <div style={{fontSize:9,fontWeight:800,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginTop:2}}>{s.label}</div>
                   </div>
                 ))}
@@ -488,10 +486,8 @@ export default function DashboardAnalista() {
             </div>
             <div style={{overflow:'hidden',borderRadius:'20px'}}>
               <div style={{display:'flex',transition:'transform .45s cubic-bezier(.4,0,.2,1)',transform:`translateX(-${carruselIdx*100}%)`}}>
-
-                {/* SESIONES */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(37,99,235,0.25)',boxShadow:'0 8px 32px rgba(37,99,235,0.12)'}}>
-                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:40}}>
+                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#1e1b4b 0%,#1e3a8a 50%,#1d4ed8 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:32}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,0.15),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
                       <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(147,197,253,0.3)',backgroundColor:'rgba(37,99,235,0.25)',marginBottom:'16px'}}>
@@ -512,19 +508,14 @@ export default function DashboardAnalista() {
                         <Icon name="bolt" size={15} color="#fff"/> Jugar ahora →
                       </button>
                     </div>
-                    {/* ILUSTRACIÓN SESIÓN */}
-                    <div style={{flexShrink:0,opacity:.85,position:'relative',zIndex:1}}>
-                      <SesionIllustration/>
-                    </div>
+                    <div style={{flexShrink:0,opacity:.9,position:'relative',zIndex:1}}><SesionIllustration/></div>
                   </div>
                   <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
                     {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#2563eb':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
                   </div>
                 </div>
-
-                {/* LABS */}
                 <div style={{minWidth:'100%',borderRadius:'20px',overflow:'hidden',border:'1px solid rgba(52,211,153,0.3)',boxShadow:'0 8px 32px rgba(16,185,129,0.12)'}}>
-                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:40}}>
+                  <div style={{padding:'36px 44px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:32}}>
                     <div style={{position:'absolute',top:'-80px',right:'-60px',width:'320px',height:'320px',borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.12),transparent)',pointerEvents:'none'}}/>
                     <div style={{position:'relative',zIndex:1}}>
                       <div style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'5px 13px',borderRadius:'100px',border:'1px solid rgba(110,231,183,0.25)',backgroundColor:'rgba(16,185,129,0.2)',marginBottom:'16px'}}>
@@ -545,10 +536,7 @@ export default function DashboardAnalista() {
                         <Icon name="flask" size={15} color="#fff"/> Entrar al Lab →
                       </button>
                     </div>
-                    {/* ILUSTRACIÓN LAB */}
-                    <div style={{flexShrink:0,opacity:.85,position:'relative',zIndex:1}}>
-                      <LabIllustration/>
-                    </div>
+                    <div style={{flexShrink:0,opacity:.9,position:'relative',zIndex:1}}><LabIllustration/></div>
                   </div>
                   <div style={{backgroundColor:'rgba(248,250,252,0.95)',padding:'12px',display:'flex',justifyContent:'center',gap:'8px',borderTop:'1px solid #e8eaf0'}}>
                     {[0,1].map(i=><div key={i} onClick={()=>setCarruselIdx(i)} style={{width:carruselIdx===i?'24px':'8px',height:'8px',borderRadius:'4px',backgroundColor:carruselIdx===i?'#10b981':'#cbd5e1',cursor:'pointer',transition:'all .35s'}}/>)}
@@ -695,7 +683,7 @@ export default function DashboardAnalista() {
                 ))}
               </div>
             </div>
-            {empleoTab==='ofertas'&&<ComingSoon title="Ofertas de empleo SOC" desc="Empresas buscarán analistas por su Analyst Card. Tu OVR y skills hablarán por ti." icon="users" color="#4f46e5"/>}
+            {empleoTab==='ofertas'&&<ComingSoon title="Ofertas de empleo SOC" desc="Empresas buscarán analistas por su Analyst Card." icon="users" color="#4f46e5"/>}
             {empleoTab==='certs'&&<ComingSoon title="Certificaciones recomendadas" desc="Recomendaciones según tu Analyst Card actual." icon="award" color="#7c3aed"/>}
             {empleoTab==='bootcamps'&&<ComingSoon title="Bootcamps y cursos SOC" desc="Selección curada ordenada por relevancia para tu perfil." icon="book" color="#0891b2"/>}
             {empleoTab==='retos'&&<ComingSoon title="Retos y plataformas externas" desc="TryHackMe, Blue Team Labs, CyberDefenders integrados con tu perfil." icon="shield" color="#059669"/>}
