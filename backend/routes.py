@@ -879,3 +879,78 @@ async def historial_labs(email: str = Depends(get_current_user)):
     for lab in labs:
         lab["_id"] = str(lab["_id"])
     return labs
+# ── AVATAR ────────────────────────────────────────────────────────────────────
+import httpx
+from fastapi.responses import Response as FastAPIResponse
+
+@router.get("/avatar/proxy")
+async def avatar_proxy(
+    top: str = "shortHairShortFlat",
+    hairColor: str = "2c1b18",
+    accessories: str = "blank",
+    facialHair: str = "blank",
+    facialHairColor: str = "2c1b18",
+    clothe: str = "hoodie",
+    clotheColor: str = "262e33",
+    skin: str = "light",
+    eyes: str = "default",
+    eyebrow: str = "default",
+    mouth: str = "default",
+    size: int = 200,
+):
+    """
+    Proxy para DiceBear — el frontend no puede llamar a DiceBear
+    directamente por CORS, así que el backend lo hace y devuelve el SVG.
+    """
+    params = {
+        "seed":            top + hairColor + clothe,
+        "top":             top,
+        "hairColor":       hairColor,
+        "accessories":     accessories,
+        "facialHair":      facialHair,
+        "facialHairColor": facialHairColor,
+        "clothe":          clothe,
+        "clotheColor":     clotheColor,
+        "skin":            skin,
+        "eyes":            eyes,
+        "eyebrow":         eyebrow,
+        "mouth":           mouth,
+        "size":            size,
+        "backgroundColor": "b6e3f4",
+    }
+    url = "https://api.dicebear.com/7.x/avataaars/svg"
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(url, params=params)
+            r.raise_for_status()
+            return FastAPIResponse(
+                content=r.content,
+                media_type="image/svg+xml",
+                headers={"Cache-Control": "public, max-age=86400"},
+            )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Error obteniendo avatar: {str(e)}")
+
+
+@router.post("/me/avatar")
+async def update_avatar(datos: dict, email: str = Depends(get_current_user)):
+    """Guarda la configuración del avatar DiceBear del usuario."""
+    db = get_db()
+    avatar_config = datos.get("avatar_config")
+    if not avatar_config or not isinstance(avatar_config, dict):
+        raise HTTPException(status_code=400, detail="avatar_config requerido")
+
+    # Solo campos válidos
+    campos_validos = {
+        "top", "hairColor", "accessories", "facialHair",
+        "facialHairColor", "clothe", "clotheColor", "skin",
+        "eyes", "eyebrow", "mouth"
+    }
+    config_limpia = {k: str(v) for k, v in avatar_config.items() if k in campos_validos}
+
+    await db.users.update_one(
+        {"email": email},
+        {"$set": {"avatar_config": config_limpia}}
+    )
+    return {"ok": True, "avatar_config": config_limpia}
