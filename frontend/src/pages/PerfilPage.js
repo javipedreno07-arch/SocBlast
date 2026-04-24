@@ -151,22 +151,13 @@ const DEFAULT_AVATAR_CONFIG = {
   clotheColor:'262e33', skin:'light', eyes:'default', eyebrow:'default', mouth:'default',
 };
 
-/* ── URL a través del proxy del backend para evitar bloqueos CORS ── */
 function buildAvatarUrl(config={}, size=200) {
   const c = {...DEFAULT_AVATAR_CONFIG, ...config};
   const p = new URLSearchParams({
-    top:             c.top,
-    hairColor:       c.hairColor,
-    accessories:     c.accessories,
-    facialHair:      c.facialHair,
-    facialHairColor: c.facialHairColor,
-    clothe:          c.clothe,
-    clotheColor:     c.clotheColor,
-    skin:            c.skin,
-    eyes:            c.eyes,
-    eyebrow:         c.eyebrow,
-    mouth:           c.mouth,
-    size,
+    top: c.top, hairColor: c.hairColor, accessories: c.accessories,
+    facialHair: c.facialHair, facialHairColor: c.facialHairColor,
+    clothe: c.clothe, clotheColor: c.clotheColor, skin: c.skin,
+    eyes: c.eyes, eyebrow: c.eyebrow, mouth: c.mouth, size,
   });
   return `${API}/api/avatar/proxy?${p.toString()}`;
 }
@@ -216,9 +207,14 @@ const getArenaColor = (arena='') => {
   return '#d97706';
 };
 
-/* ── AVATAR COMPONENT ── */
 function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
   const [loaded, setLoaded] = useState(false);
+  const prevKey = useRef('');
+  const key = avatarConfig ? JSON.stringify(avatarConfig) : '';
+
+  useEffect(() => {
+    if (key !== prevKey.current) { setLoaded(false); prevKey.current = key; }
+  }, [key]);
 
   if (foto) return (
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.2)'}}>
@@ -230,10 +226,11 @@ function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
       {!loaded && (
         <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#b6e3f4'}}>
-          <div style={{width:size*0.25,height:size*0.25,border:`2px solid rgba(79,70,229,0.2)`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+          <div style={{width:Math.max(10,size*0.25),height:Math.max(10,size*0.25),border:`2px solid rgba(79,70,229,0.2)`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
         </div>
       )}
       <img
+        key={key}
         src={buildAvatarUrl(avatarConfig, size*2)}
         alt={name}
         width={size} height={size}
@@ -586,9 +583,14 @@ export default function PerfilPage() {
                   <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20,fontFamily:'monospace'}}>PREVIEW</p>
                   <div className="avatar-float" style={{display:'flex',justifyContent:'center',marginBottom:16}}>
                     <div style={{width:160,height:160,borderRadius:'50%',overflow:'hidden',border:'3px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
-                      {imgLoading&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(182,227,244,0.8)'}}><div style={{width:24,height:24,border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
+                      {imgLoading && (
+                        <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(182,227,244,0.8)'}}>
+                          <div style={{width:24,height:24,border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+                        </div>
+                      )}
                       <img
-                        src={buildAvatarUrl(avatarConfig, 320)}
+                        key={JSON.stringify(avatarConfig)}
+                        src={buildAvatarUrl(avatarConfig, 200)}
                         alt="avatar preview"
                         width={160} height={160}
                         onLoadStart={()=>setImgLoading(true)}
