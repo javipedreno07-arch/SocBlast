@@ -24,6 +24,7 @@ import LabPage from './pages/LabPage';
 import VerificarCertificado from './pages/VerificarCertificado';
 import MaintenancePage from './pages/MaintenancePage';
 import AnalystCardPage from './pages/AnalystCardPage';
+import AvatarPage from './pages/AvatarPage';
 
 const MAINTENANCE_MODE = false;
 
@@ -96,6 +97,7 @@ const AppRoutes = ({ onGuestLogin }) => {
       <Route path="/perfil"       element={<PrivateRoute rol="analista"><PerfilPage /></PrivateRoute>} />
       <Route path="/certificado"  element={<PrivateRoute rol="analista"><CertificadoPage /></PrivateRoute>} />
       <Route path="/analyst-card" element={<PrivateRoute rol="analista"><AnalystCardPage /></PrivateRoute>} />
+      <Route path="/avatar"       element={<PrivateRoute rol="analista"><AvatarPage /></PrivateRoute>} />
       <Route path="/lab"          element={<LabPage />} />
 
       {/* ── Rutas empresa ── */}
