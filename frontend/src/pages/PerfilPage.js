@@ -6,8 +6,6 @@ import axios from 'axios';
 const API = 'https://socblast-production.up.railway.app';
 const ACC  = '#4f46e5';
 
-const DICEBEAR_BASE = 'https://api.dicebear.com/7.x/avataaars/svg';
-
 const AVATAR_OPTS = {
   top: [
     {id:'shortHairShortFlat',  label:'Corto liso'},
@@ -153,17 +151,24 @@ const DEFAULT_AVATAR_CONFIG = {
   clotheColor:'262e33', skin:'light', eyes:'default', eyebrow:'default', mouth:'default',
 };
 
+/* ── URL a través del proxy del backend para evitar bloqueos CORS ── */
 function buildAvatarUrl(config={}, size=200) {
   const c = {...DEFAULT_AVATAR_CONFIG, ...config};
   const p = new URLSearchParams({
-    seed: c.top+c.hairColor+c.clothe,
-    top: c.top, hairColor: c.hairColor, accessories: c.accessories,
-    facialHair: c.facialHair, facialHairColor: c.facialHairColor,
-    clothe: c.clothe, clotheColor: c.clotheColor, skin: c.skin,
-    eyes: c.eyes, eyebrow: c.eyebrow, mouth: c.mouth,
-    size, backgroundColor: 'b6e3f4',
+    top:             c.top,
+    hairColor:       c.hairColor,
+    accessories:     c.accessories,
+    facialHair:      c.facialHair,
+    facialHairColor: c.facialHairColor,
+    clothe:          c.clothe,
+    clotheColor:     c.clotheColor,
+    skin:            c.skin,
+    eyes:            c.eyes,
+    eyebrow:         c.eyebrow,
+    mouth:           c.mouth,
+    size,
   });
-  return `${DICEBEAR_BASE}?${p.toString()}`;
+  return `${API}/api/avatar/proxy?${p.toString()}`;
 }
 
 function randomAvatarConfig() {
@@ -211,23 +216,9 @@ const getArenaColor = (arena='') => {
   return '#d97706';
 };
 
-/* ── AVATAR COMPONENT — carga SVG inline via fetch para evitar bloqueos CSP ── */
+/* ── AVATAR COMPONENT ── */
 function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
-  const [svgContent, setSvgContent] = useState('');
-  const [loading,    setLoading]    = useState(false);
-  const prevUrl = useRef('');
-
-  useEffect(() => {
-    if (foto || !avatarConfig) { setSvgContent(''); return; }
-    const url = buildAvatarUrl(avatarConfig, size * 2);
-    if (url === prevUrl.current) return;
-    prevUrl.current = url;
-    setLoading(true);
-    fetch(url)
-      .then(r => r.text())
-      .then(svg => { setSvgContent(svg); setLoading(false); })
-      .catch(() => { setSvgContent(''); setLoading(false); });
-  }, [avatarConfig, foto, size]);
+  const [loaded, setLoaded] = useState(false);
 
   if (foto) return (
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.2)'}}>
@@ -235,20 +226,24 @@ function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
     </div>
   );
 
-  if (avatarConfig && svgContent) return (
-    <div
-      style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#b6e3f4'}}
-      dangerouslySetInnerHTML={{__html: svgContent}}
-    />
-  );
-
-  if (loading) return (
-    <div style={{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#f0f4ff,#e8eaff)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid rgba(79,70,229,0.15)'}}>
-      <div style={{width:size*0.28,height:size*0.28,border:`2px solid #e2e8f0`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+  if (avatarConfig) return (
+    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
+      {!loaded && (
+        <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#b6e3f4'}}>
+          <div style={{width:size*0.25,height:size*0.25,border:`2px solid rgba(79,70,229,0.2)`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+        </div>
+      )}
+      <img
+        src={buildAvatarUrl(avatarConfig, size*2)}
+        alt={name}
+        width={size} height={size}
+        onLoad={()=>setLoaded(true)}
+        onError={()=>setLoaded(true)}
+        style={{width:'100%',height:'100%',objectFit:'cover',opacity:loaded?1:0,transition:'opacity .3s'}}
+      />
     </div>
   );
 
-  // fallback iniciales
   const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
   return (
     <div style={{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#4f46e5,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:'2px solid rgba(79,70,229,0.2)'}}>
@@ -591,16 +586,15 @@ export default function PerfilPage() {
                   <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20,fontFamily:'monospace'}}>PREVIEW</p>
                   <div className="avatar-float" style={{display:'flex',justifyContent:'center',marginBottom:16}}>
                     <div style={{width:160,height:160,borderRadius:'50%',overflow:'hidden',border:'3px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
-                      {imgLoading&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.8)'}}><div style={{width:20,height:20,border:'2px solid #e2e8f0',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
+                      {imgLoading&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(182,227,244,0.8)'}}><div style={{width:24,height:24,border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
                       <img
-                        src={buildAvatarUrl(avatarConfig,320)}
-                        alt="avatar"
+                        src={buildAvatarUrl(avatarConfig, 320)}
+                        alt="avatar preview"
                         width={160} height={160}
                         onLoadStart={()=>setImgLoading(true)}
                         onLoad={()=>setImgLoading(false)}
                         onError={()=>setImgLoading(false)}
                         style={{width:'100%',height:'100%',objectFit:'cover'}}
-                        crossOrigin="anonymous"
                       />
                     </div>
                   </div>
