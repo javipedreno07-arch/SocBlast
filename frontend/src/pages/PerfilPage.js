@@ -6,7 +6,6 @@ import axios from 'axios';
 const API = 'https://socblast-production.up.railway.app';
 const ACC  = '#4f46e5';
 
-/* ── DICEBEAR ─────────────────────────────────────────────────────────────── */
 const DICEBEAR_BASE = 'https://api.dicebear.com/7.x/avataaars/svg';
 
 const AVATAR_OPTS = {
@@ -98,27 +97,27 @@ const AVATAR_OPTS = {
     {id:'black',     label:'Negro',     hex:'#614335'},
   ],
   eyes: [
-    {id:'default',    label:'Normal'},
-    {id:'happy',      label:'Feliz'},
-    {id:'wink',       label:'Guiño'},
-    {id:'closed',     label:'Cerrados'},
-    {id:'surprised',  label:'Sorprendido'},
-    {id:'squint',     label:'Entornados'},
-    {id:'side',       label:'Lateral'},
-    {id:'hearts',     label:'Corazones'},
-    {id:'eyeRoll',    label:'En blanco'},
-    {id:'xDizzy',     label:'KO'},
-    {id:'dizzy',      label:'Mareado'},
-    {id:'cry',        label:'Llorando'},
+    {id:'default',   label:'Normal'},
+    {id:'happy',     label:'Feliz'},
+    {id:'wink',      label:'Guiño'},
+    {id:'closed',    label:'Cerrados'},
+    {id:'surprised', label:'Sorprendido'},
+    {id:'squint',    label:'Entornados'},
+    {id:'side',      label:'Lateral'},
+    {id:'hearts',    label:'Corazones'},
+    {id:'eyeRoll',   label:'En blanco'},
+    {id:'xDizzy',    label:'KO'},
+    {id:'dizzy',     label:'Mareado'},
+    {id:'cry',       label:'Llorando'},
   ],
   eyebrow: [
-    {id:'default',              label:'Normal'},
-    {id:'defaultNatural',       label:'Natural'},
-    {id:'flatNatural',          label:'Planas'},
-    {id:'raisedExcited',        label:'Levantadas'},
-    {id:'sadConcerned',         label:'Triste'},
-    {id:'unibrow',              label:'Moneja'},
-    {id:'upDown',               label:'Arriba-abajo'},
+    {id:'default',        label:'Normal'},
+    {id:'defaultNatural', label:'Natural'},
+    {id:'flatNatural',    label:'Planas'},
+    {id:'raisedExcited',  label:'Levantadas'},
+    {id:'sadConcerned',   label:'Triste'},
+    {id:'unibrow',        label:'Moneja'},
+    {id:'upDown',         label:'Arriba-abajo'},
   ],
   mouth: [
     {id:'default',    label:'Normal'},
@@ -136,16 +135,16 @@ const AVATAR_OPTS = {
 
 const AVATAR_SECTIONS = [
   {key:'top',            label:'Pelo / Sombrero'},
-  {key:'hairColor',      label:'Color de pelo',       type:'color'},
-  {key:'skin',           label:'Tono de piel',         type:'color'},
+  {key:'hairColor',      label:'Color de pelo',        type:'color'},
+  {key:'skin',           label:'Tono de piel',          type:'color'},
   {key:'eyes',           label:'Ojos'},
   {key:'eyebrow',        label:'Cejas'},
   {key:'mouth',          label:'Boca'},
   {key:'accessories',    label:'Accesorios'},
   {key:'facialHair',     label:'Vello facial'},
-  {key:'facialHairColor',label:'Color vello',          type:'color'},
+  {key:'facialHairColor',label:'Color vello',           type:'color'},
   {key:'clothe',         label:'Ropa'},
-  {key:'clotheColor',    label:'Color de ropa',        type:'color'},
+  {key:'clotheColor',    label:'Color de ropa',         type:'color'},
 ];
 
 const DEFAULT_AVATAR_CONFIG = {
@@ -162,7 +161,7 @@ function buildAvatarUrl(config={}, size=200) {
     facialHair: c.facialHair, facialHairColor: c.facialHairColor,
     clothe: c.clothe, clotheColor: c.clotheColor, skin: c.skin,
     eyes: c.eyes, eyebrow: c.eyebrow, mouth: c.mouth,
-    size, backgroundColor: 'transparent',
+    size, backgroundColor: 'b6e3f4',
   });
   return `${DICEBEAR_BASE}?${p.toString()}`;
 }
@@ -177,7 +176,6 @@ function totalCombinations() {
   return Object.values(AVATAR_OPTS).reduce((a,opts)=>a*opts.length,1).toLocaleString('es-ES');
 }
 
-/* ── TIERS / SKILLS DATA ──────────────────────────────────────────────────── */
 const TIERS_DATA = [
   {tier:1,name:'SOC Rookie',    xp:'0',      xpMax:'500',    color:'#64748b',desc:'Primeros pasos en el mundo SOC.',         skills:['Conceptos básicos','Navegación SIEM']},
   {tier:2,name:'SOC Analyst',   xp:'500',    xpMax:'1.500',  color:'#3b82f6',desc:'Identifica amenazas básicas con soltura.', skills:['Análisis de logs','Clasificación alertas']},
@@ -213,18 +211,43 @@ const getArenaColor = (arena='') => {
   return '#d97706';
 };
 
-/* ── AVATAR COMPONENT ─────────────────────────────────────────────────────── */
+/* ── AVATAR COMPONENT — carga SVG inline via fetch para evitar bloqueos CSP ── */
 function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
+  const [svgContent, setSvgContent] = useState('');
+  const [loading,    setLoading]    = useState(false);
+  const prevUrl = useRef('');
+
+  useEffect(() => {
+    if (foto || !avatarConfig) { setSvgContent(''); return; }
+    const url = buildAvatarUrl(avatarConfig, size * 2);
+    if (url === prevUrl.current) return;
+    prevUrl.current = url;
+    setLoading(true);
+    fetch(url)
+      .then(r => r.text())
+      .then(svg => { setSvgContent(svg); setLoading(false); })
+      .catch(() => { setSvgContent(''); setLoading(false); });
+  }, [avatarConfig, foto, size]);
+
   if (foto) return (
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.2)'}}>
       <img src={foto} alt={name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
     </div>
   );
-  if (avatarConfig) return (
-    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#f0f4ff'}}>
-      <img src={buildAvatarUrl(avatarConfig,size*2)} alt={name} width={size} height={size} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+
+  if (avatarConfig && svgContent) return (
+    <div
+      style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#b6e3f4'}}
+      dangerouslySetInnerHTML={{__html: svgContent}}
+    />
+  );
+
+  if (loading) return (
+    <div style={{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#f0f4ff,#e8eaff)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid rgba(79,70,229,0.15)'}}>
+      <div style={{width:size*0.28,height:size*0.28,border:`2px solid #e2e8f0`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
+
   // fallback iniciales
   const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
   return (
@@ -234,7 +257,6 @@ function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
   );
 }
 
-/* ── MAIN ─────────────────────────────────────────────────────────────────── */
 export default function PerfilPage() {
   const {token} = useAuth();
   const navigate = useNavigate();
@@ -270,7 +292,7 @@ export default function PerfilPage() {
         preferencias:    r.data.preferencias||[],
         perfil_publico:  r.data.perfil_publico!==false,
       });
-      if (r.data.foto_perfil) { setFotoPreview(r.data.foto_perfil); setFotoBase64(r.data.foto_perfil); }
+      if (r.data.foto_perfil)   { setFotoPreview(r.data.foto_perfil); setFotoBase64(r.data.foto_perfil); }
       if (r.data.avatar_config) setAvatarConfig({...DEFAULT_AVATAR_CONFIG,...r.data.avatar_config});
     } catch {}
     setLoading(false);
@@ -358,20 +380,17 @@ export default function PerfilPage() {
 
   const currentAvatarSection = AVATAR_SECTIONS.find(s=>s.key===avatarSection);
   const currentAvatarOpts    = AVATAR_OPTS[avatarSection]||[];
-  const previewUrl           = buildAvatarUrl(avatarConfig,300);
 
   return (
     <>
       <style>{css}</style>
 
-      {/* TOAST perfil */}
       {saved && (
         <div style={{position:'fixed',bottom:28,left:'50%',transform:'translateX(-50%)',zIndex:9999,padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#059669,#10b981)',color:'#fff',fontSize:14,fontWeight:700,boxShadow:'0 8px 32px rgba(5,150,105,0.35)',animation:'toastIn .3s ease',display:'flex',alignItems:'center',gap:8}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Perfil guardado correctamente
         </div>
       )}
-      {/* TOAST avatar */}
       {savedAvatar && (
         <div style={{position:'fixed',bottom:28,left:'50%',transform:'translateX(-50%)',zIndex:9999,padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#4f46e5,#6366f1)',color:'#fff',fontSize:14,fontWeight:700,boxShadow:'0 8px 32px rgba(79,70,229,0.35)',animation:'toastIn .3s ease',display:'flex',alignItems:'center',gap:8}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -381,7 +400,6 @@ export default function PerfilPage() {
 
       <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"'Inter',-apple-system,sans-serif",color:'#0f172a'}}>
 
-        {/* NAVBAR */}
         <nav style={{position:'sticky',top:0,zIndex:50,height:56,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 40px',backgroundColor:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 12px rgba(0,0,0,0.06)'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}} onClick={()=>navigate('/')}>
             <img src="/logosoc.png" alt="SocBlast" style={{height:28}}/>
@@ -389,8 +407,7 @@ export default function PerfilPage() {
           </div>
           <div style={{display:'flex',gap:2}}>
             {[{label:'← Dashboard',path:'/dashboard'},{label:'Training',path:'/training'},{label:'Ranking',path:'/ranking'},{label:'Certificado',path:'/certificado'}].map((item,i)=>(
-              <button key={i} className="nav-btn" onClick={()=>navigate(item.path)}
-                style={{padding:'5px 14px',borderRadius:7,background:'none',border:'none',color:'#64748b',fontSize:13,cursor:'pointer'}}>{item.label}</button>
+              <button key={i} className="nav-btn" onClick={()=>navigate(item.path)} style={{padding:'5px 14px',borderRadius:7,background:'none',border:'none',color:'#64748b',fontSize:13,cursor:'pointer'}}>{item.label}</button>
             ))}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -407,7 +424,6 @@ export default function PerfilPage() {
 
         <div style={{maxWidth:960,margin:'0 auto',padding:'32px 40px 60px'}}>
 
-          {/* Tabs */}
           <div style={{display:'flex',marginBottom:28,borderBottom:'1px solid #e8eaf0',gap:2}}>
             {TABS.map(tab=>(
               <button key={tab.id} className="tab-btn" onClick={()=>setVista(tab.id)}
@@ -509,7 +525,7 @@ export default function PerfilPage() {
             </div>
           )}
 
-          {/* ── EDITAR PERFIL ── */}
+          {/* ── EDITAR ── */}
           {vista==='editar' && (
             <div className="fade-up">
               <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:20,alignItems:'start'}}>
@@ -533,26 +549,26 @@ export default function PerfilPage() {
                   <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20,fontFamily:'monospace'}}>INFORMACIÓN PERSONAL</p>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
                     <div>
-                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6,letterSpacing:'0.5px'}}>NOMBRE DE USUARIO</label>
+                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6}}>NOMBRE DE USUARIO</label>
                       <input value={nombre} disabled style={{width:'100%',padding:'10px 14px',borderRadius:9,border:'1px solid #e2e8f0',fontSize:13,color:'#94a3b8',backgroundColor:'#f8fafc',cursor:'not-allowed'}}/>
                     </div>
                     <div>
-                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6,letterSpacing:'0.5px'}}>NOMBRE COMPLETO</label>
+                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6}}>NOMBRE COMPLETO</label>
                       <input className="inp-edit" value={editForm.nombre_completo} onChange={e=>setEditForm(p=>({...p,nombre_completo:e.target.value}))} placeholder="Tu nombre y apellidos" style={{width:'100%',padding:'10px 14px',borderRadius:9,border:'1px solid #e2e8f0',fontSize:13,color:'#0f172a',backgroundColor:'#fff'}}/>
                     </div>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
                     <div>
-                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6,letterSpacing:'0.5px'}}>EDAD</label>
+                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6}}>EDAD</label>
                       <input className="inp-edit" type="number" min="14" max="99" value={editForm.edad} onChange={e=>setEditForm(p=>({...p,edad:e.target.value}))} placeholder="Tu edad" style={{width:'100%',padding:'10px 14px',borderRadius:9,border:'1px solid #e2e8f0',fontSize:13,color:'#0f172a',backgroundColor:'#fff'}}/>
                     </div>
                     <div>
-                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6,letterSpacing:'0.5px'}}>UBICACIÓN</label>
+                      <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6}}>UBICACIÓN</label>
                       <input className="inp-edit" value={editForm.ubicacion} onChange={e=>setEditForm(p=>({...p,ubicacion:e.target.value}))} placeholder="Ej: Madrid, España" style={{width:'100%',padding:'10px 14px',borderRadius:9,border:'1px solid #e2e8f0',fontSize:13,color:'#0f172a',backgroundColor:'#fff'}}/>
                     </div>
                   </div>
                   <div style={{marginBottom:20}}>
-                    <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6,letterSpacing:'0.5px'}}>ÁREAS DE INTERÉS <span style={{color:'#94a3b8',fontWeight:500}}>({editForm.preferencias.length}/6)</span></label>
+                    <label style={{fontSize:11,fontWeight:700,color:'#64748b',display:'block',marginBottom:6}}>ÁREAS DE INTERÉS <span style={{color:'#94a3b8',fontWeight:500}}>({editForm.preferencias.length}/6)</span></label>
                     <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
                       {PREFERENCIAS_OPTS.map(pref=>{const sel=editForm.preferencias.includes(pref);return(
                         <button key={pref} className="pref-tag" onClick={()=>togglePreferencia(pref)} style={{padding:'5px 12px',borderRadius:100,border:`1px solid ${sel?ACC:'#e2e8f0'}`,backgroundColor:sel?`${ACC}10`:'#fff',color:sel?ACC:'#64748b',fontSize:11,fontWeight:sel?700:500,cursor:'pointer'}}>{pref}</button>
@@ -571,20 +587,26 @@ export default function PerfilPage() {
           {vista==='avatar' && (
             <div className="fade-up">
               <div style={{display:'grid',gridTemplateColumns:'260px 1fr',gap:24,alignItems:'start'}}>
-
-                {/* preview sticky */}
                 <div style={{padding:'28px 24px',borderRadius:20,backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 4px 20px rgba(0,0,0,0.07)',textAlign:'center',position:'sticky',top:80}}>
                   <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20,fontFamily:'monospace'}}>PREVIEW</p>
                   <div className="avatar-float" style={{display:'flex',justifyContent:'center',marginBottom:16}}>
-                    <div style={{width:160,height:160,borderRadius:'50%',overflow:'hidden',border:'3px solid rgba(79,70,229,0.15)',background:'linear-gradient(135deg,#f0f4ff,#e8eaff)',position:'relative'}}>
+                    <div style={{width:160,height:160,borderRadius:'50%',overflow:'hidden',border:'3px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
                       {imgLoading&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.8)'}}><div style={{width:20,height:20,border:'2px solid #e2e8f0',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
-                      <img src={previewUrl} alt="avatar" width={160} height={160} onLoadStart={()=>setImgLoading(true)} onLoad={()=>setImgLoading(false)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                      <img
+                        src={buildAvatarUrl(avatarConfig,320)}
+                        alt="avatar"
+                        width={160} height={160}
+                        onLoadStart={()=>setImgLoading(true)}
+                        onLoad={()=>setImgLoading(false)}
+                        onError={()=>setImgLoading(false)}
+                        style={{width:'100%',height:'100%',objectFit:'cover'}}
+                        crossOrigin="anonymous"
+                      />
                     </div>
                   </div>
                   <p style={{fontSize:15,fontWeight:800,color:'#0f172a',marginBottom:2}}>{nombre}</p>
                   <p style={{fontSize:11,color:'#94a3b8',marginBottom:6}}>{tierData?.name} · {userData?.arena}</p>
                   <p style={{fontSize:10,color:'#94a3b8',marginBottom:16}}>{totalCombinations()} combinaciones posibles</p>
-
                   <div style={{display:'flex',flexDirection:'column',gap:8}}>
                     <button onClick={guardarAvatar} disabled={savingAvatar}
                       style={{width:'100%',padding:'12px 0',borderRadius:10,border:'none',background:savedAvatar?'linear-gradient(135deg,#059669,#10b981)':`linear-gradient(135deg,${ACC},#6366f1)`,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:`0 4px 16px ${ACC}30`}}>
@@ -600,14 +622,10 @@ export default function PerfilPage() {
                       Resetear
                     </button>
                   </div>
-
-                  {/* mini preview ranking */}
                   <div style={{marginTop:16,padding:12,borderRadius:12,backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',textAlign:'left'}}>
                     <p style={{fontSize:9,color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:8,textAlign:'center'}}>EN EL RANKING</p>
                     <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,backgroundColor:'#fff',border:'1px solid #e8eaf0'}}>
-                      <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',flexShrink:0}}>
-                        <img src={buildAvatarUrl(avatarConfig,64)} alt="avatar" width={32} height={32} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                      </div>
+                      <Avatar name={nombre} avatarConfig={avatarConfig} size={32} foto={fotoPreview}/>
                       <div style={{flex:1}}>
                         <p style={{fontSize:12,fontWeight:700,color:'#0f172a',marginBottom:1}}>{nombre}</p>
                         <p style={{fontSize:10,color:'#94a3b8'}}>{userData?.arena}</p>
@@ -617,14 +635,11 @@ export default function PerfilPage() {
                   </div>
                 </div>
 
-                {/* opciones */}
                 <div>
                   <div style={{marginBottom:16}}>
                     <h2 style={{fontSize:20,fontWeight:900,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:4}}>Personaliza tu avatar</h2>
-                    <p style={{fontSize:13,color:'#64748b',margin:0}}>Más de {totalCombinations()} combinaciones — el avatar aparece en tu carta y en el ranking</p>
+                    <p style={{fontSize:13,color:'#64748b',margin:0}}>Más de {totalCombinations()} combinaciones — aparece en tu carta y en el ranking</p>
                   </div>
-
-                  {/* tabs sección */}
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
                     {AVATAR_SECTIONS.map(s=>(
                       <button key={s.key} onClick={()=>setAvatarSection(s.key)}
@@ -633,13 +648,10 @@ export default function PerfilPage() {
                       </button>
                     ))}
                   </div>
-
-                  {/* opciones */}
                   <div style={{background:'#fff',borderRadius:16,border:'1px solid #e8eaf0',padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.04)',minHeight:180}}>
                     <p style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginBottom:14}}>
                       {currentAvatarSection?.label} — {currentAvatarOpts.length} opciones
                     </p>
-
                     {currentAvatarSection?.type==='color' ? (
                       <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
                         {currentAvatarOpts.map(opt=>{
@@ -667,8 +679,6 @@ export default function PerfilPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* resumen selección */}
                   <div style={{marginTop:12,padding:'12px 16px',borderRadius:12,background:'#fff',border:'1px solid #e8eaf0'}}>
                     <p style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginBottom:8}}>Configuración actual</p>
                     <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
