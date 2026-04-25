@@ -305,18 +305,12 @@ async def update_xp(xp_delta: int, email: str = Depends(get_current_user)):
 # ── CERTIFICADO PÚBLICO ───────────────────────────────────────────────────────
 @router.get("/certificado/{cert_id}")
 async def verificar_certificado(cert_id: str):
-    """
-    Endpoint público sin autenticación para verificar un certificado.
-    cert_id = últimos 12 caracteres del _id de MongoDB en mayúsculas.
-    Accesible desde el QR del certificado en socblast.com/verificar/:certId
-    """
     db = get_db()
     cert_id_lower = cert_id.lower().strip()
 
     if len(cert_id_lower) != 12:
         raise HTTPException(status_code=400, detail="ID de certificado inválido (debe tener 12 caracteres)")
 
-    # Buscar usuario cuyo ObjectId termina en cert_id
     users = await db.users.find(
         {"rol": "analista"},
         {"password": 0, "email": 0, "skills_streak_bad": 0,
@@ -879,6 +873,8 @@ async def historial_labs(email: str = Depends(get_current_user)):
     for lab in labs:
         lab["_id"] = str(lab["_id"])
     return labs
+
+
 # ── AVATAR ────────────────────────────────────────────────────────────────────
 import httpx
 from fastapi.responses import Response as FastAPIResponse
@@ -899,30 +895,15 @@ async def avatar_proxy(
     size: int = 200,
 ):
     """
-    Proxy para DiceBear — el frontend no puede llamar a DiceBear
-    directamente por CORS, así que el backend lo hace y devuelve el SVG.
+    Proxy para DiceBear — usa solo el seed para evitar el error 400.
+    El seed es determinista: misma combinación = mismo avatar siempre.
     """
-    params = {
-        "seed":            top + hairColor + clothe,
-        "top":             top,
-        "hairColor":       hairColor,
-        "accessories":     accessories,
-        "facialHair":      facialHair,
-        "facialHairColor": facialHairColor,
-        "clothe":          clothe,
-        "clotheColor":     clotheColor,
-        "skin":            skin,
-        "eyes":            eyes,
-        "eyebrow":         eyebrow,
-        "mouth":           mouth,
-        "size":            size,
-        "backgroundColor": "b6e3f4",
-    }
-    url = "https://api.dicebear.com/7.x/avataaars/svg"
+    seed = f"{top}-{hairColor}-{clothe}-{skin}-{eyes}-{mouth}-{accessories}-{facialHair}-{eyebrow}-{clotheColor}-{facialHairColor}"
+    url  = f"https://api.dicebear.com/7.x/avataaars/svg?seed={seed}&size={size}&backgroundColor=b6e3f4"
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(url, params=params)
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.get(url)
             r.raise_for_status()
             return FastAPIResponse(
                 content=r.content,
@@ -941,7 +922,6 @@ async def update_avatar(datos: dict, email: str = Depends(get_current_user)):
     if not avatar_config or not isinstance(avatar_config, dict):
         raise HTTPException(status_code=400, detail="avatar_config requerido")
 
-    # Solo campos válidos
     campos_validos = {
         "top", "hairColor", "accessories", "facialHair",
         "facialHairColor", "clothe", "clotheColor", "skin",
