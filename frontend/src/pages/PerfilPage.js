@@ -162,18 +162,18 @@ function buildAvatarUrl(config = {}, size = 200) {
   const p = new URLSearchParams({
     top:             c.top,
     hairColor:       c.hairColor,
-    accessories:     c.accessories,
-    facialHair:      c.facialHair,
-    facialHairColor: c.facialHairColor,
-    clothing:        c.clothe,        // v9: clothing  (no clothe)
-    clothingColor:   c.clotheColor,   // v9: clothingColor
+    clothing:        c.clothe,
+    clothingColor:   c.clotheColor,
     skin:            c.skin,
     eyes:            c.eyes,
-    eyebrows:        c.eyebrow,       // v9: eyebrows  (no eyebrow)
+    eyebrows:        c.eyebrow,
     mouth:           c.mouth,
+    backgroundColor: 'b6e3f4',
     size,
   });
-  return `${API}/api/avatar/proxy?${p.toString()}`;
+  if (c.accessories !== 'blank') p.set('accessories', c.accessories);
+  if (c.facialHair  !== 'blank') { p.set('facialHair', c.facialHair); p.set('facialHairColor', c.facialHairColor); }
+  return `https://api.dicebear.com/9.x/avataaars/svg?${p.toString()}`;
 }
 
 function randomAvatarConfig() {
