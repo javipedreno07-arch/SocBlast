@@ -247,7 +247,7 @@ async def get_me(email: str = Depends(get_current_user)):
     return user
 
 
-# ── PERFIL PÚBLICO ────────────────────────────────────────────────────────────
+# ── PERFIL ────────────────────────────────────────────────────────────────────
 @router.put("/me/perfil")
 async def update_perfil(datos: dict, email: str = Depends(get_current_user)):
     db = get_db()
@@ -302,31 +302,26 @@ async def update_xp(xp_delta: int, email: str = Depends(get_current_user)):
     return {"xp": nueva_xp, "tier": tier}
 
 
-# ── CERTIFICADO PÚBLICO ───────────────────────────────────────────────────────
+# ── CERTIFICADO ───────────────────────────────────────────────────────────────
 @router.get("/certificado/{cert_id}")
 async def verificar_certificado(cert_id: str):
     db = get_db()
     cert_id_lower = cert_id.lower().strip()
-
     if len(cert_id_lower) != 12:
         raise HTTPException(status_code=400, detail="ID de certificado inválido (debe tener 12 caracteres)")
-
     users = await db.users.find(
         {"rol": "analista"},
         {"password": 0, "email": 0, "skills_streak_bad": 0,
          "training_progreso": 0, "token_verificacion": 0}
     ).to_list(50000)
-
     user = None
     for u in users:
         uid = str(u["_id"])
         if uid[-12:].lower() == cert_id_lower:
             user = u
             break
-
     if not user:
         raise HTTPException(status_code=404, detail="Certificado no encontrado")
-
     return {
         "nombre":               user.get("nombre", ""),
         "arena":                user.get("arena", "Bronce 3"),
@@ -373,17 +368,14 @@ async def responder_incidente(
     sesion = await db.sesiones.find_one({"_id": ObjectId(sesion_id)})
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-
     incidente     = sesion["incidentes"][incidente_id - 1]
     arena         = sesion.get("arena", "Bronce 3")
     grupo         = arena.split(" ")[0] if " " in arena else arena
     tiempos       = {"Bronce": 20, "Plata": 15, "Oro": 10, "Diamante": 7}
     tiempo_limite = tiempos.get(grupo, 20)
-
     evaluacion = await evaluar_respuesta(
         incidente, respuesta, tiempo_usado, tiempo_limite, pistas_usadas, arena
     )
-
     skills_mejora = evaluacion.get("skills_mejoradas", {})
     if skills_mejora:
         user              = await db.users.find_one({"email": email})
@@ -397,7 +389,6 @@ async def responder_incidente(
             {"$set": {"skills": skills_nuevas, "skills_streak_bad": nuevo_streak}}
         )
         evaluacion["skills_nuevas"] = skills_nuevas
-
     await db.sesiones.update_one(
         {"_id": ObjectId(sesion_id)},
         {"$push": {"respuestas": {"incidente_id": incidente_id, "evaluacion": evaluacion}}}
@@ -411,21 +402,17 @@ async def finalizar_sesion(sesion_id: str, email: str = Depends(get_current_user
     sesion = await db.sesiones.find_one({"_id": ObjectId(sesion_id)})
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-
     respuestas = sesion.get("respuestas", [])
     if not respuestas:
         raise HTTPException(status_code=400, detail="No hay respuestas")
-
     total_copas      = sum(r["evaluacion"]["copas_delta"] for r in respuestas)
     media_puntuacion = sum(r["evaluacion"]["total"] for r in respuestas) / len(respuestas)
     total_xp         = sum(r["evaluacion"]["total"] * 3 for r in respuestas)
-
     user         = await db.users.find_one({"email": email})
     nuevas_copas = max(0, user["copas"] + total_copas)
     nueva_xp     = user["xp"] + total_xp
     arena        = get_arena_por_copas(nuevas_copas)
     tier         = calcular_tier(nueva_xp)
-
     await db.users.update_one({"email": email}, {"$set": {
         "copas": nuevas_copas, "arena": arena, "xp": nueva_xp, "tier": tier,
         "sesiones_completadas": user.get("sesiones_completadas", 0) + 1,
@@ -680,27 +667,19 @@ Preguntas en orden: IP ataque, técnica MITRE, credencial comprometida, herramie
             response_format={"type": "json_object"}
         )
         escenario = json.loads(response.choices[0].message.content)
-
         lab_doc = {
-            "email_usuario": email,
-            "arena":         arena,
-            "grupo":         grupo,
-            "escenario":     escenario,
-            "estado":        "activo",
-            "inicio":        time.time(),
-            "respuestas":    {},
+            "email_usuario": email, "arena": arena, "grupo": grupo,
+            "escenario": escenario, "estado": "activo",
+            "inicio": time.time(), "respuestas": {},
         }
         result = await db.labs.insert_one(lab_doc)
         lab_id = str(result.inserted_id)
-
         escenario_publico = json.loads(json.dumps(escenario))
         escenario_publico.pop("solucion", None)
         for p in escenario_publico.get("preguntas", []):
             p.pop("respuesta_correcta", None)
-
         escenario_publico["lab_id"] = lab_id
         return escenario_publico
-
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Error parseando respuesta de la IA: {str(e)}")
     except Exception as e:
@@ -711,37 +690,27 @@ Preguntas en orden: IP ataque, técnica MITRE, credencial comprometida, herramie
 async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
     from bson import ObjectId
     db = get_db()
-
     lab_id         = payload.get("lab_id")
     respuestas     = payload.get("respuestas", {})
     informe_libre  = payload.get("informe_libre", "")
     queries_usadas = payload.get("queries_usadas", [])
-
     if not lab_id:
         raise HTTPException(status_code=400, detail="lab_id requerido")
-
     lab = await db.labs.find_one({"_id": ObjectId(lab_id), "email_usuario": email})
     if not lab:
         raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
-
     escenario = lab["escenario"]
     grupo     = lab["grupo"]
-
     preguntas_eval = []
     for p in escenario.get("preguntas", []):
         pid = str(p["id"])
         preguntas_eval.append({
-            "id":                 p["id"],
-            "categoria":          p["categoria"],
-            "pregunta":           p["pregunta"],
+            "id": p["id"], "categoria": p["categoria"], "pregunta": p["pregunta"],
             "respuesta_correcta": p.get("respuesta_correcta", ""),
             "respuesta_usuario":  respuestas.get(pid, respuestas.get(p["id"], "")),
         })
-
     cmds_terminal = [q for q in queries_usadas if q.startswith("CMD:")]
-    apps_abiertas = [q for q in queries_usadas if q.startswith("OPEN:")]
     busquedas     = [q for q in queries_usadas if q.startswith("SEARCH:")]
-
     prompt_eval = f"""Eres un evaluador experto SOC. Evalúa las respuestas de este analista en un laboratorio de nivel {grupo}.
 
 ESCENARIO: {escenario.get('titulo', '')}
@@ -790,20 +759,16 @@ Devuelve ÚNICAMENTE JSON:
     "lecciones": "..."
   }}
 }}"""
-
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt_eval}],
-            temperature=0.2,
-            max_tokens=2800,
+            temperature=0.2, max_tokens=2800,
             response_format={"type": "json_object"}
         )
-        resultado = json.loads(response.choices[0].message.content)
-
+        resultado  = json.loads(response.choices[0].message.content)
         puntuacion = max(0, min(100, resultado.get("puntuacion_normalizada", 0)))
         xp_ganada  = round(50 + puntuacion)
-
         skills_mejora     = resultado.get("skills_mejoradas", {})
         user              = await db.users.find_one({"email": email})
         skills_actuales   = user.get("skills", {s: 0.0 for s in SKILLS_LIST})
@@ -811,33 +776,20 @@ Devuelve ÚNICAMENTE JSON:
         skills_nuevas, nuevo_streak = aplicar_skills(
             skills_actuales, skills_mejora, skills_streak_bad, lab["arena"]
         )
-
         nueva_xp = user["xp"] + xp_ganada
         tier     = calcular_tier(nueva_xp)
-
         await db.users.update_one({"email": email}, {"$set": {
-            "xp":                nueva_xp,
-            "tier":              tier,
-            "skills":            skills_nuevas,
-            "skills_streak_bad": nuevo_streak,
+            "xp": nueva_xp, "tier": tier,
+            "skills": skills_nuevas, "skills_streak_bad": nuevo_streak,
         }})
-
         await db.labs.update_one(
             {"_id": ObjectId(lab_id)},
-            {"$set": {
-                "estado":     "completado",
-                "resultado":  resultado,
-                "fin":        time.time(),
-                "respuestas": respuestas,
-            }}
+            {"$set": {"estado": "completado", "resultado": resultado, "fin": time.time(), "respuestas": respuestas}}
         )
-
         resultado["xp_ganada"]     = xp_ganada
         resultado["skills_nuevas"] = skills_nuevas
         resultado["tier"]          = tier
-
         return resultado
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error evaluando laboratorio: {str(e)}")
 
@@ -845,19 +797,14 @@ Devuelve ÚNICAMENTE JSON:
 @router.get("/lab/activo")
 async def get_lab_activo(email: str = Depends(get_current_user)):
     db  = get_db()
-    lab = await db.labs.find_one(
-        {"email_usuario": email, "estado": "activo"},
-        sort=[("inicio", -1)]
-    )
+    lab = await db.labs.find_one({"email_usuario": email, "estado": "activo"}, sort=[("inicio", -1)])
     if not lab:
         return {"lab_activo": False}
-
     escenario = lab.get("escenario", {})
     escenario_publico = json.loads(json.dumps(escenario))
     escenario_publico.pop("solucion", None)
     for p in escenario_publico.get("preguntas", []):
         p.pop("respuesta_correcta", None)
-
     escenario_publico["lab_id"] = str(lab["_id"])
     escenario_publico["inicio"] = lab.get("inicio")
     return {"lab_activo": True, "escenario": escenario_publico}
@@ -886,24 +833,45 @@ async def avatar_proxy(
     accessories: str = "blank",
     facialHair: str = "blank",
     facialHairColor: str = "2c1b18",
-    clothe: str = "hoodie",
-    clotheColor: str = "262e33",
+    clothing: str = "hoodie",
+    clothingColor: str = "262e33",
     skin: str = "light",
     eyes: str = "default",
-    eyebrow: str = "default",
+    eyebrows: str = "default",
     mouth: str = "default",
     size: int = 200,
 ):
     """
-    Proxy para DiceBear — usa solo el seed para evitar el error 400.
-    El seed es determinista: misma combinación = mismo avatar siempre.
+    Proxy para DiceBear v9 avataaars con parámetros correctos.
+    clothing (no clothe), eyebrows (no eyebrow), v9.x
     """
-    seed = f"{top}-{hairColor}-{clothe}-{skin}-{eyes}-{mouth}-{accessories}-{facialHair}-{eyebrow}-{clotheColor}-{facialHairColor}"
-    url  = f"https://api.dicebear.com/7.x/avataaars/svg?seed={seed}&size={size}&backgroundColor=b6e3f4"
+    seed = f"{top}-{hairColor}-{clothing}-{skin}-{eyes}-{mouth}-{accessories}-{facialHair}-{eyebrows}-{clothingColor}-{facialHairColor}"
+
+    params = {
+        "seed":            seed,
+        "top":             top,
+        "hairColor":       hairColor,
+        "clothing":        clothing,
+        "clothingColor":   clothingColor,
+        "skin":            skin,
+        "eyes":            eyes,
+        "eyebrows":        eyebrows,
+        "mouth":           mouth,
+        "backgroundColor": "b6e3f4",
+        "size":            size,
+    }
+    # Solo añadir accessories y facialHair si no son "blank"
+    if accessories != "blank":
+        params["accessories"] = accessories
+    if facialHair != "blank":
+        params["facialHair"]      = facialHair
+        params["facialHairColor"] = facialHairColor
+
+    url = "https://api.dicebear.com/9.x/avataaars/svg"
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            r = await client.get(url)
+            r = await client.get(url, params=params)
             r.raise_for_status()
             return FastAPIResponse(
                 content=r.content,
@@ -921,16 +889,11 @@ async def update_avatar(datos: dict, email: str = Depends(get_current_user)):
     avatar_config = datos.get("avatar_config")
     if not avatar_config or not isinstance(avatar_config, dict):
         raise HTTPException(status_code=400, detail="avatar_config requerido")
-
     campos_validos = {
         "top", "hairColor", "accessories", "facialHair",
         "facialHairColor", "clothe", "clotheColor", "skin",
         "eyes", "eyebrow", "mouth"
     }
     config_limpia = {k: str(v) for k, v in avatar_config.items() if k in campos_validos}
-
-    await db.users.update_one(
-        {"email": email},
-        {"$set": {"avatar_config": config_limpia}}
-    )
+    await db.users.update_one({"email": email}, {"$set": {"avatar_config": config_limpia}})
     return {"ok": True, "avatar_config": config_limpia}

@@ -151,36 +151,53 @@ const DEFAULT_AVATAR_CONFIG = {
   clotheColor:'262e33', skin:'light', eyes:'default', eyebrow:'default', mouth:'default',
 };
 
-function buildAvatarUrl(config={}, size=200) {
-  const c = {...DEFAULT_AVATAR_CONFIG, ...config};
+/**
+ * Construye la URL del proxy con los nombres de parámetro correctos para DiceBear v9:
+ *   clothe       → clothing
+ *   clotheColor  → clothingColor
+ *   eyebrow      → eyebrows
+ */
+function buildAvatarUrl(config = {}, size = 200) {
+  const c = { ...DEFAULT_AVATAR_CONFIG, ...config };
   const p = new URLSearchParams({
-    top: c.top, hairColor: c.hairColor, accessories: c.accessories,
-    facialHair: c.facialHair, facialHairColor: c.facialHairColor,
-    clothe: c.clothe, clotheColor: c.clotheColor, skin: c.skin,
-    eyes: c.eyes, eyebrow: c.eyebrow, mouth: c.mouth, size,
+    top:             c.top,
+    hairColor:       c.hairColor,
+    accessories:     c.accessories,
+    facialHair:      c.facialHair,
+    facialHairColor: c.facialHairColor,
+    clothing:        c.clothe,        // v9: clothing  (no clothe)
+    clothingColor:   c.clotheColor,   // v9: clothingColor
+    skin:            c.skin,
+    eyes:            c.eyes,
+    eyebrows:        c.eyebrow,       // v9: eyebrows  (no eyebrow)
+    mouth:           c.mouth,
+    size,
   });
   return `${API}/api/avatar/proxy?${p.toString()}`;
 }
 
 function randomAvatarConfig() {
   const r = {};
-  Object.entries(AVATAR_OPTS).forEach(([k,opts])=>{ r[k]=opts[Math.floor(Math.random()*opts.length)].id; });
+  Object.entries(AVATAR_OPTS).forEach(([k, opts]) => {
+    r[k] = opts[Math.floor(Math.random() * opts.length)].id;
+  });
   return r;
 }
 
 function totalCombinations() {
-  return Object.values(AVATAR_OPTS).reduce((a,opts)=>a*opts.length,1).toLocaleString('es-ES');
+  return Object.values(AVATAR_OPTS).reduce((a, opts) => a * opts.length, 1).toLocaleString('es-ES');
 }
 
+// ── Datos de tiers ──────────────────────────────────────────────────────────
 const TIERS_DATA = [
-  {tier:1,name:'SOC Rookie',    xp:'0',      xpMax:'500',    color:'#64748b',desc:'Primeros pasos en el mundo SOC.',         skills:['Conceptos básicos','Navegación SIEM']},
-  {tier:2,name:'SOC Analyst',   xp:'500',    xpMax:'1.500',  color:'#3b82f6',desc:'Identifica amenazas básicas con soltura.', skills:['Análisis de logs','Clasificación alertas']},
+  {tier:1,name:'SOC Rookie',    xp:'0',      xpMax:'500',    color:'#64748b',desc:'Primeros pasos en el mundo SOC.',          skills:['Conceptos básicos','Navegación SIEM']},
+  {tier:2,name:'SOC Analyst',   xp:'500',    xpMax:'1.500',  color:'#3b82f6',desc:'Identifica amenazas básicas con soltura.',  skills:['Análisis de logs','Clasificación alertas']},
   {tier:3,name:'SOC Specialist',xp:'1.500',  xpMax:'3.000',  color:'#06b6d4',desc:'Correlaciona eventos y detecta patrones.',  skills:['Correlación SIEM','IOCs y TTPs']},
-  {tier:4,name:'SOC Expert',    xp:'3.000',  xpMax:'5.000',  color:'#10b981',desc:'Respuesta a incidentes con soltura.',       skills:['IR playbooks','MITRE ATT&CK']},
-  {tier:5,name:'SOC Sentinel',  xp:'5.000',  xpMax:'8.000',  color:'#f59e0b',desc:'Threat hunting proactivo y forense.',       skills:['Threat Hunting','Análisis forense']},
-  {tier:6,name:'SOC Architect', xp:'8.000',  xpMax:'12.000', color:'#f97316',desc:'Diseña estrategias de defensa complejas.',  skills:['Arquitectura defensiva','Red team awareness']},
-  {tier:7,name:'SOC Master',    xp:'12.000', xpMax:'18.000', color:'#ef4444',desc:'APTs, zero-days y respuesta avanzada.',     skills:['APT hunting','Zero-day response']},
-  {tier:8,name:'SOC Legend',    xp:'18.000', xpMax:'∞',      color:'#8b5cf6',desc:'El nivel más alto. Élite absoluta.',        skills:['Élite operacional','Liderazgo SOC']},
+  {tier:4,name:'SOC Expert',    xp:'3.000',  xpMax:'5.000',  color:'#10b981',desc:'Respuesta a incidentes con soltura.',        skills:['IR playbooks','MITRE ATT&CK']},
+  {tier:5,name:'SOC Sentinel',  xp:'5.000',  xpMax:'8.000',  color:'#f59e0b',desc:'Threat hunting proactivo y forense.',        skills:['Threat Hunting','Análisis forense']},
+  {tier:6,name:'SOC Architect', xp:'8.000',  xpMax:'12.000', color:'#f97316',desc:'Diseña estrategias de defensa complejas.',   skills:['Arquitectura defensiva','Red team awareness']},
+  {tier:7,name:'SOC Master',    xp:'12.000', xpMax:'18.000', color:'#ef4444',desc:'APTs, zero-days y respuesta avanzada.',      skills:['APT hunting','Zero-day response']},
+  {tier:8,name:'SOC Legend',    xp:'18.000', xpMax:'∞',      color:'#8b5cf6',desc:'El nivel más alto. Élite absoluta.',         skills:['Élite operacional','Liderazgo SOC']},
 ];
 
 const SKILLS_FULL = [
@@ -200,14 +217,15 @@ const PREFERENCIAS_OPTS = [
   'Network Security','Web Security','Mobile Security','ICS/OT Security',
 ];
 
-const getArenaColor = (arena='') => {
+const getArenaColor = (arena = '') => {
   if (arena.includes('Diamante')) return '#3b82f6';
   if (arena.includes('Oro'))      return '#f59e0b';
   if (arena.includes('Plata'))    return '#94a3b8';
   return '#d97706';
 };
 
-function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
+// ── Componente Avatar ────────────────────────────────────────────────────────
+function Avatar({ name = '', avatarConfig = null, size = 80, foto = '' }) {
   const [loaded, setLoaded] = useState(false);
   const prevKey = useRef('');
   const key = avatarConfig ? JSON.stringify(avatarConfig) : '';
@@ -226,12 +244,12 @@ function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
       {!loaded && (
         <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#b6e3f4'}}>
-          <div style={{width:Math.max(10,size*0.25),height:Math.max(10,size*0.25),border:`2px solid rgba(79,70,229,0.2)`,borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+          <div style={{width:Math.max(10,size*.25),height:Math.max(10,size*.25),border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
         </div>
       )}
       <img
         key={key}
-        src={buildAvatarUrl(avatarConfig, size*2)}
+        src={buildAvatarUrl(avatarConfig, size * 2)}
         alt={name}
         width={size} height={size}
         onLoad={()=>setLoaded(true)}
@@ -244,26 +262,27 @@ function Avatar({ name='', avatarConfig=null, size=80, foto='' }) {
   const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
   return (
     <div style={{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#4f46e5,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:'2px solid rgba(79,70,229,0.2)'}}>
-      <span style={{fontSize:size*0.34,fontWeight:800,color:'#fff',fontFamily:"'Inter',sans-serif"}}>{initials||'?'}</span>
+      <span style={{fontSize:size*.34,fontWeight:800,color:'#fff',fontFamily:"'Inter',sans-serif"}}>{initials||'?'}</span>
     </div>
   );
 }
 
+// ── Página principal ─────────────────────────────────────────────────────────
 export default function PerfilPage() {
-  const {token} = useAuth();
-  const navigate = useNavigate();
-  const fileRef  = useRef(null);
+  const { token }  = useAuth();
+  const navigate   = useNavigate();
+  const fileRef    = useRef(null);
 
-  const [userData,      setUserData]      = useState(null);
-  const [loading,       setLoading]       = useState(true);
-  const [saving,        setSaving]        = useState(false);
-  const [saved,         setSaved]         = useState(false);
-  const [savingAvatar,  setSavingAvatar]  = useState(false);
-  const [savedAvatar,   setSavedAvatar]   = useState(false);
-  const [vista,         setVista]         = useState('perfil');
-  const [avatarSection, setAvatarSection] = useState('top');
-  const [avatarConfig,  setAvatarConfig]  = useState(DEFAULT_AVATAR_CONFIG);
-  const [imgLoading,    setImgLoading]    = useState(false);
+  const [userData,     setUserData]     = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [saving,       setSaving]       = useState(false);
+  const [saved,        setSaved]        = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [savedAvatar,  setSavedAvatar]  = useState(false);
+  const [vista,        setVista]        = useState('perfil');
+  const [avatarSection,setAvatarSection]= useState('top');
+  const [avatarConfig, setAvatarConfig] = useState(DEFAULT_AVATAR_CONFIG);
+  const [imgLoading,   setImgLoading]   = useState(false);
 
   const [editForm, setEditForm] = useState({
     nombre_completo:'', edad:'', ubicacion:'', preferencias:[], perfil_publico:true,
@@ -271,56 +290,63 @@ export default function PerfilPage() {
   const [fotoPreview, setFotoPreview] = useState('');
   const [fotoBase64,  setFotoBase64]  = useState('');
 
-  useEffect(()=>{ fetchPerfil(); },[]);
+  useEffect(() => { fetchPerfil(); }, []);
 
   const fetchPerfil = async () => {
     try {
-      const r = await axios.get(`${API}/api/me`,{headers:{Authorization:`Bearer ${token}`}});
+      const r = await axios.get(`${API}/api/me`, { headers:{ Authorization:`Bearer ${token}` } });
       setUserData(r.data);
       setEditForm({
-        nombre_completo: r.data.nombre_completo||'',
-        edad:            r.data.edad||'',
-        ubicacion:       r.data.ubicacion||'',
-        preferencias:    r.data.preferencias||[],
-        perfil_publico:  r.data.perfil_publico!==false,
+        nombre_completo: r.data.nombre_completo || '',
+        edad:            r.data.edad || '',
+        ubicacion:       r.data.ubicacion || '',
+        preferencias:    r.data.preferencias || [],
+        perfil_publico:  r.data.perfil_publico !== false,
       });
       if (r.data.foto_perfil)   { setFotoPreview(r.data.foto_perfil); setFotoBase64(r.data.foto_perfil); }
-      if (r.data.avatar_config) setAvatarConfig({...DEFAULT_AVATAR_CONFIG,...r.data.avatar_config});
+      if (r.data.avatar_config) setAvatarConfig({ ...DEFAULT_AVATAR_CONFIG, ...r.data.avatar_config });
     } catch {}
     setLoading(false);
   };
 
   const handleFotoChange = (e) => {
-    const file=e.target.files[0];
+    const file = e.target.files[0];
     if (!file) return;
-    if (file.size>2_000_000){alert('La imagen es demasiado grande (máx 2MB)');return;}
-    const reader=new FileReader();
-    reader.onload=(ev)=>{ setFotoPreview(ev.target.result); setFotoBase64(ev.target.result); };
+    if (file.size > 2_000_000) { alert('La imagen es demasiado grande (máx 2MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => { setFotoPreview(ev.target.result); setFotoBase64(ev.target.result); };
     reader.readAsDataURL(file);
   };
 
   const togglePreferencia = (pref) => {
-    setEditForm(p=>({...p,preferencias:p.preferencias.includes(pref)?p.preferencias.filter(x=>x!==pref):p.preferencias.length<6?[...p.preferencias,pref]:p.preferencias}));
+    setEditForm(p => ({
+      ...p,
+      preferencias: p.preferencias.includes(pref)
+        ? p.preferencias.filter(x => x !== pref)
+        : p.preferencias.length < 6 ? [...p.preferencias, pref] : p.preferencias,
+    }));
   };
 
   const guardarPerfil = async () => {
     setSaving(true);
     try {
-      const payload={...editForm};
-      if (editForm.edad!=='') payload.edad=parseInt(editForm.edad)||null; else payload.edad=null;
-      if (fotoBase64) payload.foto_perfil=fotoBase64;
-      const r=await axios.put(`${API}/api/me/perfil`,payload,{headers:{Authorization:`Bearer ${token}`}});
-      setUserData(r.data); setSaved(true); setTimeout(()=>setSaved(false),2500);
-    } catch(err){ alert(err.response?.data?.detail||'Error al guardar'); }
+      const payload = { ...editForm };
+      if (editForm.edad !== '') payload.edad = parseInt(editForm.edad) || null;
+      else payload.edad = null;
+      if (fotoBase64) payload.foto_perfil = fotoBase64;
+      const r = await axios.put(`${API}/api/me/perfil`, payload, { headers:{ Authorization:`Bearer ${token}` } });
+      setUserData(r.data);
+      setSaved(true); setTimeout(() => setSaved(false), 2500);
+    } catch (err) { alert(err.response?.data?.detail || 'Error al guardar'); }
     setSaving(false);
   };
 
   const guardarAvatar = async () => {
     setSavingAvatar(true);
     try {
-      await axios.post(`${API}/api/me/avatar`,{avatar_config:avatarConfig},{headers:{Authorization:`Bearer ${token}`}});
-      setSavedAvatar(true); setTimeout(()=>setSavedAvatar(false),2500);
-    } catch(err){ console.error(err); }
+      await axios.post(`${API}/api/me/avatar`, { avatar_config: avatarConfig }, { headers:{ Authorization:`Bearer ${token}` } });
+      setSavedAvatar(true); setTimeout(() => setSavedAvatar(false), 2500);
+    } catch (err) { console.error(err); }
     setSavingAvatar(false);
   };
 
@@ -350,28 +376,28 @@ export default function PerfilPage() {
     </div>
   );
 
-  const tierActual  = userData?.tier||1;
-  const xp          = userData?.xp||0;
+  const tierActual  = userData?.tier || 1;
+  const xp          = userData?.xp || 0;
   const XP_MAX      = [0,500,1500,3000,5000,8000,12000,18000,99999];
-  const xpMin       = XP_MAX[tierActual-1]||0;
-  const xpMaxTier   = XP_MAX[tierActual]||99999;
-  const progresoXP  = Math.min(((xp-xpMin)/(xpMaxTier-xpMin))*100,100);
-  const tierData    = TIERS_DATA[tierActual-1];
+  const xpMin       = XP_MAX[tierActual-1] || 0;
+  const xpMaxTier   = XP_MAX[tierActual] || 99999;
+  const progresoXP  = Math.min(((xp - xpMin) / (xpMaxTier - xpMin)) * 100, 100);
+  const tierData    = TIERS_DATA[tierActual - 1];
   const arenaColor  = getArenaColor(userData?.arena);
-  const skills      = userData?.skills||{};
-  const skillEntries= SKILLS_FULL.map(s=>({...s,val:skills?.[s.key]||0}));
-  const avgSkill    = Math.round(skillEntries.reduce((a,s)=>a+s.val,0)/skillEntries.length*10)/10;
-  const nombre      = userData?.nombre||'';
+  const skills      = userData?.skills || {};
+  const skillEntries= SKILLS_FULL.map(s => ({ ...s, val: skills?.[s.key] || 0 }));
+  const avgSkill    = Math.round(skillEntries.reduce((a,s) => a+s.val, 0) / skillEntries.length * 10) / 10;
+  const nombre      = userData?.nombre || '';
 
   const TABS = [
-    {id:'perfil',  label:'Mi Perfil'},
-    {id:'editar',  label:'Editar perfil'},
-    {id:'avatar',  label:'Avatar'},
-    {id:'tiers',   label:'Progression'},
+    {id:'perfil', label:'Mi Perfil'},
+    {id:'editar', label:'Editar perfil'},
+    {id:'avatar', label:'Avatar'},
+    {id:'tiers',  label:'Progression'},
   ];
 
-  const currentAvatarSection = AVATAR_SECTIONS.find(s=>s.key===avatarSection);
-  const currentAvatarOpts    = AVATAR_OPTS[avatarSection]||[];
+  const currentAvatarSection = AVATAR_SECTIONS.find(s => s.key === avatarSection);
+  const currentAvatarOpts    = AVATAR_OPTS[avatarSection] || [];
 
   return (
     <>
@@ -384,7 +410,7 @@ export default function PerfilPage() {
         </div>
       )}
       {savedAvatar && (
-        <div style={{position:'fixed',bottom:28,left:'50%',transform:'translateX(-50%)',zIndex:9999,padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#4f46e5,#6366f1)',color:'#fff',fontSize:14,fontWeight:700,boxShadow:'0 8px 32px rgba(79,70,229,0.35)',animation:'toastIn .3s ease',display:'flex',alignItems:'center',gap:8}}>
+        <div style={{position:'fixed',bottom:28,left:'50%',transform:'translateX(-50%)',zIndex:9999,padding:'12px 24px',borderRadius:12,background:`linear-gradient(135deg,${ACC},#6366f1)`,color:'#fff',fontSize:14,fontWeight:700,boxShadow:'0 8px 32px rgba(79,70,229,0.35)',animation:'toastIn .3s ease',display:'flex',alignItems:'center',gap:8}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Avatar guardado
         </div>
@@ -392,6 +418,7 @@ export default function PerfilPage() {
 
       <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"'Inter',-apple-system,sans-serif",color:'#0f172a'}}>
 
+        {/* NAV */}
         <nav style={{position:'sticky',top:0,zIndex:50,height:56,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 40px',backgroundColor:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 12px rgba(0,0,0,0.06)'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}} onClick={()=>navigate('/')}>
             <img src="/logosoc.png" alt="SocBlast" style={{height:28}}/>
@@ -416,11 +443,12 @@ export default function PerfilPage() {
 
         <div style={{maxWidth:960,margin:'0 auto',padding:'32px 40px 60px'}}>
 
+          {/* TABS */}
           <div style={{display:'flex',marginBottom:28,borderBottom:'1px solid #e8eaf0',gap:2}}>
             {TABS.map(tab=>(
               <button key={tab.id} className="tab-btn" onClick={()=>setVista(tab.id)}
                 style={{padding:'10px 20px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:vista===tab.id?'#0f172a':'#94a3b8',borderBottom:vista===tab.id?`2px solid ${ACC}`:'2px solid transparent',marginBottom:-1,display:'flex',alignItems:'center',gap:8}}>
-                {tab.id==='avatar' && <Avatar name={nombre} avatarConfig={avatarConfig} size={18} foto={fotoPreview}/>}
+                {tab.id==='avatar'&&<Avatar name={nombre} avatarConfig={avatarConfig} size={18} foto={fotoPreview}/>}
                 {tab.label}
               </button>
             ))}
@@ -459,7 +487,12 @@ export default function PerfilPage() {
               </div>
 
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
-                {[{label:'COPAS',val:(userData?.copas||0).toLocaleString(),color:arenaColor},{label:'XP TOTAL',val:(userData?.xp||0).toLocaleString(),color:ACC},{label:'SESIONES',val:userData?.sesiones_completadas||0,color:'#059669'},{label:'TIER',val:tierActual,color:tierData?.color}].map((s,i)=>(
+                {[
+                  {label:'COPAS',    val:(userData?.copas||0).toLocaleString(), color:arenaColor},
+                  {label:'XP TOTAL', val:(userData?.xp||0).toLocaleString(),    color:ACC},
+                  {label:'SESIONES', val:userData?.sesiones_completadas||0,     color:'#059669'},
+                  {label:'TIER',     val:tierActual,                            color:tierData?.color},
+                ].map((s,i)=>(
                   <div key={i} className="stat-card" style={{padding:'18px 20px',borderRadius:14,backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}>
                     <div style={{height:3,background:`linear-gradient(90deg,${s.color},${s.color}60)`,borderRadius:4,marginBottom:12}}/>
                     <div style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:8}}>{s.label}</div>
@@ -579,15 +612,13 @@ export default function PerfilPage() {
           {vista==='avatar' && (
             <div className="fade-up">
               <div style={{display:'grid',gridTemplateColumns:'260px 1fr',gap:24,alignItems:'start'}}>
+
+                {/* Sidebar preview */}
                 <div style={{padding:'28px 24px',borderRadius:20,backgroundColor:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 4px 20px rgba(0,0,0,0.07)',textAlign:'center',position:'sticky',top:80}}>
                   <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20,fontFamily:'monospace'}}>PREVIEW</p>
                   <div className="avatar-float" style={{display:'flex',justifyContent:'center',marginBottom:16}}>
                     <div style={{width:160,height:160,borderRadius:'50%',overflow:'hidden',border:'3px solid rgba(79,70,229,0.15)',background:'#b6e3f4',position:'relative'}}>
-                      {imgLoading && (
-                        <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(182,227,244,0.8)'}}>
-                          <div style={{width:24,height:24,border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
-                        </div>
-                      )}
+                      {imgLoading&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(182,227,244,0.8)'}}><div style={{width:24,height:24,border:'2px solid rgba(79,70,229,0.2)',borderTop:`2px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
                       <img
                         key={JSON.stringify(avatarConfig)}
                         src={buildAvatarUrl(avatarConfig, 200)}
@@ -618,6 +649,8 @@ export default function PerfilPage() {
                       Resetear
                     </button>
                   </div>
+
+                  {/* Mini ranking preview */}
                   <div style={{marginTop:16,padding:12,borderRadius:12,backgroundColor:'#f8fafc',border:'1px solid #e2e8f0',textAlign:'left'}}>
                     <p style={{fontSize:9,color:'#94a3b8',fontWeight:700,letterSpacing:'1.5px',marginBottom:8,textAlign:'center'}}>EN EL RANKING</p>
                     <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,backgroundColor:'#fff',border:'1px solid #e8eaf0'}}>
@@ -631,11 +664,14 @@ export default function PerfilPage() {
                   </div>
                 </div>
 
+                {/* Editor */}
                 <div>
                   <div style={{marginBottom:16}}>
                     <h2 style={{fontSize:20,fontWeight:900,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:4}}>Personaliza tu avatar</h2>
                     <p style={{fontSize:13,color:'#64748b',margin:0}}>Más de {totalCombinations()} combinaciones — aparece en tu carta y en el ranking</p>
                   </div>
+
+                  {/* Sección tabs */}
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
                     {AVATAR_SECTIONS.map(s=>(
                       <button key={s.key} onClick={()=>setAvatarSection(s.key)}
@@ -644,14 +680,16 @@ export default function PerfilPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Opciones */}
                   <div style={{background:'#fff',borderRadius:16,border:'1px solid #e8eaf0',padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.04)',minHeight:180}}>
                     <p style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginBottom:14}}>
                       {currentAvatarSection?.label} — {currentAvatarOpts.length} opciones
                     </p>
-                    {currentAvatarSection?.type==='color' ? (
+                    {currentAvatarSection?.type === 'color' ? (
                       <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
                         {currentAvatarOpts.map(opt=>{
-                          const isSel=avatarConfig[avatarSection]===opt.id;
+                          const isSel = avatarConfig[avatarSection] === opt.id;
                           return (
                             <div key={opt.id} className="opt-btn" onClick={()=>setAvatarConfig(c=>({...c,[avatarSection]:opt.id}))}
                               style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'8px 10px',borderRadius:10,border:`2px solid ${isSel?ACC:'#e2e8f0'}`,background:isSel?'#f0f4ff':'#fafafa',cursor:'pointer',minWidth:58}}>
@@ -664,7 +702,7 @@ export default function PerfilPage() {
                     ) : (
                       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:8}}>
                         {currentAvatarOpts.map(opt=>{
-                          const isSel=avatarConfig[avatarSection]===opt.id;
+                          const isSel = avatarConfig[avatarSection] === opt.id;
                           return (
                             <div key={opt.id} className="opt-btn" onClick={()=>setAvatarConfig(c=>({...c,[avatarSection]:opt.id}))}
                               style={{padding:'10px 12px',borderRadius:10,border:`2px solid ${isSel?ACC:'#e2e8f0'}`,background:isSel?'#f0f4ff':'#fafafa',textAlign:'center',cursor:'pointer',userSelect:'none'}}>
@@ -675,12 +713,14 @@ export default function PerfilPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Config actual */}
                   <div style={{marginTop:12,padding:'12px 16px',borderRadius:12,background:'#fff',border:'1px solid #e8eaf0'}}>
                     <p style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:2,textTransform:'uppercase',marginBottom:8}}>Configuración actual</p>
                     <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
                       {AVATAR_SECTIONS.map(s=>{
-                        const opts=AVATAR_OPTS[s.key]||[];
-                        const selOpt=opts.find(o=>o.id===avatarConfig[s.key]);
+                        const opts   = AVATAR_OPTS[s.key] || [];
+                        const selOpt = opts.find(o => o.id === avatarConfig[s.key]);
                         return (
                           <div key={s.key} onClick={()=>setAvatarSection(s.key)}
                             style={{display:'flex',alignItems:'center',gap:5,padding:'3px 9px',borderRadius:7,background:avatarSection===s.key?'#f0f4ff':'#f8fafc',border:`1px solid ${avatarSection===s.key?'#c7d2fe':'#e2e8f0'}`,cursor:'pointer'}}>
@@ -752,6 +792,7 @@ export default function PerfilPage() {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </>
