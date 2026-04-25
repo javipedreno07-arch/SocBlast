@@ -2,27 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { createAvatar } from '@dicebear/core';
+import { avataaars } from '@dicebear/collection';
 
 const API = 'https://socblast-production.up.railway.app';
 const ACC  = '#4f46e5';
 
 const AVATAR_OPTS = {
   top: [
-    {id:'shortHairShortFlat',  label:'Corto liso'},
-    {id:'shortHairShortRound', label:'Corto redondo'},
-    {id:'shortHairShortWaved', label:'Corto ondulado'},
-    {id:'shortHairDreads01',   label:'Dreadlocks'},
-    {id:'longHairStraight',    label:'Largo liso'},
-    {id:'longHairCurly',       label:'Largo rizado'},
-    {id:'longHairBun',         label:'Moño'},
-    {id:'longHairBob',         label:'Bob'},
-    {id:'longHairFro',         label:'Afro largo'},
-    {id:'shortHairFrizzle',    label:'Afro corto'},
+    {id:'shortFlat',           label:'Corto liso'},
+    {id:'shortRound',          label:'Corto redondo'},
+    {id:'shortWaved',          label:'Corto ondulado'},
+    {id:'dreads01',            label:'Dreadlocks'},
+    {id:'straight01',          label:'Largo liso'},
+    {id:'curly',               label:'Largo rizado'},
+    {id:'bun',                 label:'Moño'},
+    {id:'bob',                 label:'Bob'},
+    {id:'fro',                 label:'Afro largo'},
+    {id:'frizzle',             label:'Afro corto'},
     {id:'hat',                 label:'Gorro'},
     {id:'hijab',               label:'Hijab'},
     {id:'turban',              label:'Turbante'},
     {id:'winterHat1',          label:'Gorro invierno'},
-    {id:'eyepatch',            label:'Parche ojo'},
+    {id:'shaggy',              label:'Despeinado'},
   ],
   hairColor: [
     {id:'2c1b18', label:'Negro',        hex:'#2c1b18'},
@@ -35,7 +37,6 @@ const AVATAR_OPTS = {
     {id:'c93305', label:'Rojo fuego',   hex:'#c93305'},
     {id:'e8e1e1', label:'Gris',         hex:'#e8e1e1'},
     {id:'f59797', label:'Rosa',         hex:'#f59797'},
-    {id:'3eac2c', label:'Verde',        hex:'#3eac2c'},
   ],
   accessories: [
     {id:'blank',          label:'Ninguno'},
@@ -50,7 +51,7 @@ const AVATAR_OPTS = {
     {id:'blank',          label:'Sin vello'},
     {id:'beardMedium',    label:'Barba media'},
     {id:'beardLight',     label:'Barba corta'},
-    {id:'beardMagestic',  label:'Barba larga'},
+    {id:'beardMajestic',  label:'Barba larga'},
     {id:'moustacheFancy', label:'Bigote fancy'},
     {id:'moustacheMagnum',label:'Bigote magnum'},
   ],
@@ -63,14 +64,14 @@ const AVATAR_OPTS = {
     {id:'c93305', label:'Rojo fuego', hex:'#c93305'},
   ],
   clothe: [
-    {id:'blazerShirt',    label:'Blazer + camisa'},
-    {id:'blazerSweater',  label:'Blazer + jersey'},
-    {id:'collarSweater',  label:'Jersey cuello'},
-    {id:'graphicShirt',   label:'Camiseta gráfica'},
-    {id:'hoodie',         label:'Hoodie'},
-    {id:'overall',        label:'Mono'},
-    {id:'shirtCrewNeck',  label:'Camiseta'},
-    {id:'shirtVNeck',     label:'Camiseta V'},
+    {id:'blazerAndShirt',   label:'Blazer + camisa'},
+    {id:'blazerAndSweater', label:'Blazer + jersey'},
+    {id:'collarAndSweater', label:'Jersey cuello'},
+    {id:'graphicShirt',     label:'Camiseta gráfica'},
+    {id:'hoodie',           label:'Hoodie'},
+    {id:'overall',          label:'Mono'},
+    {id:'shirtCrewNeck',    label:'Camiseta'},
+    {id:'shirtVNeck',       label:'Camiseta V'},
   ],
   clotheColor: [
     {id:'262e33', label:'Negro',      hex:'#262e33'},
@@ -86,13 +87,13 @@ const AVATAR_OPTS = {
     {id:'ffffff', label:'Blanco',     hex:'#ffffff'},
   ],
   skin: [
-    {id:'tanned',    label:'Bronceado', hex:'#FD9841'},
-    {id:'yellow',    label:'Amarillo',  hex:'#F8D25C'},
-    {id:'pale',      label:'Pálido',    hex:'#FFDBB4'},
-    {id:'light',     label:'Claro',     hex:'#EDB98A'},
-    {id:'brown',     label:'Moreno',    hex:'#D08B5B'},
-    {id:'darkBrown', label:'Oscuro',    hex:'#AE5D29'},
-    {id:'black',     label:'Negro',     hex:'#614335'},
+    {id:'f8d25c', label:'Amarillo',  hex:'#F8D25C'},
+    {id:'fd9841', label:'Bronceado', hex:'#FD9841'},
+    {id:'ffdbb4', label:'Pálido',    hex:'#FFDBB4'},
+    {id:'edb98a', label:'Claro',     hex:'#EDB98A'},
+    {id:'d08b5b', label:'Moreno',    hex:'#D08B5B'},
+    {id:'ae5d29', label:'Oscuro',    hex:'#AE5D29'},
+    {id:'614335', label:'Negro',     hex:'#614335'},
   ],
   eyes: [
     {id:'default',   label:'Normal'},
@@ -105,17 +106,20 @@ const AVATAR_OPTS = {
     {id:'hearts',    label:'Corazones'},
     {id:'eyeRoll',   label:'En blanco'},
     {id:'xDizzy',    label:'KO'},
-    {id:'dizzy',     label:'Mareado'},
+    {id:'winkWacky', label:'Guiño loco'},
     {id:'cry',       label:'Llorando'},
   ],
   eyebrow: [
-    {id:'default',        label:'Normal'},
-    {id:'defaultNatural', label:'Natural'},
-    {id:'flatNatural',    label:'Planas'},
-    {id:'raisedExcited',  label:'Levantadas'},
-    {id:'sadConcerned',   label:'Triste'},
-    {id:'unibrow',        label:'Moneja'},
-    {id:'upDown',         label:'Arriba-abajo'},
+    {id:'default',              label:'Normal'},
+    {id:'defaultNatural',       label:'Natural'},
+    {id:'flatNatural',          label:'Planas'},
+    {id:'raisedExcited',        label:'Levantadas'},
+    {id:'raisedExcitedNatural', label:'Levantadas natural'},
+    {id:'sadConcerned',         label:'Triste'},
+    {id:'sadConcernedNatural',  label:'Triste natural'},
+    {id:'unibrowNatural',       label:'Moneja'},
+    {id:'upDown',               label:'Arriba-abajo'},
+    {id:'angry',                label:'Enfadado'},
   ],
   mouth: [
     {id:'default',    label:'Normal'},
@@ -128,6 +132,8 @@ const AVATAR_OPTS = {
     {id:'screamOpen', label:'Gritando'},
     {id:'eating',     label:'Comiendo'},
     {id:'disbelief',  label:'Incredulidad'},
+    {id:'concerned',  label:'Preocupado'},
+    {id:'vomit',      label:'Vomitando'},
   ],
 };
 
@@ -146,9 +152,9 @@ const AVATAR_SECTIONS = [
 ];
 
 const DEFAULT_AVATAR_CONFIG = {
-  top:'shortHairShortFlat', hairColor:'2c1b18', accessories:'blank',
+  top:'shortFlat', hairColor:'2c1b18', accessories:'blank',
   facialHair:'blank', facialHairColor:'2c1b18', clothe:'hoodie',
-  clotheColor:'262e33', skin:'light', eyes:'default', eyebrow:'default', mouth:'default',
+  clotheColor:'262e33', skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
 };
 
 /**
@@ -159,21 +165,25 @@ const DEFAULT_AVATAR_CONFIG = {
  */
 function buildAvatarUrl(config = {}, size = 200) {
   const c = { ...DEFAULT_AVATAR_CONFIG, ...config };
-  const p = new URLSearchParams({
-    top:             c.top,
-    hairColor:       c.hairColor,
-    clothing:        c.clothe,
-    clothingColor:   c.clotheColor,
-    skin:            c.skin,
-    eyes:            c.eyes,
-    eyebrows:        c.eyebrow,
-    mouth:           c.mouth,
-    backgroundColor: 'b6e3f4',
+  const opts = {
+    top:             [c.top],
+    hairColor:       [c.hairColor],
+    clothing:        [c.clothe],
+    clothesColor:    [c.clotheColor],
+    skinColor:       [c.skin],
+    eyes:            [c.eyes],
+    eyebrows:        [c.eyebrow],
+    mouth:           [c.mouth],
+    backgroundColor: ['b6e3f4'],
     size,
-  });
-  if (c.accessories !== 'blank') p.set('accessories', c.accessories);
-  if (c.facialHair  !== 'blank') { p.set('facialHair', c.facialHair); p.set('facialHairColor', c.facialHairColor); }
-  return `https://api.dicebear.com/9.x/avataaars/svg?${p.toString()}`;
+  };
+  if (c.accessories !== 'blank') opts.accessories      = [c.accessories];
+  if (c.facialHair  !== 'blank') {
+    opts.facialHair      = [c.facialHair];
+    opts.facialHairColor = [c.facialHairColor];
+  }
+  const avatar = createAvatar(avataaars, opts);
+  return `data:image/svg+xml;utf8,${encodeURIComponent(avatar.toString())}`;
 }
 
 function randomAvatarConfig() {
