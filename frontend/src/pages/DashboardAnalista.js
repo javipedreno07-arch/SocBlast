@@ -260,7 +260,7 @@ const LabIllustration=()=>(<svg width="150" height="150" viewBox="0 0 170 170" f
 export default function DashboardAnalista() {
   const {user,token,logout}=useAuth();
   const navigate=useNavigate();
-  const [userData,setUserData]=useState(null);
+  const [userData,setUserData]=useState(user);
   const [historial,setHistorial]=useState([]);
   const [empleoTab,setEmpleoTab]=useState('ofertas');
   const [ranking,setRanking]=useState([]);
