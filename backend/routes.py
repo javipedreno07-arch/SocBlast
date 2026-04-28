@@ -822,7 +822,6 @@ async def historial_labs(email: str = Depends(get_current_user)):
 
 
 # ── AVATAR ────────────────────────────────────────────────────────────────────
-import requests as req_sync
 from fastapi.responses import Response as FastAPIResponse
 
 @router.get("/avatar/proxy")
