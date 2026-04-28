@@ -55,8 +55,9 @@ const isEmpresa = (rol) => rol === 'empresa' || rol === 'company';
 const PrivateRoute = ({ children, rol }) => {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', backgroundColor:'#f5f7fa', color:'#0f172a' }}>
-      Cargando...
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', backgroundColor:'#f8fafc' }}>
+      <div style={{ width:36, height:36, border:'3px solid #e2e8f0', borderTop:'3px solid #4f46e5', borderRadius:'50%', animation:'spin .8s linear infinite' }}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
   if (!user) return <Navigate to="/login" />;
@@ -133,16 +134,16 @@ function App() {
   }
 
   return (
-    <>
-      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <div style={{ opacity: showSplash ? 0 : 1, transition: 'opacity 0.4s ease' }}>
-        <AuthProvider>
+    <AuthProvider>
+      <>
+        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+        <div style={{ opacity: showSplash ? 0 : 1, transition: 'opacity 0.4s ease' }}>
           <Router>
             <AppRoutes onGuestLogin={handleGuestLogin} />
           </Router>
-        </AuthProvider>
-      </div>
-    </>
+        </div>
+      </>
+    </AuthProvider>
   );
 }
 
