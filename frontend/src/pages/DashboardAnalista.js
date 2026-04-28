@@ -171,7 +171,7 @@ function AnalystProfileCard({nombre,tier,skills,copas,arena,xp,sesiones,avatarCo
             <AvatarCircle name={nombre} avatarConfig={avatarConfig} size={88} foto={foto} color={ac.main}/>
             {/* OVR badge */}
             <div style={{position:'absolute',bottom:-4,right:-4,padding:'2px 8px',borderRadius:100,background:ac.main,border:'2px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}>
-              <span style={{fontFamily:F,fontSize:12,fontWeight:700,color:'#fff',letterSpacing:.5}}>{ovr}</span>
+              <span style={{fontFamily:"'Rajdhani',sans-serif",fontSize:13,fontWeight:900,color:'#fff',letterSpacing:.5}}>{ovr}</span>
             </div>
           </div>
           <div style={{textAlign:'center'}}>
@@ -332,7 +332,7 @@ export default function DashboardAnalista() {
             </button>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <div style={{padding:'5px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:8}}>
+            <div onClick={()=>navigate('/arenas')} style={{padding:'5px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
               <MiniArenas copas={copas} arenaActual={arenaObj}/>
               <div style={{width:1,height:14,background:'#e2e8f0'}}/>
               <span style={{fontSize:11,fontWeight:700,color:ac.main}}>{arenaObj.name}</span>
@@ -350,7 +350,7 @@ export default function DashboardAnalista() {
 
           {/* GREETING */}
           <div className="fade-up" style={{marginBottom:20}}>
-            <h1 style={{fontSize:24,fontWeight:800,color:'#0f172a',letterSpacing:'-0.5px',marginBottom:2}}>
+            <h1 style={{fontSize:28,fontWeight:900,color:'#0f172a',letterSpacing:'-0.8px',marginBottom:4}}>
               Hola, <span style={{color:ACC}}>{user?.nombre}</span> 👋
             </h1>
             <p style={{fontSize:13,color:'#64748b'}}>
