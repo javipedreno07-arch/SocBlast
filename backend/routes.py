@@ -201,10 +201,9 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
     if not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
-    if not db_user.get("email_verificado", False):
-        raise HTTPException(status_code=403, detail="Debes verificar tu email antes de iniciar sesión")
-
     updates = {}
+    if not db_user.get("email_verificado", False):
+        updates["email_verificado"] = True
     if "siem_queries" not in db_user.get("skills", {}):
         updates["skills.siem_queries"] = 0.0
     if "skills_streak_bad" not in db_user:
@@ -823,7 +822,7 @@ async def historial_labs(email: str = Depends(get_current_user)):
 
 
 # ── AVATAR ────────────────────────────────────────────────────────────────────
-import httpx
+import requests as req_sync
 from fastapi.responses import Response as FastAPIResponse
 
 @router.get("/avatar/proxy")
@@ -841,10 +840,6 @@ async def avatar_proxy(
     mouth: str = "default",
     size: int = 200,
 ):
-    """
-    Proxy para DiceBear v9 avataaars con parámetros correctos.
-    clothing (no clothe), eyebrows (no eyebrow), v9.x
-    """
     seed = f"{top}-{hairColor}-{clothing}-{skin}-{eyes}-{mouth}-{accessories}-{facialHair}-{eyebrows}-{clothingColor}-{facialHairColor}"
 
     params = {
@@ -858,9 +853,8 @@ async def avatar_proxy(
         "eyebrows":        eyebrows,
         "mouth":           mouth,
         "backgroundColor": "b6e3f4",
-        "size":            size,
+        "size":            str(size),
     }
-    # Solo añadir accessories y facialHair si no son "blank"
     if accessories != "blank":
         params["accessories"] = accessories
     if facialHair != "blank":
@@ -868,17 +862,22 @@ async def avatar_proxy(
         params["facialHairColor"] = facialHairColor
 
     url = "https://api.dicebear.com/9.x/avataaars/svg"
+    print(f"[avatar_proxy] GET {url} params={params}")
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            r = await client.get(url, params=params)
-            r.raise_for_status()
-            return FastAPIResponse(
-                content=r.content,
-                media_type="image/svg+xml",
-                headers={"Cache-Control": "public, max-age=86400"},
-            )
+        r = req_sync.get(url, params=params, timeout=15)
+        print(f"[avatar_proxy] status={r.status_code} len={len(r.content)}")
+        if r.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"DiceBear returned {r.status_code}: {r.text[:200]}")
+        return FastAPIResponse(
+            content=r.content,
+            media_type="image/svg+xml",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"[avatar_proxy] ERROR: {e}")
         raise HTTPException(status_code=502, detail=f"Error obteniendo avatar: {str(e)}")
 
 
