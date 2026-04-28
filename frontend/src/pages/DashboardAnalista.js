@@ -273,7 +273,13 @@ export default function DashboardAnalista() {
       setUserData(r.data);
       try{const h=await axios.get(`${API}/api/sesiones/historial`,{headers:{Authorization:`Bearer ${token}`}});setHistorial(h.data||[]);}catch{}
       try{const rk=await axios.get(`${API}/api/ranking`,{headers:{Authorization:`Bearer ${token}`}});setRanking((rk.data?.jugadores||[]).slice(0,3));}catch{}
-    }catch{logout();navigate('/login');}
+    }catch(err){
+      if(err?.response?.status===401){logout();navigate('/login');}
+      else{
+        // Error de red — usar datos del contexto (localStorage) como fallback
+        if(user) setUserData(user);
+      }
+    }
   };
 
   const copas=userData?.copas||0,xp=userData?.xp||0,tier=userData?.tier||1;
