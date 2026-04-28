@@ -26,7 +26,7 @@ import MaintenancePage from './pages/MaintenancePage';
 import AnalystCardPage from './pages/AnalystCardPage';
 import AvatarPage from './pages/AvatarPage';
 
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 const GUEST_USER = {
   nombre: 'Invitado',
