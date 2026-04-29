@@ -61,106 +61,98 @@ const DEFAULT_AVATAR_CONFIG = {
   facialHair:'blank', facialHairColor:'2c1b18', clothe:'hoodie',
   clotheColor:'262e33', skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
 };
-function buildAvatarUrl(config, size) {
-  var cfg = size || 120;
-  var c = Object.assign({}, DEFAULT_AVATAR_CONFIG, config || {});
-  var seed = c.top+'-'+c.hairColor+'-'+c.clothe+'-'+c.clotheColor+'-'+c.skin+'-'+c.eyes+'-'+c.eyebrow+'-'+c.mouth+'-'+c.accessories+'-'+c.facialHair+'-'+c.facialHairColor;
-  return 'https://api.dicebear.com/9.x/avataaars/svg?seed='+encodeURIComponent(seed)+'&backgroundColor=dbeafe&size='+cfg;
+function buildAvatarUrl(config={}, size=120) {
+  const c = {...DEFAULT_AVATAR_CONFIG,...config};
+  const seed = `${c.top}-${c.hairColor}-${c.clothe}-${c.clotheColor}-${c.skin}-${c.eyes}-${c.eyebrow}-${c.mouth}-${c.accessories}-${c.facialHair}-${c.facialHairColor}`;
+  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=dbeafe&size=${size}`;
 }
 
-function AvatarCircle(props) {
-  var name = props.name || '';
-  var avatarConfig = props.avatarConfig || null;
-  var size = props.size || 72;
-  var foto = props.foto || '';
-  var color = props.color || ACC;
-  var loaded = useState(false);
-  var setLoaded = loaded[1];
-  loaded = loaded[0];
-  var key = avatarConfig ? JSON.stringify(avatarConfig) : '';
-  if (foto) return React.createElement('div', {style:{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}},
-    React.createElement('img', {src:foto,alt:name,style:{width:'100%',height:'100%',objectFit:'cover'}})
+function AvatarCircle({name='', avatarConfig=null, size=72, foto='', color=ACC}) {
+  const [loaded, setLoaded] = useState(false);
+  const key = avatarConfig ? JSON.stringify(avatarConfig) : '';
+  if (foto) return (
+    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}}>
+      <img src={foto} alt={name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+    </div>
   );
-  if (avatarConfig) return React.createElement('div', {style:{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0',background:'#dbeafe',position:'relative'}},
-    !loaded && React.createElement('div', {style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#dbeafe'}},
-      React.createElement('div', {style:{width:size*.28,height:size*.28,border:'2px solid '+color+'30',borderTop:'2px solid '+color,borderRadius:'50%',animation:'spin .8s linear infinite'}})
-    ),
-    React.createElement('img', {key:key,src:buildAvatarUrl(avatarConfig,size*2),alt:name,width:size,height:size,onLoad:function(){setLoaded(true);},onError:function(){setLoaded(true);},style:{width:'100%',height:'100%',objectFit:'cover',opacity:loaded?1:0,transition:'opacity .3s'}})
+  if (avatarConfig) return (
+    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0',background:'#dbeafe',position:'relative'}}>
+      {!loaded && <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#dbeafe'}}><div style={{width:size*.28,height:size*.28,border:`2px solid ${color}30`,borderTop:`2px solid ${color}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
+      <img key={key} src={buildAvatarUrl(avatarConfig, size*2)} alt={name} width={size} height={size}
+        onLoad={()=>setLoaded(true)} onError={()=>setLoaded(true)}
+        style={{width:'100%',height:'100%',objectFit:'cover',opacity:loaded?1:0,transition:'opacity .3s'}}/>
+    </div>
   );
-  var initials = name.trim().split(' ').map(function(w){return w[0]?w[0].toUpperCase():'';}).slice(0,2).join('');
-  return React.createElement('div', {style:{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,'+color+','+color+'cc)',display:'flex',alignItems:'center',justifyContent:'center',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}},
-    React.createElement('span', {style:{fontSize:size*.34,fontWeight:700,color:'#fff'}}, initials||'?')
+  const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
+  return (
+    <div style={{width:size,height:size,borderRadius:'50%',background:`linear-gradient(135deg,${color},${color}cc)`,display:'flex',alignItems:'center',justifyContent:'center',border:'3px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}}>
+      <span style={{fontSize:size*.34,fontWeight:700,color:'#fff'}}>{initials||'?'}</span>
+    </div>
   );
 }
 
-const calcStreak = function(hist) {
+const calcStreak = hist => {
   if (!hist.length) return 0;
-  var dates = Array.from(new Set(hist.map(function(s){return new Date(s.inicio*1000).toISOString().split('T')[0];}))).sort().reverse();
-  var streak = 0, cur = new Date();
-  for (var i=0; i<dates.length; i++) {
-    var diff = Math.floor((cur - new Date(dates[i]))/86400000);
-    if (diff<=1) { streak++; cur=new Date(dates[i]); } else break;
-  }
+  const dates = [...new Set(hist.map(s=>new Date(s.inicio*1000).toISOString().split('T')[0]))].sort().reverse();
+  let streak=0, cur=new Date();
+  for (const d of dates) { const diff=Math.floor((cur-new Date(d))/86400000); if(diff<=1){streak++;cur=new Date(d);}else break; }
   return streak;
 };
 
-function ActivityHeatmap(props) {
-  var historial = props.historial;
-  var days=90, today=new Date();
-  var cells=Array.from({length:days},function(_,i){var d=new Date(today);d.setDate(today.getDate()-(days-1-i));var ds=d.toISOString().split('T')[0];return{date:d,count:historial.filter(function(s){return new Date(s.inicio*1000).toISOString().split('T')[0]===ds;}).length};});
-  var weeks=[]; for(var i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
-  var gc=function(c){return c===0?'#e2e8f0':c===1?'#bfdbfe':c===2?'#60a5fa':'#0a66c2';};
-  return React.createElement('div',{style:{display:'flex',gap:'3px'}},
-    weeks.map(function(wk,wi){
-      return React.createElement('div',{key:wi,style:{display:'flex',flexDirection:'column',gap:'3px'}},
-        wk.map(function(d,di){
-          return React.createElement('div',{key:di,title:d.date.toLocaleDateString('es-ES')+' '+d.count,style:{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:gc(d.count),cursor:'default'},
-            onMouseEnter:function(e){e.target.style.transform='scale(1.4)';},
-            onMouseLeave:function(e){e.target.style.transform='scale(1)';}
-          });
-        })
-      );
-    })
+function ActivityHeatmap({historial}) {
+  const days=90, today=new Date();
+  const cells=Array.from({length:days},(_,i)=>{const d=new Date(today);d.setDate(today.getDate()-(days-1-i));const ds=d.toISOString().split('T')[0];return{date:d,count:historial.filter(s=>new Date(s.inicio*1000).toISOString().split('T')[0]===ds).length};});
+  const weeks=[]; for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
+  const gc=c=>c===0?'#e2e8f0':c===1?'#bfdbfe':c===2?'#60a5fa':'#0a66c2';
+  return(
+    <div style={{display:'flex',gap:'3px'}}>
+      {weeks.map((wk,wi)=>(
+        <div key={wi} style={{display:'flex',flexDirection:'column',gap:'3px'}}>
+          {wk.map((d,di)=>(
+            <div key={di} title={`${d.date.toLocaleDateString('es-ES')} · ${d.count}`}
+              style={{width:'10px',height:'10px',borderRadius:'2px',backgroundColor:gc(d.count),cursor:'default'}}
+              onMouseEnter={e=>e.target.style.transform='scale(1.4)'} onMouseLeave={e=>e.target.style.transform='scale(1)'}/>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
-function Icon(props) {
-  var name = props.name;
-  var size = props.size || 15;
-  var color = props.color || 'currentColor';
-  var icons = {
-    bolt: 'M13 2 3 14 12 14 11 22 21 10 12 10z',
-    flask: 'M6 18h8M3 22h18M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2z',
-    cup: 'M18 2H6v7a6 6 0 0 0 12 0V2Z',
-    award: 'M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
-    user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2',
-    users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
-    chart: 'M18 20V10M12 20V4M6 20v-6',
-    book: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20',
-    shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-    target: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
-    trend: 'M23 6 13.5 15.5 8.5 10.5 1 18',
-    fire: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3',
-    clock: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
-    arrowRight: 'M5 12h14m-7-7 7 7-7 7',
-    check: 'M20 6 9 17 4 12',
-    brain: 'M9.5 2A2.5 2.5 0 0 1 12 4.5v15',
-    planet: 'M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14z',
-  };
-  return React.createElement('span', {style:{display:'inline-flex',alignItems:'center',justifyContent:'center',color:color,width:size,height:size,flexShrink:0}},
-    React.createElement('svg', {width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
-      React.createElement('path', {d: icons[name] || icons.target})
-    )
-  );
-}
+const IC = {
+  bolt:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  flask:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
+  cup:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+  award:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
+  user:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  users:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  chart:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+  book:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  shield: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  target: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  trend:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+  fire:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+  clock:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  arrow:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
+  brain:  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
+  planet: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="7"/><path d="M3 12c0 0 5-8 18 0"/><path d="M3 12c0 0 5 8 18 0"/></svg>,
+};
+const Icon = ({name, size=15, color='currentColor'}) => (
+  <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',color,width:size,height:size,flexShrink:0}}>
+    {React.cloneElement(IC[name]||IC.target, {width:size,height:size})}
+  </span>
+);
 
-function ComingSoon(props) {
-  var title=props.title, desc=props.desc, icon=props.icon, color=props.color||ACC;
-  return React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 24px',textAlign:'center',background:'#f8fafc',borderRadius:10,border:'1px dashed #e2e8f0',minHeight:200}},
-    React.createElement('div',{style:{width:44,height:44,borderRadius:10,background:color+'12',border:'1px solid '+color+'20',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12}}, React.createElement(Icon,{name:icon,size:20,color:color})),
-    React.createElement('span',{style:{fontSize:11,fontWeight:600,color:color,letterSpacing:'1px',marginBottom:8}},'PROXIMAMENTE'),
-    React.createElement('h3',{style:{fontSize:14,fontWeight:700,color:'#0f172a',marginBottom:5}},title),
-    React.createElement('p',{style:{fontSize:12,color:'#64748b',lineHeight:1.6,maxWidth:300}},desc)
+function ComingSoon({title, desc, icon, color=ACC}) {
+  return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 24px',textAlign:'center',background:'#f8fafc',borderRadius:10,border:'1px dashed #e2e8f0',minHeight:200}}>
+      <div style={{width:44,height:44,borderRadius:10,background:`${color}12`,border:`1px solid ${color}20`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12}}>
+        <Icon name={icon} size={20} color={color}/>
+      </div>
+      <span style={{fontSize:11,fontWeight:600,color,letterSpacing:'1px',marginBottom:8}}>PROXIMAMENTE</span>
+      <h3 style={{fontSize:14,fontWeight:700,color:'#0f172a',marginBottom:5}}>{title}</h3>
+      <p style={{fontSize:12,color:'#64748b',lineHeight:1.6,maxWidth:300}}>{desc}</p>
+    </div>
   );
 }
 
@@ -177,34 +169,34 @@ export default function DashboardAnalista() {
 
   const fetchUser = async () => {
     try {
-      const r = await axios.get(API+'/api/me', {headers:{Authorization:'Bearer '+token}});
+      const r = await axios.get(`${API}/api/me`, {headers:{Authorization:`Bearer ${token}`}});
       setUserData(r.data);
-      try { const h = await axios.get(API+'/api/sesiones/historial', {headers:{Authorization:'Bearer '+token}}); setHistorial(h.data||[]); } catch(e) {}
-      try { const rk = await axios.get(API+'/api/ranking', {headers:{Authorization:'Bearer '+token}}); setRanking((rk.data?.jugadores||[]).slice(0,3)); } catch(e) {}
+      try { const h = await axios.get(`${API}/api/sesiones/historial`, {headers:{Authorization:`Bearer ${token}`}}); setHistorial(h.data||[]); } catch(e) {}
+      try { const rk = await axios.get(`${API}/api/ranking`, {headers:{Authorization:`Bearer ${token}`}}); setRanking((rk.data?.jugadores||[]).slice(0,3)); } catch(e) {}
     } catch(err) {
       if (err?.response?.status === 401) { logout(); navigate('/login'); }
       else if (user) { setUserData(user); }
     }
   };
 
-  const copas    = userData?.copas || 0;
-  const xp       = userData?.xp || 0;
-  const tier     = userData?.tier || 1;
-  const sesiones = userData?.sesiones_completadas || 0;
-  const skills   = userData?.skills || {};
-  const arena    = userData?.arena || 'Bronce 3';
-  const arenaObj = getArenaFromCopas(copas);
-  const group    = getArenaGroup(arena);
-  const ac       = ARENA_COLORS[group];
-  const streak   = calcStreak(historial);
-  const ovr      = calcOVR(skills);
-  const XP_MAX   = [0,500,1500,3000,5000,8000,12000,18000,99999];
-  const xpMin    = XP_MAX[tier-1]||0;
-  const xpMax    = XP_MAX[tier]||99999;
-  const pctXP    = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
+  const copas     = userData?.copas || 0;
+  const xp        = userData?.xp || 0;
+  const tier      = userData?.tier || 1;
+  const sesiones  = userData?.sesiones_completadas || 0;
+  const skills    = userData?.skills || {};
+  const arena     = userData?.arena || 'Bronce 3';
+  const arenaObj  = getArenaFromCopas(copas);
+  const group     = getArenaGroup(arena);
+  const ac        = ARENA_COLORS[group];
+  const streak    = calcStreak(historial);
+  const ovr       = calcOVR(skills);
+  const XP_MAX    = [0,500,1500,3000,5000,8000,12000,18000,99999];
+  const xpMin     = XP_MAX[tier-1]||0;
+  const xpMax     = XP_MAX[tier]||99999;
+  const pctXP     = Math.min(((xp-xpMin)/(xpMax-xpMin))*100, 100);
   const tierColor = TIER_CLR[tier] || '#64748b';
   const skillVals = SKILL_ABBR.map(s => ({...s, val: Math.max(0, Math.round((skills?.[s.key]||0)*10))}));
-  const topSkills = [...skillVals].sort((a,b) => b.val-a.val).slice(0,6);
+  const topSkills = [...skillVals].sort((a,b) => b.val-a.val).slice(0,4);
   const weakSkills = [...skillVals].sort((a,b) => a.val-b.val).slice(0,1);
   const siguienteArena = ARENAS_CONFIG[ARENAS_CONFIG.findIndex(a => a.id===arenaObj.id)+1];
   const avatarConfig = userData?.avatar_config || null;
@@ -219,15 +211,16 @@ export default function DashboardAnalista() {
     .s2{animation:fadeUp .3s ease .16s both;}
     .s3{animation:fadeUp .3s ease .24s both;}
     .nb:hover{background:#f3f4f6!important;}
-    .pb:hover{opacity:.88;}
+    .pb:hover{opacity:.88;transform:translateY(-1px);}
     .qb:hover{background:#eff6ff!important;border-color:#bfdbfe!important;}
-    .hr:hover{background:#f8fafc!important;}
+    .hr:hover{background:#f1f5f9!important;}
+    *{transition:transform .15s ease,box-shadow .15s ease,opacity .1s;}
   `;
 
   if (!userData) return (
     <div style={{minHeight:'100vh',background:'#f3f2ef',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{width:36,height:36,border:'3px solid #e2e8f0',borderTop:'3px solid '+ACC,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+      <div style={{width:36,height:36,border:'3px solid #e2e8f0',borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
 
@@ -236,25 +229,32 @@ export default function DashboardAnalista() {
       <style>{css}</style>
 
       {/* NAVBAR */}
-      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'#fff',borderBottom:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.08)'}}>
+      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'#fff',borderBottom:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.07)'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={()=>navigate('/')}>
           <img src="/logosoc.png" alt="SocBlast" style={{height:26}}/>
           <span style={{fontSize:16,fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
         </div>
         <div style={{display:'flex',gap:0,alignItems:'center'}}>
-          {[{label:'Training',icon:'book',path:'/training'},{label:'Ranking',icon:'chart',path:'/ranking'},{label:'Certificado',icon:'award',path:'/certificado'},{label:'Perfil',icon:'user',path:'/perfil'},{label:'Empleo',icon:'users',path:'#empleo'}].map((item,i) => (
-            <button key={i} className="nb" onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
-              style={{padding:'6px 14px',borderRadius:6,background:'none',border:'none',color:'#374151',fontSize:12,fontWeight:500,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          {[
+            {label:'Training',   icon:'book',  path:'/training'},
+            {label:'Ranking',    icon:'chart', path:'/ranking'},
+            {label:'Certificado',icon:'award', path:'/certificado'},
+            {label:'Perfil',     icon:'user',  path:'/perfil'},
+            {label:'Empleo',     icon:'users', path:'#empleo'},
+          ].map((item,i) => (
+            <button key={i} className="nb"
+              onClick={()=>item.path==='#empleo'?document.getElementById('empleo-section')?.scrollIntoView({behavior:'smooth'}):navigate(item.path)}
+              style={{padding:'6px 12px',borderRadius:6,background:'none',border:'none',color:'#374151',fontSize:12,fontWeight:500,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
               <Icon name={item.icon} size={18} color="#374151"/>
               <span style={{fontSize:10}}>{item.label}</span>
             </button>
           ))}
           <div style={{width:1,height:28,background:'#e2e8f0',margin:'0 4px'}}/>
-          <button className="nb" onClick={()=>navigate('/sesion')} style={{padding:'6px 14px',borderRadius:6,background:'none',border:'none',color:ACC,fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          <button className="nb" onClick={()=>navigate('/sesion')} style={{padding:'6px 12px',borderRadius:6,background:'none',border:'none',color:ACC,fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <Icon name="bolt" size={18} color={ACC}/>
             <span style={{fontSize:10}}>Sesiones</span>
           </button>
-          <button className="nb" onClick={()=>navigate('/lab')} style={{padding:'6px 14px',borderRadius:6,background:'none',border:'none',color:'#059669',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          <button className="nb" onClick={()=>navigate('/lab')} style={{padding:'6px 12px',borderRadius:6,background:'none',border:'none',color:'#059669',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <Icon name="flask" size={18} color="#059669"/>
             <span style={{fontSize:10,color:'#059669'}}>Labs</span>
           </button>
@@ -262,7 +262,7 @@ export default function DashboardAnalista() {
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div onClick={()=>navigate('/arenas')} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',borderRadius:8,background:'#f8fafc',border:'1px solid #e2e8f0',cursor:'pointer'}}>
             <span style={{fontSize:11,fontWeight:700,color:ac.main}}>{arenaObj.name}</span>
-            {streak>0 && <><div style={{width:1,height:12,background:'#e2e8f0'}}/><span style={{fontSize:11,fontWeight:700,color:'#d97706'}}>{streak}</span></>}
+            {streak>0 && <><div style={{width:1,height:12,background:'#e2e8f0'}}/><Icon name="fire" size={12} color="#d97706"/><span style={{fontSize:11,fontWeight:700,color:'#d97706'}}>{streak}</span></>}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={()=>navigate('/perfil')}>
             <AvatarCircle name={user?.nombre} avatarConfig={avatarConfig} size={32} foto={foto} color={ACC}/>
@@ -281,17 +281,17 @@ export default function DashboardAnalista() {
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
           {/* Profile Card */}
-          <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.07)',overflow:'hidden'}}>
-            {/* Banner */}
-            <div style={{height:88,background:'linear-gradient(135deg,#0a66c2,#0284c7)',position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',inset:0,opacity:.07,backgroundImage:'radial-gradient(circle, white 1px, transparent 1px)',backgroundSize:'30px 30px'}}/>
+          <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.07)',overflow:'hidden'}}>
+            {/* Banner azul */}
+            <div style={{height:88,background:'linear-gradient(135deg,#0a66c2 0%,#0284c7 100%)',position:'relative',overflow:'hidden'}}>
+              <div style={{position:'absolute',inset:0,opacity:.06,backgroundImage:'radial-gradient(circle, white 1px, transparent 1px)',backgroundSize:'28px 28px'}}/>
               <div style={{position:'absolute',top:10,right:12,display:'flex',alignItems:'center',gap:5,padding:'3px 9px',borderRadius:100,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.2)'}}>
                 <div style={{width:5,height:5,borderRadius:'50%',background:'#4ade80',animation:'pulse 2s infinite'}}/>
-                <span style={{fontSize:10,color:'#fff',fontWeight:600}}>Verified</span>
+                <span style={{fontSize:10,color:'#fff',fontWeight:600}}>SocBlast Verified</span>
               </div>
             </div>
             <div style={{padding:'0 20px 20px'}}>
-              {/* Avatar */}
+              {/* Avatar sobresaliendo del banner */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginTop:-36,marginBottom:14}}>
                 <div style={{position:'relative'}}>
                   <AvatarCircle name={user?.nombre} avatarConfig={avatarConfig} size={80} foto={foto} color={ACC}/>
@@ -300,28 +300,28 @@ export default function DashboardAnalista() {
                   </div>
                 </div>
                 <div style={{display:'flex',gap:6,paddingBottom:2}}>
-                  <button className="pb" onClick={()=>navigate('/analyst-card')} style={{padding:'6px 14px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Card</button>
-                  <button className="pb" onClick={()=>navigate('/perfil')} style={{padding:'6px 14px',borderRadius:100,background:'#fff',border:'1px solid '+ACC,color:ACC,fontSize:12,fontWeight:600,cursor:'pointer'}}>Editar</button>
+                  <button className="pb" onClick={()=>navigate('/analyst-card')} style={{padding:'6px 14px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Analyst Card</button>
+                  <button className="pb" onClick={()=>navigate('/perfil')} style={{padding:'6px 14px',borderRadius:100,background:'#fff',border:`1px solid ${ACC}`,color:ACC,fontSize:12,fontWeight:600,cursor:'pointer'}}>Editar</button>
                 </div>
               </div>
-              {/* Info */}
+              {/* Nombre */}
               <h2 style={{fontSize:18,fontWeight:700,color:'#0f172a',marginBottom:2,letterSpacing:'-0.3px'}}>{user?.nombre}</h2>
               <p style={{fontSize:13,color:'#374151',marginBottom:8}}>
                 <span style={{fontWeight:600,color:tierColor}}>{TIERS[tier]}</span>
                 <span style={{color:'#cbd5e1',margin:'0 6px'}}>·</span>
-                <span>Cybersecurity Analyst</span>
+                Cybersecurity Analyst
               </p>
-              <div style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:100,background:ac.light,border:'1px solid '+ac.border,marginBottom:16}}>
+              <div style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:100,background:ac.light,border:`1px solid ${ac.border}`,marginBottom:16}}>
                 <div style={{width:5,height:5,borderRadius:'50%',background:ac.main}}/>
                 <span style={{fontSize:11,fontWeight:600,color:ac.main}}>{arena}</span>
               </div>
               {/* Stats */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
                 {[
-                  {val:ovr,                     label:'OVR',     color:ac.main},
-                  {val:copas.toLocaleString(),  label:'Copas',   color:'#d97706'},
-                  {val:sesiones,                label:'Sesiones',color:'#059669'},
-                  {val:xp.toLocaleString(),     label:'XP',      color:tierColor},
+                  {val:ovr,                    label:'OVR',     color:ac.main},
+                  {val:copas.toLocaleString(), label:'Copas',   color:'#d97706'},
+                  {val:sesiones,               label:'Sesiones',color:'#059669'},
+                  {val:xp.toLocaleString(),    label:'XP',      color:tierColor},
                 ].map((s,i) => (
                   <div key={i} style={{padding:'10px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e8eaf0',textAlign:'center'}}>
                     <div style={{fontSize:20,fontWeight:700,color:s.color,lineHeight:1,letterSpacing:'-0.5px'}}>{s.val}</div>
@@ -329,27 +329,27 @@ export default function DashboardAnalista() {
                   </div>
                 ))}
               </div>
-              {/* Top skills */}
+              {/* Skills */}
               <div style={{marginBottom:14}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:8}}>TOP SKILLS</div>
-                {topSkills.slice(0,4).map((s,i) => (
+                {topSkills.map((s,i) => (
                   <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                     <span style={{fontSize:9,fontWeight:700,color:'#94a3b8',width:22,flexShrink:0}}>{s.abbr}</span>
                     <div style={{flex:1,height:4,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
-                      <div style={{width:Math.min(s.val,100)+'%',height:'100%',borderRadius:2,background:s.val>=7?ACC:'#94a3b8',transition:'width 1s ease'}}/>
+                      <div style={{width:`${Math.min(s.val,100)}%`,height:'100%',borderRadius:2,background:s.val>=7?ACC:'#94a3b8',transition:'width 1s ease'}}/>
                     </div>
                     <span style={{fontSize:10,fontWeight:700,color:s.val>=7?ACC:'#64748b',width:16,textAlign:'right',flexShrink:0}}>{s.val}</span>
                   </div>
                 ))}
               </div>
-              {/* XP bar */}
+              {/* XP */}
               <div style={{padding:'10px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e8eaf0'}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
                   <span style={{fontSize:11,fontWeight:600,color:tierColor}}>{TIERS[tier]}</span>
                   <span style={{fontSize:10,color:'#94a3b8'}}>{xp.toLocaleString()} XP</span>
                 </div>
                 <div style={{height:5,borderRadius:3,background:'#e2e8f0',overflow:'hidden'}}>
-                  <div style={{width:pctXP+'%',height:'100%',borderRadius:3,background:tierColor,transition:'width 1.2s ease'}}/>
+                  <div style={{width:`${pctXP}%`,height:'100%',borderRadius:3,background:tierColor,transition:'width 1.2s ease'}}/>
                 </div>
                 {tier<8 && <p style={{fontSize:10,color:'#94a3b8',marginTop:4}}>Faltan {(XP_MAX[tier]-xp).toLocaleString()} XP para {TIERS[tier+1]}</p>}
               </div>
@@ -365,7 +365,7 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:11,color:ac.main,fontWeight:700}}>{(siguienteArena.min-copas).toLocaleString()} copas</span>
               </div>
               <div style={{height:4,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
-                <div style={{height:'100%',borderRadius:2,width:Math.min(((copas-arenaObj.min)/300)*100,100)+'%',background:ac.main,transition:'width 1s ease'}}/>
+                <div style={{height:'100%',borderRadius:2,width:`${Math.min(((copas-arenaObj.min)/300)*100,100)}%`,background:ac.main,transition:'width 1s ease'}}/>
               </div>
             </div>
           )}
@@ -379,8 +379,9 @@ export default function DashboardAnalista() {
               {label:'Ranking Global', desc:'Tu posicion',      path:'/ranking',     color:'#d97706',icon:'chart'},
               {label:'Mi Certificado', desc:'QR verificable',   path:'/certificado', color:'#059669',icon:'award'},
             ].map((item,i) => (
-              <div key={i} className="qb" onClick={()=>navigate(item.path)} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 8px',borderRadius:7,cursor:'pointer',marginBottom:4,border:'1px solid transparent'}}>
-                <div style={{width:26,height:26,borderRadius:6,background:item.color+'12',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <div key={i} className="qb" onClick={()=>navigate(item.path)}
+                style={{display:'flex',alignItems:'center',gap:8,padding:'7px 8px',borderRadius:7,cursor:'pointer',marginBottom:4,border:'1px solid transparent'}}>
+                <div style={{width:26,height:26,borderRadius:6,background:`${item.color}12`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <Icon name={item.icon} size={13} color={item.color}/>
                 </div>
                 <div style={{flex:1}}>
@@ -409,7 +410,8 @@ export default function DashboardAnalista() {
           <div className="s1" style={{borderRadius:12,overflow:'hidden',background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
             <div style={{display:'flex',borderBottom:'1px solid #e2e8f0'}}>
               {[{i:0,l:'Sesiones competitivas',c:'#0a66c2'},{i:1,l:'Laboratorio SOC',c:'#059669'}].map(t => (
-                <button key={t.i} onClick={()=>setCarruselIdx(t.i)} style={{flex:1,padding:'11px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:carruselIdx===t.i?t.c:'#94a3b8',borderBottom:carruselIdx===t.i?'2px solid '+t.c:'2px solid transparent'}}>
+                <button key={t.i} onClick={()=>setCarruselIdx(t.i)}
+                  style={{flex:1,padding:'11px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:carruselIdx===t.i?t.c:'#94a3b8',borderBottom:carruselIdx===t.i?`2px solid ${t.c}`:'2px solid transparent'}}>
                   {t.l}
                 </button>
               ))}
@@ -475,7 +477,11 @@ export default function DashboardAnalista() {
               <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:12}}>ACTIVIDAD 90 DIAS</div>
               <div style={{overflowX:'auto',marginBottom:10}}><ActivityHeatmap historial={historial}/></div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
-                {[{value:sesiones,label:'sesiones',color:ACC},{value:streak,label:'racha',color:'#d97706'},{value:historial.filter(s=>s.resultado?.copas_ganadas>0).length,label:'victorias',color:'#059669'}].map((s,i) => (
+                {[
+                  {value:sesiones, label:'sesiones', color:ACC},
+                  {value:streak,   label:'racha',    color:'#d97706'},
+                  {value:historial.filter(s=>s.resultado?.copas_ganadas>0).length, label:'victorias', color:'#059669'},
+                ].map((s,i) => (
                   <div key={i} style={{textAlign:'center',padding:'8px',borderRadius:7,background:'#f8fafc',border:'1px solid #f1f5f9'}}>
                     <div style={{fontSize:17,fontWeight:700,color:s.color}}>{s.value}</div>
                     <div style={{fontSize:10,color:'#94a3b8',marginTop:1}}>{s.label}</div>
@@ -488,7 +494,9 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px'}}>TOP RANKING</span>
                 <button onClick={()=>navigate('/ranking')} style={{fontSize:11,color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo</button>
               </div>
-              {ranking.length===0 ? <p style={{fontSize:12,color:'#94a3b8',textAlign:'center',padding:'8px 0'}}>Cargando...</p> : ranking.map((j,i) => (
+              {ranking.length===0 ? (
+                <p style={{fontSize:12,color:'#94a3b8',textAlign:'center',padding:'8px 0'}}>Cargando...</p>
+              ) : ranking.map((j,i) => (
                 <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:i<ranking.length-1?'1px solid #f8fafc':'none'}}>
                   <span style={{fontSize:13,width:18}}>{i===0?'🥇':i===1?'🥈':'🥉'}</span>
                   <div style={{flex:1,minWidth:0}}>
@@ -544,7 +552,8 @@ export default function DashboardAnalista() {
                 <p style={{fontSize:11,color:'rgba(255,255,255,0.45)',lineHeight:1.6,marginBottom:12}}>OVR, skills verificadas y arena — todo en un perfil publico compartible.</p>
                 <div style={{display:'flex',gap:4}}>
                   {[{id:'ofertas',l:'Ofertas'},{id:'certs',l:'Certs'},{id:'bootcamps',l:'Bootcamps'},{id:'retos',l:'Retos'}].map(tab => (
-                    <button key={tab.id} onClick={()=>setEmpleoTab(tab.id)} style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,background:empleoTab===tab.id?'rgba(129,140,248,0.25)':'rgba(255,255,255,0.05)',color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.4)',borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent'}}>
+                    <button key={tab.id} onClick={()=>setEmpleoTab(tab.id)}
+                      style={{padding:'4px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,background:empleoTab===tab.id?'rgba(129,140,248,0.25)':'rgba(255,255,255,0.05)',color:empleoTab===tab.id?'#c7d2fe':'rgba(255,255,255,0.4)',borderBottom:empleoTab===tab.id?'2px solid #818cf8':'2px solid transparent'}}>
                       {tab.l}
                     </button>
                   ))}
@@ -552,10 +561,10 @@ export default function DashboardAnalista() {
               </div>
             </div>
             <div style={{background:'#fff',padding:'18px'}}>
-              {empleoTab==='ofertas'    && <ComingSoon title="Ofertas de empleo SOC"        desc="Empresas buscaran analistas por su perfil verificado."   icon="users" color="#0a66c2"/>}
-              {empleoTab==='certs'      && <ComingSoon title="Certificaciones recomendadas" desc="Recomendaciones segun tu perfil actual."                 icon="award" color="#7c3aed"/>}
-              {empleoTab==='bootcamps'  && <ComingSoon title="Bootcamps y cursos SOC"       desc="Curados por relevancia para tu nivel y arena."           icon="book"  color="#0891b2"/>}
-              {empleoTab==='retos'      && <ComingSoon title="Retos y plataformas externas" desc="TryHackMe, Blue Team Labs, CyberDefenders integrados."   icon="shield" color="#059669"/>}
+              {empleoTab==='ofertas'   && <ComingSoon title="Ofertas de empleo SOC"        desc="Empresas buscaran analistas por su perfil verificado."   icon="users" color="#0a66c2"/>}
+              {empleoTab==='certs'     && <ComingSoon title="Certificaciones recomendadas" desc="Recomendaciones segun tu perfil actual."                 icon="award" color="#7c3aed"/>}
+              {empleoTab==='bootcamps' && <ComingSoon title="Bootcamps y cursos SOC"       desc="Curados por relevancia para tu nivel y arena."           icon="book"  color="#0891b2"/>}
+              {empleoTab==='retos'     && <ComingSoon title="Retos y plataformas externas" desc="TryHackMe, Blue Team Labs, CyberDefenders integrados."   icon="shield" color="#059669"/>}
             </div>
           </div>
 
