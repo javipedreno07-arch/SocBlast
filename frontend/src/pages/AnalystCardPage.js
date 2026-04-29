@@ -4,99 +4,36 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
-const F = `'Rajdhani','Arial Narrow','Impact',sans-serif`;
+const ACC = '#0a66c2';
 
 const SKILLS = [
-  {
-    key:'analisis_logs', abbr:'LOG', label:'Análisis de Logs', color:'#3b82f6',
-    criterios:[
-      'Identifica logs relevantes entre el ruido',
-      'Correlaciona eventos por timestamp',
-      'Lee correctamente campos clave (usuario, proceso, IP, puerto)',
-      'Detecta anomalías en patrones de comportamiento',
-      'Reconstruye la secuencia cronológica del ataque',
-    ]
-  },
-  {
-    key:'deteccion_amenazas', abbr:'DET', label:'Detección de Amenazas', color:'#6366f1',
-    criterios:[
-      'Identifica el IOC principal correcto',
-      'Clasifica la severidad apropiadamente',
-      'Distingue falsos positivos de amenazas reales',
-      'Reconoce el tipo de ataque correctamente',
-      'Asocia el comportamiento con TTPs conocidas',
-    ]
-  },
-  {
-    key:'respuesta_incidentes', abbr:'RSP', label:'Respuesta a Incidentes', color:'#f59e0b',
-    criterios:[
-      'Elige la acción de contención correcta',
-      'Prioriza bien contención sobre erradicación y recuperación',
-      'No toma acciones que causen daño adicional',
-      'Sigue el orden lógico de respuesta al incidente',
-      'Propone remediación adecuada al tipo de incidente',
-    ]
-  },
-  {
-    key:'threat_hunting', abbr:'THR', label:'Threat Hunting', color:'#8b5cf6',
-    criterios:[
-      'Busca proactivamente más allá de las alertas visibles',
-      'Identifica movimiento lateral o persistencia oculta',
-      'Formula hipótesis correctas sobre el atacante',
-      'Usa queries SIEM efectivas para descubrir amenazas',
-      'Conecta indicios aparentemente no relacionados',
-    ]
-  },
-  {
-    key:'forense_digital', abbr:'FOR', label:'Forense Digital', color:'#ec4899',
-    criterios:[
-      'Identifica el vector de entrada del ataque',
-      'Reconstruye la cadena completa de compromiso',
-      'Localiza artefactos forenses relevantes',
-      'Estima correctamente el alcance del daño',
-      'Preserva la integridad de la evidencia en sus decisiones',
-    ]
-  },
-  {
-    key:'gestion_vulnerabilidades', abbr:'VUL', label:'Gestión de Vulns', color:'#f97316',
-    criterios:[
-      'Identifica la vulnerabilidad explotada',
-      'Prioriza correctamente por criticidad e impacto',
-      'Propone parche o mitigación adecuada',
-      'Evalúa el riesgo residual correctamente',
-      'Considera el contexto del entorno (producción, legacy...)',
-    ]
-  },
-  {
-    key:'inteligencia_amenazas', abbr:'INT', label:'Intel. de Amenazas', color:'#10b981',
-    criterios:[
-      'Asocia el ataque con actores o grupos conocidos',
-      'Identifica TTPs usando MITRE ATT&CK correctamente',
-      'Usa contexto de threat intel para enriquecer el análisis',
-      'Reconoce infraestructura C2 o patrones de campaña',
-      'Propone indicadores para bloqueo proactivo',
-    ]
-  },
-  {
-    key:'siem_queries', abbr:'SIE', label:'SIEM & Queries', color:'#0891b2',
-    criterios:[
-      'Formula queries eficientes y correctas',
-      'Usa campos y operadores adecuados',
-      'Reduce el ruido con filtros precisos',
-      'Crea correlaciones útiles entre fuentes de logs',
-      'Interpreta correctamente los resultados del SIEM',
-    ]
-  },
+  { key:'analisis_logs',           abbr:'LOG', label:'Analisis de Logs',      color:'#3b82f6',
+    criterios:['Identifica logs relevantes entre el ruido','Correlaciona eventos por timestamp','Lee correctamente campos clave','Detecta anomalias en patrones','Reconstruye la secuencia del ataque'] },
+  { key:'deteccion_amenazas',      abbr:'DET', label:'Deteccion de Amenazas', color:'#6366f1',
+    criterios:['Identifica el IOC principal correcto','Clasifica la severidad apropiadamente','Distingue falsos positivos','Reconoce el tipo de ataque','Asocia el comportamiento con TTPs'] },
+  { key:'respuesta_incidentes',    abbr:'RSP', label:'Respuesta a Incidentes',color:'#f59e0b',
+    criterios:['Elige la accion de contencion correcta','Prioriza contencion sobre erradicacion','No toma acciones daninas','Sigue el orden logico de respuesta','Propone remediacion adecuada'] },
+  { key:'threat_hunting',          abbr:'THR', label:'Threat Hunting',        color:'#8b5cf6',
+    criterios:['Busca proactivamente mas alla de alertas','Identifica movimiento lateral oculto','Formula hipotesis correctas','Usa queries SIEM efectivas','Conecta indicios no relacionados'] },
+  { key:'forense_digital',         abbr:'FOR', label:'Forense Digital',       color:'#ec4899',
+    criterios:['Identifica el vector de entrada','Reconstruye la cadena de compromiso','Localiza artefactos relevantes','Estima el alcance del dano','Preserva la integridad de evidencia'] },
+  { key:'gestion_vulnerabilidades',abbr:'VUL', label:'Gestion de Vulns',      color:'#f97316',
+    criterios:['Identifica la vulnerabilidad explotada','Prioriza por criticidad e impacto','Propone parche o mitigacion','Evalua el riesgo residual','Considera el contexto del entorno'] },
+  { key:'inteligencia_amenazas',   abbr:'INT', label:'Intel. de Amenazas',    color:'#10b981',
+    criterios:['Asocia el ataque con actores conocidos','Identifica TTPs con MITRE ATT&CK','Usa contexto de threat intel','Reconoce infraestructura C2','Propone indicadores de bloqueo'] },
+  { key:'siem_queries',            abbr:'SIE', label:'SIEM & Queries',        color:'#0891b2',
+    criterios:['Formula queries eficientes','Usa campos y operadores adecuados','Reduce el ruido con filtros','Crea correlaciones entre fuentes','Interpreta correctamente resultados'] },
 ];
 
-const ARENA_THEMES = {
-  bronce:   { main:'#d97706', accent:'#fbbf24', light:'#fef3c7', bg:'linear-gradient(160deg,#3d1a00 0%,#7c3000 30%,#b85a00 60%,#7c3000 80%,#2a1000 100%)', shine:'rgba(255,200,100,0.12)' },
-  plata:    { main:'#94a3b8', accent:'#e2e8f0', light:'#f1f5f9', bg:'linear-gradient(160deg,#0f172a 0%,#1e293b 35%,#334155 60%,#1e293b 80%,#0f172a 100%)', shine:'rgba(200,220,240,0.1)' },
-  oro:      { main:'#f59e0b', accent:'#fde68a', light:'#fffbeb', bg:'linear-gradient(160deg,#1a1200 0%,#4a3500 25%,#8a6200 55%,#c49000 75%,#4a3500 90%,#1a1200 100%)', shine:'rgba(255,230,100,0.18)' },
-  diamante: { main:'#3b82f6', accent:'#93c5fd', light:'#dbeafe', bg:'linear-gradient(160deg,#020817 0%,#0c1f4a 30%,#1a3a8a 60%,#0c1f4a 80%,#020817 100%)', shine:'rgba(147,197,253,0.15)' },
-};
+const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
+const TIER_CLR = ['','#64748b','#0a66c2','#0891b2','#059669','#d97706','#ea580c','#dc2626','#7c3aed'];
 
-const TIERS = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
+const ARENA_COLORS = {
+  bronce:   { main:'#b45309', light:'#fef3c7', border:'#fcd34d', name:'Bronce' },
+  plata:    { main:'#475569', light:'#f1f5f9', border:'#cbd5e1', name:'Plata'  },
+  oro:      { main:'#92400e', light:'#fffbeb', border:'#fde68a', name:'Oro'    },
+  diamante: { main:'#1e40af', light:'#eff6ff', border:'#bfdbfe', name:'Diamante' },
+};
 
 function getArenaGroup(arena) {
   if (!arena) return 'bronce';
@@ -109,86 +46,40 @@ function getArenaGroup(arena) {
 
 function calcOVR(skills) {
   const vals = SKILLS.map(s => Math.round((skills?.[s.key] || 0) * 10));
-  return Math.max(50, Math.round(vals.reduce((a, b) => a + b, 0) / vals.length));
+  return Math.max(50, Math.round(vals.reduce((a,b)=>a+b,0)/vals.length));
 }
 
-function FifaCard({ nombre, tier, skills, copas, arena, size='lg' }) {
-  const group     = getArenaGroup(arena);
-  const theme     = ARENA_THEMES[group];
-  const skillVals = SKILLS.map(s => ({ ...s, val: Math.max(50, Math.round((skills?.[s.key] || 0) * 10)) }));
-  const ovr       = calcOVR(skills);
-  const initials  = nombre ? nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SO';
-  const W = size === 'lg' ? 260 : 155;
-  const H = Math.round(W * 1.56);
+const DEFAULT_AVATAR_CONFIG = {
+  top:'shortFlat', hairColor:'2c1b18', accessories:'blank',
+  facialHair:'blank', facialHairColor:'2c1b18', clothe:'hoodie',
+  clotheColor:'262e33', skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
+};
+function buildAvatarUrl(config={}, size=120) {
+  const c = {...DEFAULT_AVATAR_CONFIG,...config};
+  const seed = c.top+'-'+c.hairColor+'-'+c.clothe+'-'+c.clotheColor+'-'+c.skin+'-'+c.eyes+'-'+c.eyebrow+'-'+c.mouth+'-'+c.accessories+'-'+c.facialHair+'-'+c.facialHairColor;
+  return 'https://api.dicebear.com/9.x/avataaars/svg?seed='+encodeURIComponent(seed)+'&backgroundColor=dbeafe&size='+size;
+}
 
+function AvatarCircle({name='', avatarConfig=null, size=96, foto='', color=ACC}) {
+  const [loaded, setLoaded] = useState(false);
+  const key = avatarConfig ? JSON.stringify(avatarConfig) : '';
+  if (foto) return (
+    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'4px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}}>
+      <img src={foto} alt={name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+    </div>
+  );
+  if (avatarConfig) return (
+    <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'4px solid #fff',boxShadow:'0 0 0 2px #e2e8f0',background:'#dbeafe',position:'relative'}}>
+      {!loaded && <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:size*.28,height:size*.28,border:'2px solid '+color+'30',borderTop:'2px solid '+color,borderRadius:'50%',animation:'spin .8s linear infinite'}}/></div>}
+      <img key={key} src={buildAvatarUrl(avatarConfig,size*2)} alt={name} width={size} height={size}
+        onLoad={()=>setLoaded(true)} onError={()=>setLoaded(true)}
+        style={{width:'100%',height:'100%',objectFit:'cover',opacity:loaded?1:0,transition:'opacity .3s'}}/>
+    </div>
+  );
+  const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
   return (
-    <div style={{ width:W, height:H, borderRadius:W*0.07, position:'relative', overflow:'hidden', boxShadow:`0 24px 56px ${theme.main}55`, flexShrink:0 }}>
-      <div style={{ position:'absolute', inset:0, background:theme.bg }}/>
-      <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
-        <div style={{ position:'absolute', top:'-40%', right:'-15%', width:'55%', height:'200%', background:'rgba(255,255,255,0.022)', transform:'rotate(18deg)' }}/>
-      </div>
-      <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg,${theme.shine} 0%,transparent 55%,rgba(0,0,0,0.18) 100%)`, pointerEvents:'none' }}/>
-      <div style={{ position:'relative', zIndex:2, height:'100%', display:'flex', flexDirection:'column', padding:`${W*0.06}px ${W*0.07}px` }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:W*0.01 }}>
-          <div>
-            <div style={{ fontFamily:F, fontSize:W*0.28, lineHeight:.9, color:theme.accent, fontWeight:700, letterSpacing:-1 }}>{ovr}</div>
-            <div style={{ fontFamily:F, fontSize:W*0.08, color:theme.accent, letterSpacing:3, fontWeight:700, opacity:.85 }}>ANALYST</div>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, color:theme.accent, letterSpacing:1, marginTop:W*0.02, padding:`2px ${W*0.03}px`, borderRadius:20, background:`${theme.main}22`, border:`1px solid ${theme.main}40`, display:'inline-block' }}>
-              {arena ? arena.toUpperCase() : 'BRONCE III'}
-            </div>
-          </div>
-          <div style={{ textAlign:'right', paddingTop:2 }}>
-            <div style={{ fontFamily:F, fontSize:W*0.055, letterSpacing:3, color:`${theme.accent}40`, fontWeight:600 }}>SOCBLAST</div>
-            <div style={{ width:W*0.13, height:W*0.13, borderRadius:W*0.03, background:`${theme.accent}10`, border:`1px solid ${theme.accent}22`, display:'flex', alignItems:'center', justifyContent:'center', marginLeft:'auto', marginTop:3 }}>
-              <svg width={W*0.07} height={W*0.07} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-          </div>
-        </div>
-        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
-          <svg width={W*0.55} height={W*0.55} viewBox="0 0 100 100" style={{ position:'absolute' }}>
-            <polygon points="50,3 94,27 94,73 50,97 6,73 6,27" fill={`${theme.accent}07`} stroke={theme.accent} strokeWidth="1.8" strokeOpacity="0.3"/>
-            <polygon points="50,12 86,32 86,68 50,88 14,68 14,32" fill={`${theme.accent}04`} stroke={theme.accent} strokeWidth="0.6" strokeOpacity="0.15"/>
-          </svg>
-          <div style={{ fontFamily:F, fontSize:W*0.2, color:theme.accent, fontWeight:700, letterSpacing:3, zIndex:1 }}>{initials}</div>
-        </div>
-        <div style={{ textAlign:'center', marginBottom:W*0.018 }}>
-          <div style={{ fontFamily:F, fontSize:W*0.15, letterSpacing:2, color:theme.light, textTransform:'uppercase', lineHeight:1, fontWeight:700 }}>
-            {nombre?.split(' ')[0] || 'ANALYST'}
-          </div>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:700, color:theme.accent, letterSpacing:2, textTransform:'uppercase', marginTop:3, opacity:.7 }}>
-            {TIERS[tier]||'SOC ROOKIE'}
-          </div>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:W*0.022 }}>
-          <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
-          <div style={{ width:5, height:5, background:theme.accent, opacity:.5, transform:'rotate(45deg)', flexShrink:0 }}/>
-          <div style={{ flex:1, height:1, background:theme.accent, opacity:.18 }}/>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1px 1fr', gap:0, marginBottom:W*0.012 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.01 }}>
-            {skillVals.slice(0,4).map(s=>(
-              <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
-                <span style={{ fontFamily:F, fontSize:W*0.1, color:theme.accent, fontWeight:700, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ background:theme.accent, opacity:.14, margin:`0 ${W*0.042}px` }}/>
-          <div style={{ display:'flex', flexDirection:'column', gap:W*0.01 }}>
-            {skillVals.slice(4).map(s=>(
-              <div key={s.key} style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:W*0.036, fontWeight:800, letterSpacing:1.5, color:theme.light, opacity:.55 }}>{s.abbr}</span>
-                <span style={{ fontFamily:F, fontSize:W*0.1, color:theme.accent, fontWeight:700, letterSpacing:1, lineHeight:1 }}>{s.val}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-          <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
-          <span style={{ fontFamily:F, fontSize:W*0.04, letterSpacing:2, color:theme.accent, fontWeight:600, opacity:.4 }}>{copas.toLocaleString()} COPAS</span>
-          <div style={{ flex:1, height:1, background:theme.accent, opacity:.12 }}/>
-        </div>
-      </div>
+    <div style={{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,'+color+','+color+'cc)',display:'flex',alignItems:'center',justifyContent:'center',border:'4px solid #fff',boxShadow:'0 0 0 2px #e2e8f0'}}>
+      <span style={{fontSize:size*.34,fontWeight:700,color:'#fff'}}>{initials||'?'}</span>
     </div>
   );
 }
@@ -196,217 +87,298 @@ function FifaCard({ nombre, tier, skills, copas, arena, size='lg' }) {
 export default function AnalystCardPage() {
   const { token, user, logout } = useAuth();
   const navigate = useNavigate();
-  const [userData,     setUserData]     = useState(null);
-  const [ranking,      setRanking]      = useState([]);
-  const [expandedSkill,setExpandedSkill]= useState(null);
+  const [userData,      setUserData]      = useState(null);
+  const [ranking,       setRanking]       = useState([]);
+  const [expandedSkill, setExpandedSkill] = useState(null);
 
   useEffect(() => {
-    axios.get(`${API}/api/me`, { headers:{ Authorization:`Bearer ${token}` } })
+    axios.get(API+'/api/me', {headers:{Authorization:'Bearer '+token}})
       .then(r => setUserData(r.data))
       .catch(() => { logout(); navigate('/login'); });
-    axios.get(`${API}/api/ranking`, { headers:{ Authorization:`Bearer ${token}` } })
+    axios.get(API+'/api/ranking', {headers:{Authorization:'Bearer '+token}})
       .then(r => setRanking(r.data?.jugadores || []))
       .catch(() => {});
   }, []);
 
+  const css = `
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+    .fu{animation:fadeUp .3s ease forwards;}
+    .s1{animation:fadeUp .3s ease .06s both;}
+    .s2{animation:fadeUp .3s ease .12s both;}
+    .skill-row{cursor:pointer;transition:background .15s;}
+    .skill-row:hover{background:#f0f7ff!important;}
+    .nb:hover{background:#f3f4f6!important;}
+  `;
+
   if (!userData) return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{minHeight:'100vh',background:'#f3f2ef',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ width:40, height:40, border:'3px solid #e2e8f0', borderTop:'3px solid #4f46e5', borderRadius:'50%', animation:'spin .8s linear infinite' }}/>
+      <div style={{width:36,height:36,border:'3px solid #e2e8f0',borderTop:'3px solid '+ACC,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
 
-  const skills    = userData.skills || {};
-  const copas     = userData.copas || 0;
-  const tier      = userData.tier || 1;
-  const arena     = userData.arena || 'Bronce 3';
-  const group     = getArenaGroup(arena);
-  const theme     = ARENA_THEMES[group];
-  const skillVals = SKILLS.map(s => ({ ...s, val: Math.max(50, Math.round((skills[s.key] || 0) * 10)) }));
-  const ovr       = calcOVR(skills);
-  const weakest   = [...skillVals].sort((a,b) => a.val - b.val).slice(0,3);
-  const strongest = [...skillVals].sort((a,b) => b.val - a.val).slice(0,3);
-
-  const css = `
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
-    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-    @keyframes cardFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-10px) rotate(1deg);}}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
-    .fade-up{animation:fadeUp .4s ease forwards;}
-    .card-float{animation:cardFloat 6s ease-in-out infinite;}
-    .back-btn:hover{background:#f1f5f9!important;}
-    .skill-row:hover{background:#f8faff!important;}
-    .skill-row{cursor:pointer;}
-    .skill-bar-fill{transition:width 1.2s cubic-bezier(.4,0,.2,1);}
-    .criterio-expanded{animation:slideDown .25s ease forwards;}
-    *{transition:transform .18s ease,box-shadow .18s ease,background .15s ease;}
-  `;
+  const skills      = userData.skills || {};
+  const copas       = userData.copas || 0;
+  const tier        = userData.tier || 1;
+  const arena       = userData.arena || 'Bronce 3';
+  const group       = getArenaGroup(arena);
+  const ac          = ARENA_COLORS[group];
+  const tierColor   = TIER_CLR[tier] || '#64748b';
+  const ovr         = calcOVR(skills);
+  const avatarConfig = userData.avatar_config || null;
+  const foto        = userData.foto_perfil || '';
+  const skillVals   = SKILLS.map(s => ({...s, val: Math.max(0, Math.round((skills[s.key]||0)*10))}));
+  const sorted      = [...skillVals].sort((a,b) => b.val-a.val);
+  const strongest   = sorted.slice(0,3);
+  const weakest     = [...skillVals].sort((a,b) => a.val-b.val).slice(0,3);
+  const avgSkill    = Math.round(skillVals.reduce((a,s)=>a+s.val,0)/skillVals.length);
 
   return (
-    <>
+    <div style={{minHeight:'100vh',background:'#f3f2ef',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",color:'#0f172a'}}>
       <style>{css}</style>
-      <div style={{ minHeight:'100vh', background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)', fontFamily:"'Inter',sans-serif", color:'#0f172a' }}>
 
-        {/* navbar */}
-        <nav style={{ height:56, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 40px', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderBottom:'1px solid #e8eaf0', boxShadow:'0 1px 12px rgba(0,0,0,0.06)', position:'sticky', top:0, zIndex:50 }}>
-          <button className="back-btn" onClick={()=>navigate('/dashboard')}
-            style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'1px solid #e2e8f0', color:'#64748b', padding:'6px 14px', borderRadius:8, fontSize:13, cursor:'pointer', fontWeight:500 }}>
-            ← Dashboard
-          </button>
-          <span style={{ fontSize:13, fontWeight:700, color:'#0f172a', letterSpacing:'.04em' }}>ANALYST CARD</span>
-          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:8, background:'#f8fafc', border:'1px solid #e2e8f0' }}>
-            <div style={{ width:6, height:6, borderRadius:'50%', background:'#22c55e', animation:'pulse 2s infinite' }}/>
-            <span style={{ fontSize:13, color:'#374151', fontWeight:500 }}>{user?.nombre}</span>
-          </div>
-        </nav>
+      {/* NAVBAR */}
+      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'#fff',borderBottom:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.07)'}}>
+        <button className="nb" onClick={()=>navigate('/dashboard')}
+          style={{display:'flex',alignItems:'center',gap:6,background:'none',border:'1px solid #e2e8f0',color:'#374151',padding:'5px 14px',borderRadius:7,fontSize:13,cursor:'pointer',fontWeight:500}}>
+          ← Dashboard
+        </button>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <img src="/logosoc.png" alt="SocBlast" style={{height:24}}/>
+          <span style={{fontSize:14,fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
+          <span style={{fontSize:12,color:'#94a3b8',margin:'0 4px'}}>/</span>
+          <span style={{fontSize:13,fontWeight:600,color:'#374151'}}>Analyst Card</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <AvatarCircle name={user?.nombre} avatarConfig={avatarConfig} size={28} foto={foto} color={ACC}/>
+          <span style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>{user?.nombre}</span>
+        </div>
+      </nav>
 
-        {/* hero */}
-        <div className="fade-up" style={{ maxWidth:1100, margin:'0 auto', padding:'48px 40px 0', display:'flex', gap:60, alignItems:'center' }}>
-          <div className="card-float" style={{ flexShrink:0 }}>
-            <FifaCard nombre={user?.nombre} tier={tier} skills={skills} copas={copas} arena={arena} size="lg"/>
+      <div style={{maxWidth:1000,margin:'0 auto',padding:'24px 16px 60px'}}>
+
+        {/* PROFILE HEADER — LinkedIn style */}
+        <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.07)',overflow:'hidden',marginBottom:14}}>
+          {/* Banner */}
+          <div style={{height:120,background:'linear-gradient(135deg,#0a66c2 0%,#0284c7 60%,#0369a1 100%)',position:'relative',overflow:'hidden'}}>
+            <div style={{position:'absolute',inset:0,opacity:.06,backgroundImage:'radial-gradient(circle,white 1px,transparent 1px)',backgroundSize:'28px 28px'}}/>
+            {/* OVR badge en banner */}
+            <div style={{position:'absolute',top:16,right:20,padding:'8px 20px',borderRadius:12,background:'rgba(255,255,255,0.15)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.25)',textAlign:'center'}}>
+              <div style={{fontSize:32,fontWeight:900,color:'#fff',lineHeight:1,letterSpacing:'-1px'}}>{ovr}</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:700,letterSpacing:'2px',marginTop:2}}>OVR SCORE</div>
+            </div>
+            <div style={{position:'absolute',bottom:12,left:20,display:'flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:100,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.2)'}}>
+              <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',animation:'pulse 2s infinite'}}/>
+              <span style={{fontSize:11,color:'#fff',fontWeight:600}}>SocBlast Verified Analyst</span>
+            </div>
           </div>
-          <div style={{ flex:1 }}>
-            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'4px 14px', borderRadius:20, background:`${theme.main}12`, border:`1px solid ${theme.main}25`, marginBottom:20 }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', background:theme.main, animation:'pulse 2s infinite' }}/>
-              <span style={{ fontSize:10, fontWeight:800, color:theme.main, letterSpacing:2, textTransform:'uppercase' }}>Tu Analyst Card · {arena}</span>
+
+          <div style={{padding:'0 28px 24px'}}>
+            {/* Avatar + acciones */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginTop:-44,marginBottom:16}}>
+              <AvatarCircle name={user?.nombre} avatarConfig={avatarConfig} size={96} foto={foto} color={ACC}/>
+              <div style={{display:'flex',gap:8,paddingBottom:4}}>
+                <button onClick={()=>navigate('/sesion')}
+                  style={{padding:'8px 18px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>
+                  Jugar sesion
+                </button>
+                <button onClick={()=>navigate('/perfil')}
+                  style={{padding:'8px 18px',borderRadius:100,background:'#fff',border:'1px solid '+ACC,color:ACC,fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                  Editar perfil
+                </button>
+              </div>
             </div>
-            <div style={{ fontFamily:F, fontSize:42, fontWeight:700, color:'#0f172a', letterSpacing:'-1px', lineHeight:1.1, marginBottom:6 }}>
-              {user?.nombre?.toUpperCase()}
+
+            {/* Info */}
+            <h1 style={{fontSize:24,fontWeight:800,color:'#0f172a',marginBottom:4,letterSpacing:'-0.5px'}}>{user?.nombre}</h1>
+            <p style={{fontSize:14,color:'#374151',marginBottom:8}}>
+              <span style={{fontWeight:700,color:tierColor}}>{TIERS[tier]||'SOC Rookie'}</span>
+              <span style={{color:'#cbd5e1',margin:'0 8px'}}>·</span>
+              <span>Cybersecurity Analyst</span>
+              <span style={{color:'#cbd5e1',margin:'0 8px'}}>·</span>
+              <span style={{color:'#64748b'}}>SocBlast Platform</span>
+            </p>
+            <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+              <div onClick={()=>navigate('/arenas')} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 12px',borderRadius:100,background:ac.light,border:'1px solid '+ac.border,cursor:'pointer'}}>
+                <div style={{width:6,height:6,borderRadius:'50%',background:ac.main}}/>
+                <span style={{fontSize:12,fontWeight:700,color:ac.main}}>{arena}</span>
+              </div>
+              <span style={{fontSize:13,color:'#64748b'}}>{userData.sesiones_completadas||0} sesiones completadas</span>
+              <span style={{fontSize:13,color:'#64748b'}}>{copas.toLocaleString()} copas</span>
             </div>
-            <div style={{ fontSize:14, color:'#64748b', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:28 }}>
-              {TIERS[tier]} · Tier {tier} · {arena}
-            </div>
-            <div style={{ display:'flex', gap:14, marginBottom:28 }}>
-              {[
-                { val:ovr, label:'OVR', color:theme.main, bg:`${theme.main}10`, border:`${theme.main}20` },
-                { val:copas.toLocaleString(), label:'COPAS', color:'#f59e0b', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.18)' },
-                { val:userData.sesiones_completadas||0, label:'SESIONES', color:'#4f46e5', bg:'rgba(79,70,229,0.06)', border:'rgba(79,70,229,0.14)' },
-              ].map((s,i)=>(
-                <div key={i} style={{ padding:'16px 22px', borderRadius:14, background:s.bg, border:`1px solid ${s.border}`, textAlign:'center', minWidth:90 }}>
-                  <div style={{ fontFamily:F, fontSize:44, lineHeight:1, color:s.color, fontWeight:700, letterSpacing:-1 }}>{s.val}</div>
-                  <div style={{ fontSize:9, fontWeight:800, color:'#94a3b8', letterSpacing:2, textTransform:'uppercase', marginTop:2 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ padding:'16px 20px', borderRadius:12, background:'#fff', border:`1px solid ${theme.main}18`, maxWidth:500, boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-              <p style={{ fontSize:13, color:'#475569', lineHeight:1.7, margin:0 }}>
-                {group==='bronce'  && 'Estás comenzando. La IA mide tus habilidades en cada sesión. Completa sesiones para subir tu OVR y llegar a Plata.'}
-                {group==='plata'   && 'Buen nivel. Estás demostrando habilidades reales como analista. Trabaja en correlación de eventos y respuesta para alcanzar Oro.'}
-                {group==='oro'     && 'Analista avanzado. Tu carta refleja expertise real en SOC. Los analistas de Oro son los más buscados por empresas.'}
-                {group==='diamante'&& 'Élite. Tu Analyst Card está en el top de SocBlast. Muy pocos analistas alcanzan este nivel.'}
-              </p>
-            </div>
+          </div>
+
+          {/* Stats bar */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',borderTop:'1px solid #e2e8f0'}}>
+            {[
+              {val:ovr,                        label:'OVR Score',   sub:'Overall Rating',     color:ac.main},
+              {val:copas.toLocaleString(),     label:'Copas',       sub:'Puntos competitivos', color:'#d97706'},
+              {val:userData.sesiones_completadas||0, label:'Sesiones', sub:'Completadas',    color:'#059669'},
+              {val:(userData.xp||0).toLocaleString(), label:'XP Total', sub:'Experiencia',   color:tierColor},
+            ].map((s,i) => (
+              <div key={i} style={{padding:'16px',textAlign:'center',borderLeft:i>0?'1px solid #e2e8f0':'none',background:i===0?ac.light+'50':'transparent'}}>
+                <div style={{fontSize:26,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:'-0.5px'}}>{s.val}</div>
+                <div style={{fontSize:12,fontWeight:700,color:'#374151',marginTop:3}}>{s.label}</div>
+                <div style={{fontSize:10,color:'#94a3b8',marginTop:1}}>{s.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* skill breakdown con subcriterios */}
-        <div style={{ maxWidth:1100, margin:'0 auto', padding:'40px 40px 0' }}>
-          <div style={{ marginBottom:20 }}>
-            <p style={{ fontFamily:F, fontSize:16, fontWeight:700, color:'#94a3b8', letterSpacing:3, marginBottom:4, textTransform:'uppercase' }}>Skill Breakdown — 8 Habilidades</p>
-            <p style={{ fontSize:13, color:'#64748b' }}>Pulsa en cada habilidad para ver los subcriterios que la componen</p>
+        {/* SKILLS — LinkedIn endorsements style */}
+        <div className="s1" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',overflow:'hidden',marginBottom:14}}>
+          <div style={{padding:'20px 24px',borderBottom:'1px solid #e2e8f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <h2 style={{fontSize:18,fontWeight:700,color:'#0f172a',marginBottom:2}}>Skills verificadas</h2>
+              <p style={{fontSize:13,color:'#64748b'}}>Evaluadas por IA en cada sesion. Promedio: <strong style={{color:ACC}}>{avgSkill}/100</strong></p>
+            </div>
+            <div style={{padding:'6px 14px',borderRadius:8,background:ACC+'0d',border:'1px solid '+ACC+'20'}}>
+              <span style={{fontSize:12,fontWeight:700,color:ACC}}>8 skills activas</span>
+            </div>
           </div>
 
-          <div style={{ background:'#fff', borderRadius:16, border:'1px solid #e8eaf0', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.05)', marginBottom:24 }}>
-            {skillVals.sort((a,b)=>b.val-a.val).map((s,i)=>{
-              const isExpanded = expandedSkill === s.key;
-              const isWeak  = s.val < 60;
-              const isTop   = s.val >= 75;
-              return (
-                <div key={s.key}>
-                  {/* fila principal */}
-                  <div className="skill-row"
-                    onClick={()=>setExpandedSkill(isExpanded ? null : s.key)}
-                    style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 20px', borderBottom:'1px solid #f1f5f9', background:isExpanded?`${s.color}05`:'transparent' }}>
-                    <div style={{ width:28, fontFamily:F, fontSize:18, fontWeight:700, color:theme.main, flexShrink:0, textAlign:'center', opacity:.45 }}>{i+1}</div>
-                    <div style={{ width:38, fontSize:10, fontWeight:800, color:'#64748b', letterSpacing:1.5, fontFamily:'monospace', flexShrink:0 }}>{s.abbr}</div>
-                    <div style={{ flex:1, fontSize:13, fontWeight:600, color:'#0f172a' }}>{s.label}</div>
-                    <div style={{ width:220, height:6, background:'#f1f5f9', borderRadius:3, overflow:'hidden', flexShrink:0 }}>
-                      <div className="skill-bar-fill" style={{ height:'100%', borderRadius:3, width:`${s.val}%`, background:isWeak?'linear-gradient(90deg,#fca5a5,#ef4444)':isTop?`linear-gradient(90deg,${s.color}80,${s.color})`:`linear-gradient(90deg,${s.color}60,${s.color})` }}/>
-                    </div>
-                    <div style={{ fontFamily:F, fontSize:24, fontWeight:700, color:isWeak?'#ef4444':s.color, width:44, textAlign:'right', flexShrink:0 }}>{s.val}</div>
-                    <div style={{ fontSize:10, color:isWeak?'#ef4444':isTop?'#059669':'#94a3b8', fontWeight:700, width:16, textAlign:'center', flexShrink:0, transform:isExpanded?'rotate(180deg)':'none', transition:'transform .2s' }}>▼</div>
+          {sorted.map((s,i) => {
+            const isExpanded = expandedSkill === s.key;
+            const isStrong   = s.val >= 70;
+            const isWeak     = s.val < 40;
+            const pct        = Math.min(s.val, 100);
+            return (
+              <div key={s.key}>
+                <div className="skill-row" onClick={()=>setExpandedSkill(isExpanded?null:s.key)}
+                  style={{display:'flex',alignItems:'center',gap:16,padding:'14px 24px',borderBottom:'1px solid #f1f5f9',background:isExpanded?'#f0f7ff':'transparent'}}>
+                  {/* icono skill */}
+                  <div style={{width:40,height:40,borderRadius:10,background:isStrong?s.color+'12':isWeak?'#fef2f2':'#f8fafc',border:'1px solid '+(isStrong?s.color+'25':isWeak?'#fecaca':'#e2e8f0'),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:11,fontWeight:800,color:isStrong?s.color:isWeak?'#ef4444':'#94a3b8',letterSpacing:.5}}>{s.abbr}</span>
                   </div>
-
-                  {/* subcriterios expandidos */}
-                  {isExpanded && (
-                    <div className="criterio-expanded" style={{ padding:'12px 20px 16px 82px', background:`${s.color}04`, borderBottom:'1px solid #f1f5f9' }}>
-                      <p style={{ fontFamily:F, fontSize:12, fontWeight:700, color:s.color, letterSpacing:2, textTransform:'uppercase', marginBottom:10 }}>
-                        Subcriterios evaluados por la IA
-                      </p>
-                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                        {s.criterios.map((c, ci) => (
-                          <div key={ci} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                            <div style={{ width:20, height:20, borderRadius:6, background:`${s.color}15`, border:`1px solid ${s.color}25`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                              <span style={{ fontFamily:F, fontSize:11, fontWeight:700, color:s.color }}>{ci+1}</span>
-                            </div>
-                            <span style={{ fontSize:13, color:'#475569', lineHeight:1.5 }}>{c}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ marginTop:12, padding:'10px 14px', borderRadius:8, background:'#fff', border:`1px solid ${s.color}18` }}>
-                        <p style={{ fontSize:11, color:'#94a3b8', margin:0 }}>
-                          Cada subcriterio se puntúa 0-2 en cada sesión. La media acumulada define tu valor en esta skill.
-                        </p>
+                  {/* nombre + barra */}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
+                      <span style={{fontSize:13,fontWeight:600,color:'#0f172a'}}>{s.label}</span>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        {isStrong && <span style={{fontSize:10,padding:'2px 8px',borderRadius:100,background:s.color+'12',color:s.color,fontWeight:700}}>Verificada</span>}
+                        {isWeak   && <span style={{fontSize:10,padding:'2px 8px',borderRadius:100,background:'#fef2f2',color:'#ef4444',fontWeight:700}}>A mejorar</span>}
+                        <span style={{fontSize:16,fontWeight:800,color:isStrong?s.color:isWeak?'#ef4444':'#374151',fontFamily:'monospace',minWidth:28,textAlign:'right'}}>{s.val}</span>
                       </div>
                     </div>
-                  )}
+                    <div style={{height:5,borderRadius:3,background:'#e2e8f0',overflow:'hidden'}}>
+                      <div style={{width:pct+'%',height:'100%',borderRadius:3,background:isWeak?'linear-gradient(90deg,#fca5a5,#ef4444)':isStrong?'linear-gradient(90deg,'+s.color+'80,'+s.color+')':'linear-gradient(90deg,#94a3b8,#64748b)',transition:'width 1.2s ease'}}/>
+                    </div>
+                  </div>
+                  {/* toggle */}
+                  <div style={{fontSize:11,color:'#94a3b8',transform:isExpanded?'rotate(180deg)':'none',transition:'transform .2s',flexShrink:0}}>▼</div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* top y débiles */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:40 }}>
-            <div style={{ padding:'20px 22px', borderRadius:14, background:'#fff', border:'1px solid #e8eaf0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-              <p style={{ fontFamily:F, fontSize:13, fontWeight:700, color:'#059669', letterSpacing:2, textTransform:'uppercase', marginBottom:14 }}>Top Skills</p>
-              {strongest.map((s,i)=>(
-                <div key={s.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ fontFamily:F, fontSize:18, fontWeight:700, color:'#059669', width:20 }}>{i+1}</span>
-                    <span style={{ fontSize:13, color:'#475569' }}>{s.label}</span>
+                {/* criterios expandidos */}
+                {isExpanded && (
+                  <div style={{padding:'14px 24px 18px 80px',background:'#f8fbff',borderBottom:'1px solid #e2e8f0',animation:'slideDown .2s ease'}}>
+                    <p style={{fontSize:10,fontWeight:700,color:s.color,letterSpacing:'1.5px',marginBottom:10}}>SUBCRITERIOS EVALUADOS POR IA</p>
+                    <div style={{display:'flex',flexDirection:'column',gap:7}}>
+                      {s.criterios.map((c,ci) => (
+                        <div key={ci} style={{display:'flex',alignItems:'center',gap:10}}>
+                          <div style={{width:20,height:20,borderRadius:6,background:s.color+'12',border:'1px solid '+s.color+'20',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            <span style={{fontSize:10,fontWeight:700,color:s.color}}>{ci+1}</span>
+                          </div>
+                          <span style={{fontSize:12,color:'#475569',lineHeight:1.5}}>{c}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{marginTop:10,padding:'8px 12px',borderRadius:7,background:'#fff',border:'1px solid '+s.color+'18'}}>
+                      <p style={{fontSize:11,color:'#94a3b8',margin:0}}>Cada subcriterio se puntua 0-2 en cada sesion. La media acumulada define tu valor.</p>
+                    </div>
                   </div>
-                  <span style={{ fontFamily:F, fontSize:22, fontWeight:700, color:'#059669' }}>{s.val}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* FORTALEZAS Y DEBILIDADES */}
+        <div className="s2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+          <div style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',overflow:'hidden'}}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:'#059669'}}/>
+              <h3 style={{fontSize:15,fontWeight:700,color:'#0f172a'}}>Puntos fuertes</h3>
+            </div>
+            <div style={{padding:'16px 20px'}}>
+              {strongest.map((s,i) => (
+                <div key={s.key} style={{display:'flex',alignItems:'center',gap:12,marginBottom:i<2?12:0}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:s.color+'10',border:'1px solid '+s.color+'20',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:10,fontWeight:800,color:s.color}}>{s.abbr}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                      <span style={{fontSize:12,fontWeight:600,color:'#374151'}}>{s.label}</span>
+                      <span style={{fontSize:14,fontWeight:800,color:s.color}}>{s.val}</span>
+                    </div>
+                    <div style={{height:3,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
+                      <div style={{width:s.val+'%',height:'100%',borderRadius:2,background:s.color,transition:'width 1s ease'}}/>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ padding:'20px 22px', borderRadius:14, background:'#fff', border:'1px solid #e8eaf0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-              <p style={{ fontFamily:F, fontSize:13, fontWeight:700, color:'#ef4444', letterSpacing:2, textTransform:'uppercase', marginBottom:14 }}>A Mejorar</p>
-              {weakest.map((s,i)=>(
-                <div key={s.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <span style={{ fontSize:13, color:'#475569' }}>{s.label}</span>
-                  <span style={{ fontFamily:F, fontSize:22, fontWeight:700, color:'#ef4444' }}>{s.val}</span>
+          </div>
+          <div style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',overflow:'hidden'}}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:'#ef4444'}}/>
+              <h3 style={{fontSize:15,fontWeight:700,color:'#0f172a'}}>Areas de mejora</h3>
+            </div>
+            <div style={{padding:'16px 20px'}}>
+              {weakest.map((s,i) => (
+                <div key={s.key} style={{display:'flex',alignItems:'center',gap:12,marginBottom:i<2?12:0}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#fef2f2',border:'1px solid #fecaca',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:10,fontWeight:800,color:'#ef4444'}}>{s.abbr}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                      <span style={{fontSize:12,fontWeight:600,color:'#374151'}}>{s.label}</span>
+                      <span style={{fontSize:14,fontWeight:800,color:'#ef4444'}}>{s.val}</span>
+                    </div>
+                    <div style={{height:3,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
+                      <div style={{width:s.val+'%',height:'100%',borderRadius:2,background:'#ef4444',transition:'width 1s ease'}}/>
+                    </div>
+                  </div>
                 </div>
               ))}
               <button onClick={()=>navigate('/sesion')}
-                style={{ width:'100%', marginTop:8, padding:'10px', borderRadius:8, background:'linear-gradient(135deg,#ef4444,#dc2626)', border:'none', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:F, letterSpacing:1, textTransform:'uppercase' }}>
-                Entrenar ahora →
+                style={{width:'100%',marginTop:14,padding:'10px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>
+                Entrenar ahora
               </button>
             </div>
           </div>
-
-          {/* comparativa ranking */}
-          {ranking.length > 0 && (
-            <div style={{ marginBottom:56 }}>
-              <p style={{ fontFamily:F, fontSize:13, fontWeight:700, color:'#94a3b8', letterSpacing:3, textTransform:'uppercase', marginBottom:16 }}>Comparativa — Top Ranking</p>
-              <div style={{ display:'flex', gap:20, overflowX:'auto', paddingBottom:8 }}>
-                <div style={{ flexShrink:0, textAlign:'center' }}>
-                  <div style={{ border:`2px solid ${theme.main}`, borderRadius:14, display:'inline-block', padding:2 }}>
-                    <FifaCard nombre={user?.nombre} tier={tier} skills={skills} copas={copas} arena={arena} size="sm"/>
-                  </div>
-                  <div style={{ fontFamily:F, fontSize:12, fontWeight:700, color:theme.main, marginTop:6, letterSpacing:1 }}>TÚ</div>
-                </div>
-                {ranking.slice(0,5).filter(j=>j.nombre!==user?.nombre).map((j,i)=>(
-                  <div key={i} style={{ flexShrink:0, textAlign:'center', opacity:.65 }}>
-                    <FifaCard nombre={j.nombre} tier={j.tier||1} skills={j.skills||{}} copas={j.copas||0} arena={j.arena||'Bronce 3'} size="sm"/>
-                    <div style={{ fontFamily:F, fontSize:12, fontWeight:700, color:'#94a3b8', marginTop:6 }}>#{i+2}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* COMPARATIVA RANKING */}
+        {ranking.length > 0 && (
+          <div className="s2" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',overflow:'hidden',marginBottom:14}}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #e2e8f0'}}>
+              <h3 style={{fontSize:15,fontWeight:700,color:'#0f172a',marginBottom:2}}>Comparativa con el ranking</h3>
+              <p style={{fontSize:12,color:'#64748b'}}>Como se compara tu OVR con los mejores analistas</p>
+            </div>
+            <div style={{padding:'16px 20px'}}>
+              {[{nombre:user?.nombre, ovr, arena, tier, isMe:true}, ...ranking.slice(0,4).filter(j=>j.nombre!==user?.nombre).map(j=>({...j,ovr:calcOVR(j.skills||{}),isMe:false}))].map((j,i) => (
+                <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 10px',borderRadius:8,background:j.isMe?ACC+'08':'transparent',border:j.isMe?'1px solid '+ACC+'20':'1px solid transparent',marginBottom:6}}>
+                  <span style={{fontSize:13,width:20,color:'#94a3b8',fontWeight:600}}>#{i+1}</span>
+                  <div style={{width:32,height:32,borderRadius:'50%',background:j.isMe?ACC:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:11,fontWeight:700,color:j.isMe?'#fff':'#64748b'}}>{j.nombre?.[0]?.toUpperCase()||'?'}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <span style={{fontSize:13,fontWeight:j.isMe?700:500,color:j.isMe?ACC:'#374151'}}>{j.nombre}{j.isMe?' (tu)':''}</span>
+                    <div style={{fontSize:11,color:'#94a3b8'}}>{j.arena}</div>
+                  </div>
+                  <div style={{width:140,height:4,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
+                    <div style={{width:(j.ovr||50)+'%',height:'100%',borderRadius:2,background:j.isMe?ACC:'#94a3b8',transition:'width 1s ease'}}/>
+                  </div>
+                  <span style={{fontSize:15,fontWeight:800,color:j.isMe?ACC:'#374151',minWidth:28,textAlign:'right'}}>{j.ovr||50}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
-    </>
+    </div>
   );
 }
