@@ -305,13 +305,13 @@ export default function DashboardAnalista() {
                 </div>
               </div>
               {/* Nombre */}
-              <h2 style={{fontSize:18,fontWeight:700,color:'#0f172a',marginBottom:2,letterSpacing:'-0.3px'}}>{user?.nombre}</h2>
+              <h2 style={{fontSize:20,fontWeight:800,color:'#0f172a',marginBottom:3,letterSpacing:'-0.4px'}}>{user?.nombre}</h2>
               <p style={{fontSize:13,color:'#374151',marginBottom:8}}>
                 <span style={{fontWeight:600,color:tierColor}}>{TIERS[tier]}</span>
                 <span style={{color:'#cbd5e1',margin:'0 6px'}}>·</span>
                 Cybersecurity Analyst
               </p>
-              <div style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:100,background:ac.light,border:`1px solid ${ac.border}`,marginBottom:16}}>
+              <div onClick={()=>navigate('/arenas')} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:100,background:ac.light,border:`1px solid ${ac.border}`,marginBottom:16,cursor:'pointer'}} title='Ver arenas'>
                 <div style={{width:5,height:5,borderRadius:'50%',background:ac.main}}/>
                 <span style={{fontSize:11,fontWeight:600,color:ac.main}}>{arena}</span>
               </div>
@@ -325,16 +325,16 @@ export default function DashboardAnalista() {
                 ].map((s,i) => (
                   <div key={i} style={{padding:'10px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e8eaf0',textAlign:'center'}}>
                     <div style={{fontSize:20,fontWeight:700,color:s.color,lineHeight:1,letterSpacing:'-0.5px'}}>{s.val}</div>
-                    <div style={{fontSize:10,fontWeight:600,color:'#64748b',marginTop:2}}>{s.label}</div>
+                    <div style={{fontSize:11,fontWeight:700,color:'#374151',marginTop:3,letterSpacing:'.3px'}}>{s.label}</div>
                   </div>
                 ))}
               </div>
               {/* Skills */}
               <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:8}}>TOP SKILLS</div>
+                <div style={{fontSize:11,fontWeight:700,color:'#374151',letterSpacing:'1px',marginBottom:10}}>Habilidades verificadas</div>
                 {topSkills.map((s,i) => (
                   <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                    <span style={{fontSize:9,fontWeight:700,color:'#94a3b8',width:22,flexShrink:0}}>{s.abbr}</span>
+                    <span style={{fontSize:10,fontWeight:700,color:'#475569',width:24,flexShrink:0}}>{s.label.split(' ')[0]}</span>
                     <div style={{flex:1,height:4,borderRadius:2,background:'#e2e8f0',overflow:'hidden'}}>
                       <div style={{width:`${Math.min(s.val,100)}%`,height:'100%',borderRadius:2,background:s.val>=7?ACC:'#94a3b8',transition:'width 1s ease'}}/>
                     </div>
@@ -343,7 +343,7 @@ export default function DashboardAnalista() {
                 ))}
               </div>
               {/* XP */}
-              <div style={{padding:'10px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e8eaf0'}}>
+              <div onClick={()=>navigate('/perfil')} style={{padding:'10px 12px',borderRadius:8,background:'#f8fafc',border:'1px solid #e8eaf0',cursor:'pointer'}} title='Ver progression'>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
                   <span style={{fontSize:11,fontWeight:600,color:tierColor}}>{TIERS[tier]}</span>
                   <span style={{fontSize:10,color:'#94a3b8'}}>{xp.toLocaleString()} XP</span>
@@ -359,7 +359,7 @@ export default function DashboardAnalista() {
           {/* Siguiente arena */}
           {siguienteArena && (
             <div className="s1" style={{padding:'14px 16px',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:8}}>PROXIMO OBJETIVO</div>
+              <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:8}}>Próximo objetivo</div>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
                 <span style={{fontSize:12,fontWeight:600,color:'#374151'}}>{siguienteArena.name}</span>
                 <span style={{fontSize:11,color:ac.main,fontWeight:700}}>{(siguienteArena.min-copas).toLocaleString()} copas</span>
@@ -372,7 +372,7 @@ export default function DashboardAnalista() {
 
           {/* Accesos rapidos */}
           <div className="s1" style={{padding:'16px',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:10}}>ACCESOS RAPIDOS</div>
+            <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:10}}>Accesos rápidos</div>
             {[
               {label:'Laboratorio SOC',desc:'SIEM · Forense',   path:'/lab',         color:'#059669',icon:'flask'},
               {label:'Training SOC',   desc:'Modulos · Cursos', path:'/training',    color:'#7c3aed',icon:'book'},
@@ -474,7 +474,7 @@ export default function DashboardAnalista() {
           {/* Actividad + Ranking */}
           <div className="s2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div style={{padding:'16px',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:12}}>ACTIVIDAD 90 DIAS</div>
+              <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:12}}>Actividad · 90 días</div>
               <div style={{overflowX:'auto',marginBottom:10}}><ActivityHeatmap historial={historial}/></div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
                 {[
@@ -491,7 +491,7 @@ export default function DashboardAnalista() {
             </div>
             <div style={{padding:'16px',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-                <span style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px'}}>TOP RANKING</span>
+                <span style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px'}}>Top Ranking</span>
                 <button onClick={()=>navigate('/ranking')} style={{fontSize:11,color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Ver todo</button>
               </div>
               {ranking.length===0 ? (
@@ -507,7 +507,7 @@ export default function DashboardAnalista() {
                 </div>
               ))}
               <div style={{marginTop:10,padding:'10px',borderRadius:8,background:'#fef2f2',border:'1px solid #fecaca'}}>
-                <div style={{fontSize:10,color:'#ef4444',fontWeight:700,marginBottom:4}}>SKILL A MEJORAR</div>
+                <div style={{fontSize:10,color:'#ef4444',fontWeight:700,marginBottom:4}}>Skill a mejorar</div>
                 <div style={{fontSize:12,color:'#7f1d1d',fontWeight:600,marginBottom:6}}>{weakSkills[0]?.label}</div>
                 <button onClick={()=>navigate('/sesion')} style={{width:'100%',padding:'6px',borderRadius:6,background:'#ef4444',border:'none',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>Entrenar</button>
               </div>
@@ -517,7 +517,7 @@ export default function DashboardAnalista() {
           {/* Historial */}
           <div className="s2" style={{padding:'16px 18px',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <span style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px'}}>ULTIMAS SESIONES</span>
+              <span style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px'}}>Últimas sesiones</span>
               <button onClick={()=>navigate('/sesion')} style={{fontSize:11,color:ACC,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>Nueva</button>
             </div>
             {historial.length===0 ? (
