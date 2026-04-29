@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
-const ACC = '#0a66c2';
+const ACC = '#4f46e5';
 
 const SKILL_ABBR = [
   { key:'analisis_logs',           abbr:'LOG', label:'Analisis de Logs'     },
@@ -25,7 +25,7 @@ const ARENA_COLORS = {
 };
 
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
-const TIER_CLR = ['','#64748b','#0a66c2','#0891b2','#059669','#d97706','#ea580c','#dc2626','#7c3aed'];
+const TIER_CLR = ['','#64748b','#4f46e5','#0891b2','#059669','#d97706','#ea580c','#dc2626','#7c3aed'];
 
 const ARENAS_CONFIG = [
   {id:'bronce3', name:'Bronce III', tier:'bronce', min:0,    max:299  },
@@ -103,7 +103,7 @@ function ActivityHeatmap({historial}) {
   const days=90, today=new Date();
   const cells=Array.from({length:days},(_,i)=>{const d=new Date(today);d.setDate(today.getDate()-(days-1-i));const ds=d.toISOString().split('T')[0];return{date:d,count:historial.filter(s=>new Date(s.inicio*1000).toISOString().split('T')[0]===ds).length};});
   const weeks=[]; for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
-  const gc=c=>c===0?'#e2e8f0':c===1?'#bfdbfe':c===2?'#60a5fa':'#0a66c2';
+  const gc=c=>c===0?'#e2e8f0':c===1?'#bfdbfe':c===2?'#60a5fa':'#4f46e5';
   return(
     <div style={{display:'flex',gap:'3px'}}>
       {weeks.map((wk,wi)=>(
@@ -218,18 +218,18 @@ export default function DashboardAnalista() {
   `;
 
   if (!userData) return (
-    <div style={{minHeight:'100vh',background:'#f3f2ef',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{width:36,height:36,border:'3px solid #e2e8f0',borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
   );
 
   return (
-    <div style={{minHeight:'100vh',background:'#f3f2ef',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",color:'#0f172a'}}>
+    <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",color:'#0f172a'}}>
       <style>{css}</style>
 
       {/* NAVBAR */}
-      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'#fff',borderBottom:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.07)'}}>
+      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 16px rgba(79,70,229,0.07)'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={()=>navigate('/')}>
           <img src="/logosoc.png" alt="SocBlast" style={{height:26}}/>
           <span style={{fontSize:16,fontWeight:800,color:'#0f172a'}}>Soc<span style={{color:ACC}}>Blast</span></span>
@@ -281,9 +281,9 @@ export default function DashboardAnalista() {
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
           {/* Profile Card */}
-          <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.07)',overflow:'hidden'}}>
+          <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 2px 16px rgba(79,70,229,0.06)',overflow:'hidden'}}>
             {/* Banner azul */}
-            <div style={{height:88,background:'linear-gradient(135deg,#0a66c2 0%,#0284c7 100%)',position:'relative',overflow:'hidden'}}>
+            <div style={{height:88,background:'linear-gradient(135deg,#4f46e5 0%,#6366f1 60%,#818cf8 100%)',position:'relative',overflow:'hidden'}}>
               <div style={{position:'absolute',inset:0,opacity:.06,backgroundImage:'radial-gradient(circle, white 1px, transparent 1px)',backgroundSize:'28px 28px'}}/>
               <div style={{position:'absolute',top:10,right:12,display:'flex',alignItems:'center',gap:5,padding:'3px 9px',borderRadius:100,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.2)'}}>
                 <div style={{width:5,height:5,borderRadius:'50%',background:'#4ade80',animation:'pulse 2s infinite'}}/>
@@ -301,7 +301,7 @@ export default function DashboardAnalista() {
                 </div>
                 <div style={{display:'flex',gap:6,paddingBottom:2}}>
                   <button className="pb" onClick={()=>navigate('/analyst-card')} style={{padding:'6px 14px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Analyst Card</button>
-                  <button className="pb" onClick={()=>navigate('/perfil')} style={{padding:'6px 14px',borderRadius:100,background:'#fff',border:`1px solid ${ACC}`,color:ACC,fontSize:12,fontWeight:600,cursor:'pointer'}}>Editar</button>
+                  <button className="pb" onClick={()=>navigate('/perfil')} style={{padding:'6px 14px',borderRadius:100,background:'#fff',border:`1px solid ${ACC}30`,color:ACC,fontSize:12,fontWeight:600,cursor:'pointer'}}>Editar</button>
                 </div>
               </div>
               {/* Nombre */}
@@ -319,7 +319,7 @@ export default function DashboardAnalista() {
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
                 {[
                   {val:ovr,                    label:'OVR',     color:ac.main},
-                  {val:copas.toLocaleString(), label:'Copas',   color:'#d97706'},
+                  {val:copas.toLocaleString(), label:'Puntos',   color:'#d97706'},
                   {val:sesiones,               label:'Sesiones',color:'#059669'},
                   {val:xp.toLocaleString(),    label:'XP',      color:tierColor},
                 ].map((s,i) => (
@@ -398,7 +398,7 @@ export default function DashboardAnalista() {
 
           {/* CTAs */}
           <div className="s1" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-            <button className="pb" onClick={()=>navigate('/sesion')} style={{padding:'13px',borderRadius:10,background:'linear-gradient(135deg,#0a66c2,#0284c7)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 2px 8px rgba(10,102,194,0.25)'}}>
+            <button className="pb" onClick={()=>navigate('/sesion')} style={{padding:'13px',borderRadius:10,background:'linear-gradient(135deg,#4f46e5,#6366f1)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 2px 8px rgba(10,102,194,0.25)'}}>
               <Icon name="bolt" size={15} color="#fff"/> Jugar sesion
             </button>
             <button className="pb" onClick={()=>navigate('/lab')} style={{padding:'13px',borderRadius:10,background:'linear-gradient(135deg,#047857,#059669)',border:'none',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 2px 8px rgba(5,150,105,0.25)'}}>
@@ -409,7 +409,7 @@ export default function DashboardAnalista() {
           {/* Modos */}
           <div className="s1" style={{borderRadius:12,overflow:'hidden',background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
             <div style={{display:'flex',borderBottom:'1px solid #e2e8f0'}}>
-              {[{i:0,l:'Sesiones competitivas',c:'#0a66c2'},{i:1,l:'Laboratorio SOC',c:'#059669'}].map(t => (
+              {[{i:0,l:'Sesiones competitivas',c:'#4f46e5'},{i:1,l:'Laboratorio SOC',c:'#059669'}].map(t => (
                 <button key={t.i} onClick={()=>setCarruselIdx(t.i)}
                   style={{flex:1,padding:'11px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:carruselIdx===t.i?t.c:'#94a3b8',borderBottom:carruselIdx===t.i?`2px solid ${t.c}`:'2px solid transparent'}}>
                   {t.l}
@@ -417,7 +417,7 @@ export default function DashboardAnalista() {
               ))}
             </div>
             {carruselIdx===0 ? (
-              <div style={{padding:'20px 24px',background:'linear-gradient(135deg,#1e3a8a,#1d4ed8)',display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'center'}}>
+              <div style={{padding:'20px 24px',background:'linear-gradient(135deg,#1e1b4b,#3730a3)',display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'center'}}>
                 <div>
                   <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 10px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:10}}>
                     <div style={{width:5,height:5,borderRadius:'50%',background:'#93c5fd',animation:'pulse 2s infinite'}}/>
@@ -561,7 +561,7 @@ export default function DashboardAnalista() {
               </div>
             </div>
             <div style={{background:'#fff',padding:'18px'}}>
-              {empleoTab==='ofertas'   && <ComingSoon title="Ofertas de empleo SOC"        desc="Empresas buscaran analistas por su perfil verificado."   icon="users" color="#0a66c2"/>}
+              {empleoTab==='ofertas'   && <ComingSoon title="Ofertas de empleo SOC"        desc="Empresas buscaran analistas por su perfil verificado."   icon="users" color="#4f46e5"/>}
               {empleoTab==='certs'     && <ComingSoon title="Certificaciones recomendadas" desc="Recomendaciones segun tu perfil actual."                 icon="award" color="#7c3aed"/>}
               {empleoTab==='bootcamps' && <ComingSoon title="Bootcamps y cursos SOC"       desc="Curados por relevancia para tu nivel y arena."           icon="book"  color="#0891b2"/>}
               {empleoTab==='retos'     && <ComingSoon title="Retos y plataformas externas" desc="TryHackMe, Blue Team Labs, CyberDefenders integrados."   icon="shield" color="#059669"/>}

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const API = 'https://socblast-production.up.railway.app';
-const ACC = '#0a66c2';
+const ACC = '#4f46e5';
 
 const SKILLS = [
   { key:'analisis_logs',           abbr:'LOG', label:'Analisis de Logs',      color:'#3b82f6',
@@ -26,7 +26,7 @@ const SKILLS = [
 ];
 
 const TIERS    = ['','SOC Rookie','SOC Analyst','SOC Specialist','SOC Expert','SOC Sentinel','SOC Architect','SOC Master','SOC Legend'];
-const TIER_CLR = ['','#64748b','#0a66c2','#0891b2','#059669','#d97706','#ea580c','#dc2626','#7c3aed'];
+const TIER_CLR = ['','#64748b','#4f46e5','#0891b2','#059669','#d97706','#ea580c','#dc2626','#7c3aed'];
 
 const ARENA_COLORS = {
   bronce:   { main:'#b45309', light:'#fef3c7', border:'#fcd34d', name:'Bronce' },
@@ -114,7 +114,7 @@ export default function AnalystCardPage() {
   `;
 
   if (!userData) return (
-    <div style={{minHeight:'100vh',background:'#f3f2ef',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{width:36,height:36,border:'3px solid #e2e8f0',borderTop:'3px solid '+ACC,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     </div>
@@ -137,11 +137,11 @@ export default function AnalystCardPage() {
   const avgSkill    = Math.round(skillVals.reduce((a,s)=>a+s.val,0)/skillVals.length);
 
   return (
-    <div style={{minHeight:'100vh',background:'#f3f2ef',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",color:'#0f172a'}}>
+    <div style={{minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",color:'#0f172a'}}>
       <style>{css}</style>
 
       {/* NAVBAR */}
-      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'#fff',borderBottom:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.07)'}}>
+      <nav style={{position:'sticky',top:0,zIndex:50,height:52,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',background:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 16px rgba(79,70,229,0.07)'}}>
         <button className="nb" onClick={()=>navigate('/dashboard')}
           style={{display:'flex',alignItems:'center',gap:6,background:'none',border:'1px solid #e2e8f0',color:'#374151',padding:'5px 14px',borderRadius:7,fontSize:13,cursor:'pointer',fontWeight:500}}>
           ← Dashboard
@@ -161,9 +161,9 @@ export default function AnalystCardPage() {
       <div style={{maxWidth:1000,margin:'0 auto',padding:'24px 16px 60px'}}>
 
         {/* PROFILE HEADER — LinkedIn style */}
-        <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.07)',overflow:'hidden',marginBottom:14}}>
+        <div className="fu" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 2px 16px rgba(79,70,229,0.06)',overflow:'hidden',marginBottom:14}}>
           {/* Banner */}
-          <div style={{height:120,background:'linear-gradient(135deg,#0a66c2 0%,#0284c7 60%,#0369a1 100%)',position:'relative',overflow:'hidden'}}>
+          <div style={{height:120,background:'linear-gradient(135deg,#4f46e5 0%,#6366f1 60%,#818cf8 100%)',position:'relative',overflow:'hidden'}}>
             <div style={{position:'absolute',inset:0,opacity:.06,backgroundImage:'radial-gradient(circle,white 1px,transparent 1px)',backgroundSize:'28px 28px'}}/>
             {/* OVR badge en banner */}
             <div style={{position:'absolute',top:16,right:20,padding:'8px 20px',borderRadius:12,background:'rgba(255,255,255,0.15)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.25)',textAlign:'center'}}>
@@ -215,7 +215,7 @@ export default function AnalystCardPage() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',borderTop:'1px solid #e2e8f0'}}>
             {[
               {val:ovr,                        label:'OVR Score',   sub:'Overall Rating',     color:ac.main},
-              {val:copas.toLocaleString(),     label:'Copas',       sub:'Puntos competitivos', color:'#d97706'},
+              {val:copas.toLocaleString(),     label:'Puntos',       sub:'Puntos competitivos', color:'#d97706'},
               {val:userData.sesiones_completadas||0, label:'Sesiones', sub:'Completadas',    color:'#059669'},
               {val:(userData.xp||0).toLocaleString(), label:'XP Total', sub:'Experiencia',   color:tierColor},
             ].map((s,i) => (
@@ -229,7 +229,7 @@ export default function AnalystCardPage() {
         </div>
 
         {/* SKILLS — LinkedIn endorsements style */}
-        <div className="s1" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',overflow:'hidden',marginBottom:14}}>
+        <div className="s1" style={{borderRadius:12,background:'#fff',border:'1px solid #e2e8f0',boxShadow:'0 2px 16px rgba(79,70,229,0.05)',overflow:'hidden',marginBottom:14}}>
           <div style={{padding:'20px 24px',borderBottom:'1px solid #e2e8f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div>
               <h2 style={{fontSize:18,fontWeight:700,color:'#0f172a',marginBottom:2}}>Skills verificadas</h2>

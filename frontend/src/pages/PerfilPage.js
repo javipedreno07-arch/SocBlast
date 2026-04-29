@@ -498,7 +498,7 @@ export default function PerfilPage() {
 
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
                 {[
-                  {label:'COPAS',    val:(userData?.copas||0).toLocaleString(), color:arenaColor},
+                  {label:'PUNTOS',    val:(userData?.copas||0).toLocaleString(), color:arenaColor},
                   {label:'XP TOTAL', val:(userData?.xp||0).toLocaleString(),    color:ACC},
                   {label:'SESIONES', val:userData?.sesiones_completadas||0,     color:'#059669'},
                   {label:'TIER',     val:tierActual,                            color:tierData?.color},
