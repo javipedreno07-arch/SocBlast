@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SBNav } from './SBLayout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -82,7 +83,7 @@ export default function CertificadoPage() {
   `;
 
   if (loading) return (
-    <div style={{ minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff,#f8f9ff,#f5f0ff)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter',sans-serif" }}>
+    <div style={{ minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter',sans-serif" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ textAlign:'center' }}>
         <div style={{ width:36,height:36,border:`3px solid #e2e8f0`,borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 16px' }}/>
@@ -104,25 +105,9 @@ export default function CertificadoPage() {
     <>
       <style>{css}</style>
 
-      {/* Navbar */}
-      <nav className="no-print" style={{ position:'sticky',top:0,zIndex:50,height:'56px',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 40px',backgroundColor:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid #e8eaf0',boxShadow:'0 1px 12px rgba(0,0,0,0.06)',fontFamily:"'Inter',sans-serif" }}>
-        <div style={{ display:'flex',alignItems:'center',gap:'10px',cursor:'pointer' }} onClick={() => navigate('/')}>
-          <img src="/logosoc.png" alt="SocBlast" style={{ height:'28px' }}/>
-          <span style={{ fontSize:'15px',fontWeight:800,color:'#0f172a' }}>Soc<span style={{ color:ACC }}>Blast</span></span>
-        </div>
-        <div style={{ display:'flex',gap:'2px' }}>
-          {[{label:'← Dashboard',path:'/dashboard'},{label:'Perfil',path:'/perfil'},{label:'Ranking',path:'/ranking'}].map((item,i) => (
-            <button key={i} className="nav-btn" onClick={() => navigate(item.path)}
-              style={{ padding:'5px 14px',borderRadius:'7px',background:'none',border:'none',color:'#64748b',fontSize:'13px',cursor:'pointer' }}>
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <button onClick={handleDescargar}
-          style={{ padding:'8px 20px',borderRadius:'9px',backgroundColor:ACC,border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',boxShadow:`0 4px 14px ${ACC}30` }}>
-          📥 Descargar PDF
-        </button>
-      </nav>
+      {/* Navbar compartido */}
+      <SBNav user={user} avatarConfig={null} foto="" activePage="/certificado" navigate={navigate}
+        extra={<button onClick={handleDescargar} style={{padding:'7px 16px',borderRadius:100,background:ACC,border:'none',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',marginLeft:8}}>📥 PDF</button>}/>
 
       <div style={{ minHeight:'100vh',background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)',fontFamily:"'Inter',sans-serif",padding:'32px 24px 72px' }}>
         <div style={{ maxWidth:'800px',margin:'0 auto' }}>
