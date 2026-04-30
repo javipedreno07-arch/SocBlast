@@ -66,31 +66,32 @@ const TOP_MAP = {
 };
 
 export function buildAvatarUrl(config={}, size=120) {
-  const c = {...DEFAULT_AVATAR_CONFIG,...config};
-  const top = TOP_MAP[c.top] || c.top;
-  // skinColor y hairColor aceptan hex sin #
-  const skinHex = c.skin.startsWith('#') ? c.skin.slice(1) : c.skin;
-  const hairHex = c.hairColor.startsWith('#') ? c.hairColor.slice(1) : c.hairColor;
-  const clthHex = c.clotheColor.startsWith('#') ? c.clotheColor.slice(1) : c.clotheColor;
+  const c       = {...DEFAULT_AVATAR_CONFIG,...config};
+  const top     = TOP_MAP[c.top] || c.top;
+  const skinHex = c.skin.replace('#','');
+  const hairHex = c.hairColor.replace('#','');
+  const clthHex = c.clotheColor.replace('#','');
+  const fhHex   = (c.facialHairColor||'2c1b18').replace('#','');
+  const hasFH   = c.facialHair && c.facialHair !== 'blank';
+  const hasAcc  = c.accessories && c.accessories !== 'blank';
   try {
     const opts = {
       size,
-      seed:            top + hairHex + skinHex,
-      backgroundColor: ['b6e3f4'],
-      top:             [top],
-      hairColor:       [hairHex],
-      skinColor:       [skinHex],
-      eyes:            [c.eyes],
-      eyebrows:        [c.eyebrow],
-      mouth:           [c.mouth],
-      clothing:        [c.clothe],
-      clothesColor:    [clthHex],
+      seed:                    [top,hairHex,skinHex,c.eyes,c.eyebrow,c.mouth,c.clothe,clthHex].join('-'),
+      backgroundColor:         ['b6e3f4'],
+      top:                     [top],
+      hairColor:               [hairHex],
+      skinColor:               [skinHex],
+      eyes:                    [c.eyes],
+      eyebrows:                [c.eyebrow],
+      mouth:                   [c.mouth],
+      clothing:                [c.clothe],
+      clothesColor:            [clthHex],
+      facialHairProbability:   hasFH ? 100 : 0,
+      accessoriesProbability:  hasAcc ? 100 : 0,
     };
-    if (c.accessories && c.accessories !== 'blank') opts.accessories = [c.accessories];
-    if (c.facialHair  && c.facialHair  !== 'blank') {
-      opts.facialHair      = [c.facialHair];
-      opts.facialHairColor = [c.facialHairColor];
-    }
+    if (hasFH)  { opts.facialHair = [c.facialHair]; opts.facialHairColor = [fhHex]; }
+    if (hasAcc) { opts.accessories = [c.accessories]; }
     const avatar = createAvatar(avataaars, opts);
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatar.toString());
   } catch(e) {
