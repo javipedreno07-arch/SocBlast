@@ -55,41 +55,46 @@ const DEFAULT_AVATAR_CONFIG = {
   facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
   skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
 };
-// ── Avatar con @dicebear/core ──────────────────────────────────────────────────
+// ── Avatar con @dicebear/core v9 ─────────────────────────────────────────────
+// Keys correctas según schema real de avataaars v9
 const TOP_MAP = {
-  shortFlat:'shortHairShortFlat', shortRound:'shortHairShortRound',
-  shortWaved:'shortHairShortWaved', dreads01:'longHairDreads',
-  straight01:'longHairStraight', curly:'longHairCurly',
-  bun:'longHairBun', bob:'shortHairShaggyMullet',
-  fro:'longHairFro', frizzle:'longHairFroBand',
+  shortFlat:'shortFlat', shortRound:'shortRound', shortWaved:'shortWaved',
+  dreads01:'dreads01', straight01:'straight01', curly:'curly',
+  bun:'bun', bob:'bob', fro:'fro', frizzle:'frizzle',
   hat:'hat', hijab:'hijab', turban:'turban',
-  winterHat1:'winterHat1', shaggy:'longHairNotTooLong',
+  winterHat1:'winterHat1', shaggy:'shaggy',
 };
 
 export function buildAvatarUrl(config={}, size=120) {
   const c = {...DEFAULT_AVATAR_CONFIG,...config};
-  const opts = {
-    size,
-    backgroundColor: ['b6e3f4'],
-    top:             [TOP_MAP[c.top] || c.top],
-    hairColor:       [c.hairColor],
-    skinColor:       [c.skin],
-    eyes:            [c.eyes],
-    eyebrows:        [c.eyebrow],
-    mouth:           [c.mouth],
-    clothing:        [c.clothe],
-    clothesColor:    [c.clotheColor],
-  };
-  if (c.accessories && c.accessories !== 'blank') opts.accessories = [c.accessories];
-  if (c.facialHair  && c.facialHair  !== 'blank') {
-    opts.facialHair      = [c.facialHair];
-    opts.facialHairColor = [c.facialHairColor];
-  }
+  const top = TOP_MAP[c.top] || c.top;
+  // skinColor y hairColor aceptan hex sin #
+  const skinHex = c.skin.startsWith('#') ? c.skin.slice(1) : c.skin;
+  const hairHex = c.hairColor.startsWith('#') ? c.hairColor.slice(1) : c.hairColor;
+  const clthHex = c.clotheColor.startsWith('#') ? c.clotheColor.slice(1) : c.clotheColor;
   try {
+    const opts = {
+      size,
+      seed:            top + hairHex + skinHex,
+      backgroundColor: ['b6e3f4'],
+      top:             [top],
+      hairColor:       [hairHex],
+      skinColor:       [skinHex],
+      eyes:            [c.eyes],
+      eyebrows:        [c.eyebrow],
+      mouth:           [c.mouth],
+      clothing:        [c.clothe],
+      clothesColor:    [clthHex],
+    };
+    if (c.accessories && c.accessories !== 'blank') opts.accessories = [c.accessories];
+    if (c.facialHair  && c.facialHair  !== 'blank') {
+      opts.facialHair      = [c.facialHair];
+      opts.facialHairColor = [c.facialHairColor];
+    }
     const avatar = createAvatar(avataaars, opts);
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(avatar.toString());
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatar.toString());
   } catch(e) {
-    // fallback: iniciales
+    console.error('Avatar error:', e.message);
     return null;
   }
 }
