@@ -71,27 +71,30 @@ const CLOTHE_MAP = {
   hoodie:'hoodie', overall:'overall',
   shirtCrewNeck:'shirtCrewNeck', shirtVNeck:'shirtVNeck',
 };
-// buildAvatarUrl: query params directos DiceBear v9
+// buildAvatarUrl: seed deterministico + params v9 sin brackets
 export function buildAvatarUrl(config={}, size=120) {
   const c = {...DEFAULT_AVATAR_CONFIG,...config};
   const top    = TOP_MAP[c.top]      || c.top;
   const clothe = CLOTHE_MAP[c.clothe] || c.clothe;
+  // Seed deterministico — mismo config = mismo avatar siempre
+  const seed = [top,c.hairColor,c.skin,c.eyes,c.eyebrow,c.mouth,clothe,c.clotheColor,c.accessories,c.facialHair].join('-');
   let url = 'https://api.dicebear.com/9.x/avataaars/svg';
-  url += '?size=' + size;
+  url += '?seed='           + encodeURIComponent(seed);
+  url += '&size='           + size;
   url += '&backgroundColor=b6e3f4';
-  url += '&top%5B%5D=' + encodeURIComponent(top);
-  url += '&hairColor%5B%5D=' + encodeURIComponent(c.hairColor);
-  url += '&skinColor%5B%5D=' + encodeURIComponent(c.skin);
-  url += '&eyes%5B%5D=' + encodeURIComponent(c.eyes);
-  url += '&eyebrows%5B%5D=' + encodeURIComponent(c.eyebrow);
-  url += '&mouth%5B%5D=' + encodeURIComponent(c.mouth);
-  url += '&clothing%5B%5D=' + encodeURIComponent(clothe);
-  url += '&clothesColor%5B%5D=' + encodeURIComponent(c.clotheColor);
+  url += '&top='            + encodeURIComponent(top);
+  url += '&hairColor='      + encodeURIComponent(c.hairColor);
+  url += '&skinColor='      + encodeURIComponent(c.skin);
+  url += '&eyes='           + encodeURIComponent(c.eyes);
+  url += '&eyebrows='       + encodeURIComponent(c.eyebrow);
+  url += '&mouth='          + encodeURIComponent(c.mouth);
+  url += '&clothing='       + encodeURIComponent(clothe);
+  url += '&clothingColor='  + encodeURIComponent(c.clotheColor);
   if (c.accessories && c.accessories !== 'blank')
-    url += '&accessories%5B%5D=' + encodeURIComponent(c.accessories);
+    url += '&accessories='  + encodeURIComponent(c.accessories);
   if (c.facialHair && c.facialHair !== 'blank') {
-    url += '&facialHair%5B%5D=' + encodeURIComponent(c.facialHair);
-    url += '&facialHairColor%5B%5D=' + encodeURIComponent(c.facialHairColor);
+    url += '&facialHair='      + encodeURIComponent(c.facialHair);
+    url += '&facialHairColor=' + encodeURIComponent(c.facialHairColor);
   }
   return url;
 }
