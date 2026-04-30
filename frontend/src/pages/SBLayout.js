@@ -55,47 +55,111 @@ const DEFAULT_AVATAR_CONFIG = {
   facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
   skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
 };
-// Mapa de IDs internos → IDs correctos DiceBear v9
-const TOP_MAP = {
-  shortFlat:'shortHairShortFlat', shortRound:'shortHairShortRound',
-  shortWaved:'shortHairShortWaved', dreads01:'longHairDreads',
-  straight01:'longHairStraight', curly:'longHairCurly',
-  bun:'longHairBun', bob:'shortHairShaggyMullet',
-  fro:'longHairFro', frizzle:'longHairFroBand',
-  hat:'hat', hijab:'hijab', turban:'turban',
-  winterHat1:'winterHat1', shaggy:'longHairNotTooLong',
+// ── Avatar SVG generado localmente (sin llamadas externas) ──────────────────
+// Colores de piel
+const SKIN_COLORS = {
+  'f8d25c':'#F8D25C','fd9841':'#FD9841','ffdbb4':'#FFDBB4','edb98a':'#EDB98A',
+  'd08b5b':'#D08B5B','ae5d29':'#AE5D29','614335':'#614335',
 };
-const CLOTHE_MAP = {
-  blazerAndShirt:'blazerAndShirt', blazerAndSweater:'blazerAndSweater',
-  collarAndSweater:'collarAndSweater', graphicShirt:'graphicShirt',
-  hoodie:'hoodie', overall:'overall',
-  shirtCrewNeck:'shirtCrewNeck', shirtVNeck:'shirtVNeck',
-};
-// buildAvatarUrl: usa el proxy del backend con parámetros correctos
-const AVATAR_API = 'https://socblast-production.up.railway.app/api/avatar/proxy';
-// El proxy espera skin como nombre (light/pale/etc), no hex
-const SKIN_NAME_MAP = {
-  'f8d25c':'yellow','fd9841':'tanned','ffdbb4':'pale','edb98a':'light',
-  'd08b5b':'brown','ae5d29':'darkBrown','614335':'black',
-};
+// Colores de pelo y ropa: hex directo
+const toHex = v => v ? (v.startsWith('#') ? v : '#'+v) : '#2c1b18';
+
+// Genera un SVG de avatar inline basado en config
+export function buildAvatarSVG(config={}) {
+  const c    = {...DEFAULT_AVATAR_CONFIG,...config};
+  const skin = SKIN_COLORS[c.skin] || '#EDB98A';
+  const hair = toHex(c.hairColor);
+  const clth = toHex(c.clotheColor);
+  const facialhair = c.facialHair && c.facialHair !== 'blank';
+  const hasHat     = c.top === 'hat' || c.top === 'winterHat1' || c.top === 'turban' || c.top === 'hijab';
+  const isLong     = c.top === 'straight01' || c.top === 'curly' || c.top === 'fro' || c.top === 'frizzle' || c.top === 'bun';
+  const isBun      = c.top === 'bun';
+
+  // SVG base: cara, cuerpo, pelo
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+    <defs>
+      <clipPath id="circle"><circle cx="100" cy="100" r="100"/></clipPath>
+    </defs>
+    <circle cx="100" cy="100" r="100" fill="#b6e3f4"/>
+    <g clip-path="url(#circle)">
+      <!-- Cuerpo -->
+      <ellipse cx="100" cy="185" rx="55" ry="35" fill="${clth}"/>
+      <rect x="45" y="160" width="110" height="50" fill="${clth}"/>
+      <!-- Cuello -->
+      <rect x="88" y="138" width="24" height="22" fill="${skin}"/>
+      <!-- Cara -->
+      <ellipse cx="100" cy="115" rx="42" ry="48" fill="${skin}"/>
+      <!-- Orejas -->
+      <ellipse cx="58" cy="118" rx="8" ry="10" fill="${skin}"/>
+      <ellipse cx="142" cy="118" rx="8" ry="10" fill="${skin}"/>
+      <!-- Ojos -->
+      ${c.eyes === 'happy' || c.eyes === 'wink'
+        ? `<path d="M82 108 Q86 103 90 108" stroke="#1a1a1a" strokeWidth="2.5" fill="none"/>
+           <path d="M110 108 Q114 103 118 108" stroke="#1a1a1a" strokeWidth="2.5" fill="none"/>`
+        : c.eyes === 'closed'
+        ? `<line x1="82" y1="106" x2="90" y2="106" stroke="#1a1a1a" strokeWidth="2.5"/>
+           <line x1="110" y1="106" x2="118" y2="106" stroke="#1a1a1a" strokeWidth="2.5"/>`
+        : `<ellipse cx="86" cy="107" rx="5" ry="5.5" fill="#1a1a1a"/>
+           <ellipse cx="114" cy="107" rx="5" ry="5.5" fill="#1a1a1a"/>
+           <ellipse cx="87.5" cy="105.5" rx="1.5" ry="1.5" fill="white"/>
+           <ellipse cx="115.5" cy="105.5" rx="1.5" ry="1.5" fill="white"/>`
+      }
+      <!-- Cejas -->
+      ${c.eyebrow === 'angry'
+        ? `<path d="M79 98 L92 101" stroke="${hair}" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+           <path d="M108 101 L121 98" stroke="${hair}" strokeWidth="2.5" fill="none" strokeLinecap="round"/>`
+        : c.eyebrow === 'raisedExcited'
+        ? `<path d="M80 95 Q86 91 92 94" stroke="${hair}" strokeWidth="2" fill="none" strokeLinecap="round"/>
+           <path d="M108 94 Q114 91 120 95" stroke="${hair}" strokeWidth="2" fill="none" strokeLinecap="round"/>`
+        : `<path d="M80 99 Q86 96 92 99" stroke="${hair}" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+           <path d="M108 99 Q114 96 120 99" stroke="${hair}" strokeWidth="2.5" fill="none" strokeLinecap="round"/>`
+      }
+      <!-- Boca -->
+      ${c.mouth === 'smile' || c.mouth === 'twinkle'
+        ? `<path d="M89 128 Q100 137 111 128" stroke="#1a1a1a" strokeWidth="2.5" fill="none" strokeLinecap="round"/>`
+        : c.mouth === 'sad'
+        ? `<path d="M89 133 Q100 126 111 133" stroke="#1a1a1a" strokeWidth="2.5" fill="none" strokeLinecap="round"/>`
+        : c.mouth === 'serious'
+        ? `<line x1="89" y1="130" x2="111" y2="130" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round"/>`
+        : `<path d="M89 129 Q100 135 111 129" stroke="#1a1a1a" strokeWidth="2" fill="none" strokeLinecap="round"/>`
+      }
+      <!-- Vello facial -->
+      ${facialhair
+        ? `<path d="M78 133 Q100 148 122 133 Q110 145 100 147 Q90 145 78 133Z" fill="${toHex(c.facialHairColor)}" opacity="0.85"/>`
+        : ''
+      }
+      <!-- Pelo -->
+      ${hasHat
+        ? `<rect x="58" y="68" width="84" height="18" rx="9" fill="${hair}"/>
+           <rect x="50" y="60" width="100" height="20" rx="10" fill="${hair}"/>`
+        : isLong
+        ? `<ellipse cx="100" cy="85" rx="45" ry="38" fill="${hair}"/>
+           <rect x="55" y="85" width="14" height="55" rx="7" fill="${hair}"/>
+           <rect x="131" y="85" width="14" height="55" rx="7" fill="${hair}"/>
+           ${isBun ? `<circle cx="100" cy="63" r="12" fill="${hair}"/>` : ''}`
+        : `<ellipse cx="100" cy="85" rx="44" ry="36" fill="${hair}"/>
+           <rect x="56" y="85" width="12" height="25" rx="6" fill="${hair}"/>
+           <rect x="132" y="85" width="12" height="25" rx="6" fill="${hair}"/>`
+      }
+      <!-- Accesorios (gafas) -->
+      ${c.accessories && c.accessories !== 'blank'
+        ? `<rect x="76" y="102" width="20" height="14" rx="6" fill="none" stroke="#555" strokeWidth="2"/>
+           <rect x="104" y="102" width="20" height="14" rx="6" fill="none" stroke="#555" strokeWidth="2"/>
+           <line x1="96" y1="109" x2="104" y2="109" stroke="#555" strokeWidth="2"/>
+           ${c.accessories === 'sunglasses'
+             ? `<rect x="77" y="103" width="18" height="12" rx="5" fill="#1a1a1a" opacity="0.7"/>
+                <rect x="105" y="103" width="18" height="12" rx="5" fill="#1a1a1a" opacity="0.7"/>`
+             : ''}`
+        : ''
+      }
+    </g>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// buildAvatarUrl ahora devuelve data URL SVG inline (sin llamadas externas)
 export function buildAvatarUrl(config={}, size=120) {
-  const c     = {...DEFAULT_AVATAR_CONFIG,...config};
-  const top   = TOP_MAP[c.top]       || c.top;
-  const cloth = CLOTHE_MAP[c.clothe] || c.clothe;
-  const skin  = SKIN_NAME_MAP[c.skin] || 'light';
-  let url = AVATAR_API + '?size=' + size;
-  url += '&top='             + encodeURIComponent(top);
-  url += '&hairColor='       + encodeURIComponent(c.hairColor);
-  url += '&skin='            + encodeURIComponent(skin);
-  url += '&eyes='            + encodeURIComponent(c.eyes);
-  url += '&eyebrows='        + encodeURIComponent(c.eyebrow);
-  url += '&mouth='           + encodeURIComponent(c.mouth);
-  url += '&clothing='        + encodeURIComponent(cloth);
-  url += '&clothingColor='   + encodeURIComponent(c.clotheColor);
-  url += '&accessories='     + encodeURIComponent(c.accessories || 'blank');
-  url += '&facialHair='      + encodeURIComponent(c.facialHair  || 'blank');
-  url += '&facialHairColor=' + encodeURIComponent(c.facialHairColor || '2c1b18');
-  return url;
+  return buildAvatarSVG(config);
 }
 
 export function AvatarCircle({name='', avatarConfig=null, size=72, foto='', color=ACC}) {
