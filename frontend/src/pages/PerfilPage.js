@@ -129,32 +129,42 @@ const PREFERENCIAS_OPTS = [
   'Network Security','Web Security','Mobile Security','ICS/OT Security',
 ];
 
-// Preview avatar — usa exactamente buildAvatarUrl de SBLayout
-function AvatarPreview({ config, size=160 }) {
-  const [loaded, setLoaded] = useState(false);
-  const [key, setKey] = useState(0);
-  const prevConfig = useRef('');
+// Preview avatar — usa buildAvatarUrl de SBLayout con query params v9
+function AvatarPreview({ config, size=160, name='' }) {
+  const [loaded,  setLoaded]  = useState(false);
+  const [error,   setError]   = useState(false);
+  const [imgKey,  setImgKey]  = useState(0);
+  const prevStr = useRef('');
 
   useEffect(() => {
-    const newKey = JSON.stringify(config);
-    if (newKey !== prevConfig.current) {
-      prevConfig.current = newKey;
+    const str = JSON.stringify(config);
+    if (str !== prevStr.current) {
+      prevStr.current = str;
       setLoaded(false);
-      setKey(k => k+1);
+      setError(false);
+      setImgKey(k => k+1);
     }
   }, [config]);
 
   const url = buildAvatarUrl(config, size*2);
+  const initials = name.trim().split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('') || '?';
+
+  if (error) return (
+    <div style={{width:size,height:size,borderRadius:'50%',background:`linear-gradient(135deg,${ACC},#6366f1)`,display:'flex',alignItems:'center',justifyContent:'center',border:'4px solid #fff',boxShadow:`0 0 0 3px ${ACC}30`,flexShrink:0}}>
+      <span style={{fontSize:size*.34,fontWeight:700,color:'#fff'}}>{initials}</span>
+    </div>
+  );
 
   return (
     <div style={{width:size,height:size,borderRadius:'50%',overflow:'hidden',border:'4px solid #fff',boxShadow:`0 0 0 3px ${ACC}30`,background:'#b6e3f4',position:'relative',flexShrink:0}}>
-      {!loaded && (
+      {!loaded && !error && (
         <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#b6e3f4',zIndex:1}}>
-          <div style={{width:32,height:32,border:`3px solid ${ACC}30`,borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+          <div style={{width:36,height:36,border:`3px solid ${ACC}30`,borderTop:`3px solid ${ACC}`,borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
         </div>
       )}
-      <img key={key} src={url} alt="avatar" width={size} height={size}
-        onLoad={()=>setLoaded(true)} onError={()=>setLoaded(true)}
+      <img key={imgKey} src={url} alt="avatar preview" width={size} height={size}
+        onLoad={()=>setLoaded(true)}
+        onError={()=>{ setLoaded(false); setError(true); }}
         style={{width:'100%',height:'100%',objectFit:'cover',opacity:loaded?1:0,transition:'opacity .25s'}}/>
     </div>
   );
@@ -437,7 +447,7 @@ export default function PerfilPage() {
             <div style={{padding:'28px 22px',borderRadius:20,background:'#fff',border:'1px solid #e8eaf0',boxShadow:'0 4px 20px rgba(79,70,229,0.07)',textAlign:'center',position:'sticky',top:80}}>
               <p style={{fontSize:10,color:'#94a3b8',fontWeight:700,letterSpacing:'2px',marginBottom:20}}>PREVIEW EN VIVO</p>
               <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
-                <AvatarPreview config={avatarConfig} size={150}/>
+                <AvatarPreview config={avatarConfig} size={150} name={nombre}/>
               </div>
               <p style={{fontSize:15,fontWeight:800,color:'#0f172a',marginBottom:2}}>{nombre}</p>
               <p style={{fontSize:11,color:'#94a3b8',marginBottom:18}}>{TIERS_DATA[tierActual-1]?.name} · {userData?.arena}</p>

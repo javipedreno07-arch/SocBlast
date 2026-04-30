@@ -71,28 +71,29 @@ const CLOTHE_MAP = {
   hoodie:'hoodie', overall:'overall',
   shirtCrewNeck:'shirtCrewNeck', shirtVNeck:'shirtVNeck',
 };
-// buildAvatarUrl: usa query params directos (v9), NO seed
+// buildAvatarUrl: query params directos DiceBear v9
 export function buildAvatarUrl(config={}, size=120) {
   const c = {...DEFAULT_AVATAR_CONFIG,...config};
-  const top     = TOP_MAP[c.top]     || c.top;
-  const clothe  = CLOTHE_MAP[c.clothe] || c.clothe;
-  const params = new URLSearchParams();
-  params.set('size', size);
-  params.set('backgroundColor', 'b6e3f4');
-  params.append('top[]', top);
-  params.append('hairColor[]', c.hairColor);
-  params.append('skinColor[]', c.skin);
-  params.append('eyes[]', c.eyes);
-  params.append('eyebrows[]', c.eyebrow);
-  params.append('mouth[]', c.mouth);
-  params.append('clothing[]', clothe);
-  params.append('clothesColor[]', c.clotheColor);
-  if (c.accessories && c.accessories !== 'blank') params.append('accessories[]', c.accessories);
-  if (c.facialHair  && c.facialHair  !== 'blank') {
-    params.append('facialHair[]', c.facialHair);
-    params.append('facialHairColor[]', c.facialHairColor);
+  const top    = TOP_MAP[c.top]      || c.top;
+  const clothe = CLOTHE_MAP[c.clothe] || c.clothe;
+  let url = 'https://api.dicebear.com/9.x/avataaars/svg';
+  url += '?size=' + size;
+  url += '&backgroundColor=b6e3f4';
+  url += '&top%5B%5D=' + encodeURIComponent(top);
+  url += '&hairColor%5B%5D=' + encodeURIComponent(c.hairColor);
+  url += '&skinColor%5B%5D=' + encodeURIComponent(c.skin);
+  url += '&eyes%5B%5D=' + encodeURIComponent(c.eyes);
+  url += '&eyebrows%5B%5D=' + encodeURIComponent(c.eyebrow);
+  url += '&mouth%5B%5D=' + encodeURIComponent(c.mouth);
+  url += '&clothing%5B%5D=' + encodeURIComponent(clothe);
+  url += '&clothesColor%5B%5D=' + encodeURIComponent(c.clotheColor);
+  if (c.accessories && c.accessories !== 'blank')
+    url += '&accessories%5B%5D=' + encodeURIComponent(c.accessories);
+  if (c.facialHair && c.facialHair !== 'blank') {
+    url += '&facialHair%5B%5D=' + encodeURIComponent(c.facialHair);
+    url += '&facialHairColor%5B%5D=' + encodeURIComponent(c.facialHairColor);
   }
-  return `https://api.dicebear.com/9.x/avataaars/svg?${params.toString()}`;
+  return url;
 }
 
 export function AvatarCircle({name='', avatarConfig=null, size=72, foto='', color=ACC}) {
