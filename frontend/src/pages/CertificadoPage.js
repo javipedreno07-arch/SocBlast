@@ -33,7 +33,7 @@ const ARENAS_COLORS = {
 const getArenaColor = a => ARENAS_COLORS[a] || ACC;
 
 export default function CertificadoPage() {
-  const { token }  = useAuth();
+  const { token, user }  = useAuth();
   const navigate   = useNavigate();
   const certRef    = useRef(null);
 

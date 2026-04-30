@@ -55,10 +55,44 @@ const DEFAULT_AVATAR_CONFIG = {
   facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
   skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
 };
+// Mapa de IDs internos → IDs correctos DiceBear v9
+const TOP_MAP = {
+  shortFlat:'shortHairShortFlat', shortRound:'shortHairShortRound',
+  shortWaved:'shortHairShortWaved', dreads01:'longHairDreads',
+  straight01:'longHairStraight', curly:'longHairCurly',
+  bun:'longHairBun', bob:'shortHairShaggyMullet',
+  fro:'longHairFro', frizzle:'longHairFroBand',
+  hat:'hat', hijab:'hijab', turban:'turban',
+  winterHat1:'winterHat1', shaggy:'longHairNotTooLong',
+};
+const CLOTHE_MAP = {
+  blazerAndShirt:'blazerAndShirt', blazerAndSweater:'blazerAndSweater',
+  collarAndSweater:'collarAndSweater', graphicShirt:'graphicShirt',
+  hoodie:'hoodie', overall:'overall',
+  shirtCrewNeck:'shirtCrewNeck', shirtVNeck:'shirtVNeck',
+};
+// buildAvatarUrl: usa query params directos (v9), NO seed
 export function buildAvatarUrl(config={}, size=120) {
   const c = {...DEFAULT_AVATAR_CONFIG,...config};
-  const seed = `${c.top}-${c.hairColor}-${c.clothe}-${c.clotheColor}-${c.skin}-${c.eyes}-${c.eyebrow}-${c.mouth}-${c.accessories}-${c.facialHair}-${c.facialHairColor}`;
-  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4&size=${size}`;
+  const top     = TOP_MAP[c.top]     || c.top;
+  const clothe  = CLOTHE_MAP[c.clothe] || c.clothe;
+  const params = new URLSearchParams();
+  params.set('size', size);
+  params.set('backgroundColor', 'b6e3f4');
+  params.append('top[]', top);
+  params.append('hairColor[]', c.hairColor);
+  params.append('skinColor[]', c.skin);
+  params.append('eyes[]', c.eyes);
+  params.append('eyebrows[]', c.eyebrow);
+  params.append('mouth[]', c.mouth);
+  params.append('clothing[]', clothe);
+  params.append('clothesColor[]', c.clotheColor);
+  if (c.accessories && c.accessories !== 'blank') params.append('accessories[]', c.accessories);
+  if (c.facialHair  && c.facialHair  !== 'blank') {
+    params.append('facialHair[]', c.facialHair);
+    params.append('facialHairColor[]', c.facialHairColor);
+  }
+  return `https://api.dicebear.com/9.x/avataaars/svg?${params.toString()}`;
 }
 
 export function AvatarCircle({name='', avatarConfig=null, size=72, foto='', color=ACC}) {
