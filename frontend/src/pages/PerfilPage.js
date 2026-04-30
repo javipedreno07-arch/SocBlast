@@ -55,6 +55,31 @@ const AVATAR_OPTS = {
     {id:'wayfarers',      label:'Wayfarer'},
     {id:'eyepatch',       label:'Parche ojo'},
   ],
+  accessoriesColor: [
+    {id:'262e33',hex:'#262e33',label:'Negro'},
+    {id:'3c4f5c',hex:'#3c4f5c',label:'Gris oscuro'},
+    {id:'65c9ff',hex:'#65c9ff',label:'Azul claro'},
+    {id:'5199e4',hex:'#5199e4',label:'Azul'},
+    {id:'25557c',hex:'#25557c',label:'Azul marino'},
+    {id:'e6e6e6',hex:'#e6e6e6',label:'Gris claro'},
+    {id:'ff5c5c',hex:'#ff5c5c',label:'Rojo'},
+    {id:'ff488e',hex:'#ff488e',label:'Rosa'},
+    {id:'a7ffc4',hex:'#a7ffc4',label:'Verde menta'},
+    {id:'ffffff',hex:'#ffffff',label:'Blanco'},
+  ],
+  hatColor: [
+    {id:'262e33',hex:'#262e33',label:'Negro'},
+    {id:'3c4f5c',hex:'#3c4f5c',label:'Gris oscuro'},
+    {id:'65c9ff',hex:'#65c9ff',label:'Azul claro'},
+    {id:'5199e4',hex:'#5199e4',label:'Azul'},
+    {id:'25557c',hex:'#25557c',label:'Azul marino'},
+    {id:'e6e6e6',hex:'#e6e6e6',label:'Gris claro'},
+    {id:'a7ffc4',hex:'#a7ffc4',label:'Verde menta'},
+    {id:'ff5c5c',hex:'#ff5c5c',label:'Rojo'},
+    {id:'ff488e',hex:'#ff488e',label:'Rosa'},
+    {id:'fbbf24',hex:'#fbbf24',label:'Amarillo'},
+    {id:'ffffff',hex:'#ffffff',label:'Blanco'},
+  ],
   facialHair: [
     {id:'blank',          label:'Sin vello'},
     {id:'beardLight',     label:'Barba corta'},
@@ -109,23 +134,25 @@ const AVATAR_OPTS = {
 };
 
 const AVATAR_SECTIONS = [
-  {key:'top',             label:'Pelo / Sombrero'},
-  {key:'hairColor',       label:'Color de pelo',   type:'color'},
-  {key:'skin',            label:'Tono de piel',    type:'color'},
-  {key:'eyes',            label:'Ojos'},
-  {key:'eyebrow',         label:'Cejas'},
-  {key:'mouth',           label:'Boca'},
-  {key:'accessories',     label:'Accesorios'},
-  {key:'facialHair',      label:'Vello facial'},
-  {key:'facialHairColor', label:'Color vello',     type:'color'},
-  {key:'clothe',          label:'Ropa'},
-  {key:'clotheColor',     label:'Color de ropa',   type:'color'},
+  {key:'top',              label:'Pelo / Sombrero'},
+  {key:'hairColor',        label:'Color de pelo',       type:'color'},
+  {key:'hatColor',         label:'Color de gorro',      type:'color'},
+  {key:'skin',             label:'Tono de piel',        type:'color'},
+  {key:'eyes',             label:'Ojos'},
+  {key:'eyebrow',          label:'Cejas'},
+  {key:'mouth',            label:'Boca'},
+  {key:'accessories',      label:'Accesorios'},
+  {key:'accessoriesColor', label:'Color accesorios',    type:'color'},
+  {key:'facialHair',       label:'Vello facial'},
+  {key:'facialHairColor',  label:'Color vello',         type:'color'},
+  {key:'clothe',           label:'Ropa'},
+  {key:'clotheColor',      label:'Color de ropa',       type:'color'},
 ];
 
 const DEFAULT_AVATAR_CONFIG = {
-  top:'shortFlat', hairColor:'2c1b18', accessories:'blank', facialHair:'blank',
-  facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
-  skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
+  top:'shortFlat', hairColor:'2c1b18', accessories:'blank', accessoriesColor:'262e33',
+  facialHair:'blank', facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
+  skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default', hatColor:'262e33',
 };
 
 const TIERS_DATA = [

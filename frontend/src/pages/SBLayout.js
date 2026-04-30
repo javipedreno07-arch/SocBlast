@@ -51,9 +51,9 @@ export function getArenaGroup(arena) {
 
 // ── Avatar ────────────────────────────────────────────────
 const DEFAULT_AVATAR_CONFIG = {
-  top:'shortFlat', hairColor:'2c1b18', accessories:'blank', facialHair:'blank',
-  facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
-  skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default',
+  top:'shortFlat', hairColor:'2c1b18', accessories:'blank', accessoriesColor:'262e33',
+  facialHair:'blank', facialHairColor:'2c1b18', clothe:'hoodie', clotheColor:'262e33',
+  skin:'edb98a', eyes:'default', eyebrow:'default', mouth:'default', hatColor:'262e33',
 };
 // ── Avatar con @dicebear/core v9 ─────────────────────────────────────────────
 // Keys correctas según schema real de avataaars v9
@@ -75,9 +75,11 @@ export function buildAvatarUrl(config={}, size=120) {
   const hasFH   = c.facialHair && c.facialHair !== 'blank';
   const hasAcc  = c.accessories && c.accessories !== 'blank';
   try {
+    const hatHex = (c.hatColor||'262e33').replace('#','');
+    const accHex = (c.accessoriesColor||'262e33').replace('#','');
     const opts = {
       size,
-      seed:                    [top,hairHex,skinHex,c.eyes,c.eyebrow,c.mouth,c.clothe,clthHex].join('-'),
+      seed:                    [top,hairHex,skinHex,c.eyes,c.eyebrow,c.mouth,c.clothe,clthHex,hatHex,accHex].join('-'),
       backgroundColor:         ['b6e3f4'],
       top:                     [top],
       hairColor:               [hairHex],
@@ -87,11 +89,12 @@ export function buildAvatarUrl(config={}, size=120) {
       mouth:                   [c.mouth],
       clothing:                [c.clothe],
       clothesColor:            [clthHex],
+      hatColor:                [hatHex],
       facialHairProbability:   hasFH ? 100 : 0,
       accessoriesProbability:  hasAcc ? 100 : 0,
     };
     if (hasFH)  { opts.facialHair = [c.facialHair]; opts.facialHairColor = [fhHex]; }
-    if (hasAcc) { opts.accessories = [c.accessories]; }
+    if (hasAcc) { opts.accessories = [c.accessories]; opts.accessoriesColor = [accHex]; }
     const avatar = createAvatar(avataaars, opts);
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatar.toString());
   } catch(e) {
