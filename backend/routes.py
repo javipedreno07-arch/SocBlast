@@ -500,44 +500,310 @@ async def crear_simulacion_empresa(simulacion: dict, email: str = Depends(get_cu
 
 
 # ── LAB ───────────────────────────────────────────────────────────────────────
-LAB_CONFIG_POR_NIVEL = {
-    "Bronce": {
-        "dificultad": "básica",
-        "descripcion": "Ataque directo con pocos pasos. Ideal para aprender el flujo de investigación SOC.",
-        "num_alertas": 5, "num_logs": 12, "num_hosts": 3,
-        "amenazas": "brute force SSH/RDP (cientos de intentos fallidos seguido de login exitoso), descarga de malware vía phishing, acceso no autorizado con credenciales robadas, posible persistencia básica",
-        "ttps": "T1110 (Brute Force), T1566 (Phishing), T1078 (Valid Accounts), T1547 (Boot Persistence básica)",
-        "num_preguntas": 5,
+import random
+
+LAB_TIPOS = {
+    "forense": {
+        "nombre": "Forense Post-Mortem",
+        "descripcion": "El ataque ya ocurrió. Reconstruye la cadena completa analizando artefactos.",
+        "icono": "🔬",
+        "skills": ["forense_digital", "analisis_logs", "inteligencia_amenazas"],
+        "objetivo_template": "Reconstruir la cadena completa del ataque: vector de entrada, herramientas usadas, movimiento lateral, persistencia y datos exfiltrados.",
     },
-    "Plata": {
-        "dificultad": "intermedia",
-        "descripcion": "Ataque multi-fase con movimiento lateral. Requiere correlación de eventos entre sistemas.",
-        "num_alertas": 7, "num_logs": 18, "num_hosts": 5,
-        "amenazas": "spear phishing con payload ejecutado, escalada de privilegios local, movimiento lateral con PsExec o WMI, C2 básico sobre HTTP, persistencia en registro",
-        "ttps": "T1566.001 (Spear Phishing), T1059 (Command Scripting), T1021 (Remote Services), T1071 (C2 over HTTP), T1547.001 (Registry Run Keys)",
-        "num_preguntas": 7,
+    "threat_hunt": {
+        "nombre": "Threat Hunting",
+        "descripcion": "No hay alerta. El atacante lleva días dentro. Encuéntralo entre el ruido.",
+        "icono": "🎯",
+        "skills": ["threat_hunting", "analisis_logs", "siem_queries"],
+        "objetivo_template": "Detectar actividad maliciosa oculta sin alertas previas. Formular hipótesis, buscar IOCs y confirmar compromiso.",
     },
-    "Oro": {
-        "dificultad": "avanzada",
-        "descripcion": "APT multi-fase con técnicas de evasión. Requiere threat hunting proactivo y análisis forense.",
-        "num_alertas": 9, "num_logs": 24, "num_hosts": 7,
-        "amenazas": "APT con living-off-the-land, credential dumping (mimikatz/lsass), DNS tunneling C2, exfiltración cifrada, persistencia avanzada (scheduled tasks + service), anti-forensics básico",
-        "ttps": "T1003 (Credential Dumping), T1071.004 (DNS C2), T1055 (Process Injection), T1547 (Boot Persistence), T1070 (Indicator Removal básico)",
-        "num_preguntas": 9,
+    "incident_response": {
+        "nombre": "Incident Response",
+        "descripcion": "Ataque en curso. Cada decisión tiene consecuencias. Contén antes de que se propague.",
+        "icono": "🚨",
+        "skills": ["respuesta_incidentes", "deteccion_amenazas", "analisis_logs"],
+        "objetivo_template": "Identificar el alcance del ataque activo, contener la amenaza y preservar evidencias para análisis forense.",
     },
-    "Diamante": {
-        "dificultad": "experta",
-        "descripcion": "Simulación APT completa. El atacante usa técnicas de evasión activa y genera ruido deliberado.",
-        "num_alertas": 11, "num_logs": 30, "num_hosts": 9,
-        "amenazas": "APT avanzado con zero-day exploit o supply chain, exfiltración encubierta en tráfico cifrado, anti-forensics activo, lateral movement masivo con pass-the-hash, golden ticket Kerberos",
-        "ttps": "T1190 (Exploit Public App), T1195 (Supply Chain), T1070 (Indicator Removal), T1036 (Masquerading), T1558 (Steal/Forge Kerberos Tickets), T1560 (Archive Data)",
-        "num_preguntas": 11,
+    "malware": {
+        "nombre": "Malware Analysis",
+        "descripcion": "Un proceso sospechoso está activo. Analiza su comportamiento e identifica el malware.",
+        "icono": "🦠",
+        "skills": ["forense_digital", "inteligencia_amenazas", "deteccion_amenazas"],
+        "objetivo_template": "Identificar el malware, sus capacidades, IOCs generados, mecanismo de persistencia y servidor C2.",
+    },
+    "osint": {
+        "nombre": "OSINT & Threat Intel",
+        "descripcion": "Te dan un IOC. Construye el perfil completo del actor de amenaza.",
+        "icono": "🌐",
+        "skills": ["inteligencia_amenazas", "threat_hunting", "siem_queries"],
+        "objetivo_template": "Construir el perfil del actor: infraestructura C2, TTPs, campañas anteriores y atribución.",
     },
 }
 
+LAB_CONFIG_POR_NIVEL = {
+    "Bronce": {
+        "dificultad": "L1 — Triage",
+        "descripcion": "Ataque directo con señales claras. Ideal para aprender el flujo SOC.",
+        "num_alertas": 5, "num_logs": 12, "num_hosts": 3,
+        "num_preguntas": 5, "ruido_pct": 0.15,
+        "copas_base": 15, "xp_base": 60,
+        "amenazas_windows": "brute force RDP/SMB con cientos de intentos fallidos seguido de login exitoso, descarga de malware vía phishing simple, acceso no autorizado con credenciales robadas, persistencia básica en registro Run key",
+        "amenazas_linux": "brute force SSH con múltiples intentos fallidos seguido de login exitoso, descarga de payload vía curl/wget, crontab de persistencia, reverse shell bash hacia IP externa",
+        "ttps": "T1110 (Brute Force), T1566 (Phishing), T1078 (Valid Accounts), T1547 (Boot Persistence)",
+        "pistas_disponibles": True,
+        "comandos_extra": [],
+    },
+    "Plata": {
+        "dificultad": "L2 — Analyst",
+        "descripcion": "Ataque multi-fase con movimiento lateral. Requiere correlación entre sistemas.",
+        "num_alertas": 7, "num_logs": 18, "num_hosts": 5,
+        "num_preguntas": 7, "ruido_pct": 0.25,
+        "copas_base": 30, "xp_base": 100,
+        "amenazas_windows": "spear phishing con macro Office ejecutada, escalada de privilegios local, movimiento lateral con PsExec o WMI, C2 sobre HTTP/S, persistencia en scheduled tasks y registro",
+        "amenazas_linux": "phishing con script bash malicioso, escalada sudo o SUID, movimiento lateral con SSH keys robadas, C2 sobre DNS o HTTP, persistencia vía crontab y systemd service",
+        "ttps": "T1566.001 (Spear Phishing), T1059 (Scripting), T1021 (Remote Services), T1071 (C2 HTTP), T1547 (Persistence)",
+        "pistas_disponibles": False,
+        "comandos_extra": ["auditpol", "schtasks", "sc query"],
+    },
+    "Oro": {
+        "dificultad": "L3 — Senior",
+        "descripcion": "APT multi-fase con evasión. Requiere threat hunting y análisis forense profundo.",
+        "num_alertas": 9, "num_logs": 24, "num_hosts": 7,
+        "num_preguntas": 9, "ruido_pct": 0.35,
+        "copas_base": 50, "xp_base": 150,
+        "amenazas_windows": "APT living-off-the-land con LOLBins, credential dumping de lsass, DNS tunneling C2, exfiltración cifrada, persistencia con scheduled tasks + WMI subscription, anti-forensics básico (clear logs)",
+        "amenazas_linux": "APT con LD_PRELOAD rootkit, /proc/mem credential dump, DNS tunneling C2, exfiltración via HTTPS con datos cifrados, persistencia en PAM modules y systemd timers, log tampering",
+        "ttps": "T1003 (Credential Dumping), T1071.004 (DNS C2), T1055 (Process Injection), T1070 (Indicator Removal), T1560 (Archive Data)",
+        "pistas_disponibles": False,
+        "comandos_extra": ["volatility", "strings", "strace", "lsof"],
+    },
+    "Diamante": {
+        "dificultad": "L3+ — APT Expert",
+        "descripcion": "Simulación APT completa con evasión activa y ruido deliberado.",
+        "num_alertas": 11, "num_logs": 30, "num_hosts": 9,
+        "num_preguntas": 11, "ruido_pct": 0.45,
+        "copas_base": 80, "xp_base": 220,
+        "amenazas_windows": "APT con zero-day o supply chain compromise, Golden Ticket Kerberos, pass-the-hash masivo, exfiltración encubierta en tráfico TLS legítimo, anti-forensics activo con timestomping y USN journal tampering, lateral movement masivo",
+        "amenazas_linux": "APT con kernel exploit o supply chain, forged PAC Kerberos en AD-integrated Linux, pass-the-ticket, exfiltración covert en ICMP/DNS, rootkit a nivel kernel con módulo LKM, active defense evasion",
+        "ttps": "T1190 (Exploit Public App), T1558 (Kerberos Tickets), T1070 (Indicator Removal), T1036 (Masquerading), T1195 (Supply Chain), T1560 (Archive Data)",
+        "pistas_disponibles": False,
+        "comandos_extra": ["volatility", "rekall", "yara", "pe-sieve"],
+    },
+}
+
+# Prompts específicos por tipo de lab y SO
+def build_lab_prompt(grupo: str, tipo: str, so: str, cfg: dict, tipo_cfg: dict) -> str:
+    amenazas = cfg[f"amenazas_{so.lower()}"]
+    
+    so_context = ""
+    if so == "Windows":
+        so_context = """
+SISTEMA OPERATIVO: Windows
+- Event IDs: 4624=login OK, 4625=login FAIL, 4688=proceso creado, 4698=tarea programada, 7045=servicio instalado, 4776=auth NTLM, 4769=ticket Kerberos, 4663=acceso objeto
+- Logs: Windows Security, Windows System, Windows Application, PowerShell/Operational, Sysmon
+- Paths: C:\\Windows\\System32\\, C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp\\
+- Usuarios: CORP\\jsmith, CORP\\administrator, NT AUTHORITY\\SYSTEM, CORP\\svc_backup
+- Hosts: CORP-DC01 (10.0.0.5), WEB-SRV-02 (10.0.0.10), WORKSTATION-JSMITH (10.0.0.45), FILE-SRV-01 (10.0.0.20)
+- Procesos sospechosos: powershell.exe -enc, cmd.exe /c, wmic.exe, certutil.exe, regsvr32.exe
+- Artefactos forenses: Prefetch, Registry hives, Event Logs (.evtx), LNK files, Amcache
+"""
+    else:
+        so_context = """
+SISTEMA OPERATIVO: Linux
+- Logs: /var/log/auth.log, /var/log/syslog, /var/log/apache2/access.log, journalctl, /var/log/audit/audit.log
+- Paths: /tmp/, /var/tmp/, /home/user/.ssh/, /etc/cron.d/, /lib/systemd/system/
+- Usuarios: root, www-data, jsmith, svc_backup, nobody
+- Hosts: web-srv-01 (10.0.0.10), db-srv-01 (10.0.0.15), workstation-jsmith (10.0.0.45), bastion-01 (10.0.0.5)
+- Comandos sospechosos: curl|bash, wget -O- | sh, nc -e /bin/bash, python3 -c 'import socket...', chmod +s, sudo -l
+- Artefactos forenses: bash_history, /proc/[pid]/maps, crontab -l, systemctl list-units, lastlog, wtmp
+- Event types (auditd): SYSCALL, EXECVE, PROCTITLE, USER_AUTH, USER_LOGIN
+"""
+
+    tipo_prompts = {
+        "forense": f"""
+TIPO DE LAB: Forense Post-Mortem
+El ataque YA OCURRIÓ hace {random.choice(['2 horas', '6 horas', '12 horas', '1 día'])}. 
+El analista llega DESPUÉS. Toda la evidencia está en los logs y artefactos.
+- Incluye artefactos forenses específicos de {so} en los logs
+- Los timestamps deben mostrar el ataque completo ya finalizado
+- Añade evidencia de limpieza parcial del atacante (algunos logs borrados o modificados)
+- El informe debe reconstruir la cadena completa post-mortem
+""",
+        "threat_hunt": f"""
+TIPO DE LAB: Threat Hunting
+El atacante lleva {random.choice(['3 días', '5 días', '1 semana', '2 semanas'])} dentro SIN haber generado alertas críticas.
+- NO hay alertas CRÍTICAS, máximo 1-2 ALTAS muy ambiguas
+- La mayoría de actividad maliciosa está mezclada con tráfico legítimo (alto ruido)
+- Los IOCs son sutiles: conexiones periódicas, comandos que parecen legítimos, pequeñas anomalías
+- El analista debe BUSCAR la amenaza, no responder a una alerta
+- Incluye 40% de actividad legítima para añadir ruido real
+""",
+        "incident_response": f"""
+TIPO DE LAB: Incident Response activo
+El ataque ESTÁ OCURRIENDO en este momento. Hay urgencia.
+- Los timestamps son recientes (últimos 30 minutos)
+- El ataque está en progreso: algunas fases completadas, otras en curso
+- Incluye alertas de propagación activa entre hosts
+- El analista debe tomar decisiones de contención mientras el ataque continúa
+- Añade evidencia de daño ya causado (archivos cifrados, datos exfiltrados, etc.)
+""",
+        "malware": f"""
+TIPO DE LAB: Malware Analysis
+Un ejecutable/script sospechoso fue detectado en {random.choice(['WORKSTATION-JSMITH', 'WEB-SRV-02', 'workstation-jsmith', 'web-srv-01'])}.
+- Incluye detalles técnicos del malware: hash SHA256, strings extraídas, imports PE o syscalls
+- Añade comportamiento observable: conexiones C2, archivos creados, registry keys, procesos hijo
+- Incluye análisis estático en logs (strings, PE headers) Y dinámico (comportamiento en sandbox)
+- IOCs específicos del malware: hashes, dominios C2, mutexes, rutas de persistencia
+- El malware debe tener un nombre realista y técnicas de evasión según nivel
+""",
+        "osint": f"""
+TIPO DE LAB: OSINT & Threat Intelligence
+Un IOC fue detectado en la red: una IP externa {random.choice(['185.220.101.47', '94.102.49.190', '45.33.32.156', '91.108.4.55'])}.
+- Los logs muestran comunicación con esta IP
+- El analista debe construir el perfil completo: WHOIS, passive DNS, historial de abusos, malware asociado
+- Incluye respuestas de herramientas OSINT en los logs (simuladas): VirusTotal, AbuseIPDB, Shodan, Censys
+- Conecta la IP con una campaña conocida o actor de amenaza (inventado pero realista)
+- Incluye otros IOCs relacionados: dominios, hashes, ASN, certificados TLS
+""",
+    }
+
+    return f"""Eres un experto en ciberseguridad ofensiva y defensiva creando un laboratorio SOC profesional nivel {grupo}.
+Estilo: Blue Team Labs Online / TryHackMe SOC Level 1 / HackTheBox Pro Labs.
+
+{so_context}
+
+NIVEL: {grupo} ({cfg['dificultad']})
+TIPO: {tipo_cfg['nombre']}
+AMENAZAS: {amenazas}
+TTPs MITRE ATT&CK: {cfg['ttps']}
+OBJETIVO: {tipo_cfg['objetivo_template']}
+
+{tipo_prompts.get(tipo, tipo_prompts['forense'])}
+
+═══ REGLAS DE COHERENCIA CRÍTICAS ═══
+1. IPs internas SOLO 10.0.0.x — IPs externas rangos públicos reales (185.220.x.x, 45.33.x.x, 94.102.x.x)
+2. Los mismos IOCs (IP, hash, proceso, usuario) deben aparecer en alertas + logs + red para correlación
+3. Timestamps en PROGRESIÓN LÓGICA que muestre la cadena del ataque
+4. {round(cfg['ruido_pct']*100)}% de logs deben ser ruido legítimo marcados "relevante": false
+5. Event IDs, paths y sintaxis de logs deben ser 100% realistas para {so}
+6. Cada pregunta debe tener respuesta exacta extraíble de los datos del escenario
+7. El escenario debe tener un nombre de empresa ficticio creíble (ej: "TechCorp Industries", "GlobalBank SA")
+
+Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
+
+{{
+  "titulo": "Operación [NombreCreativo] — [empresa ficticia]",
+  "tipo_lab": "{tipo}",
+  "sistema_operativo": "{so}",
+  "descripcion": "Contexto narrativo 2-3 frases técnicas con nombre de empresa, sector y detalles del ataque.",
+  "objetivo": "{tipo_cfg['objetivo_template']}",
+  "nivel": "{grupo}",
+  "dificultad": "{cfg['dificultad']}",
+  "empresa": {{
+    "nombre": "nombre empresa ficticia",
+    "sector": "sector (bancario/salud/retail/etc)",
+    "empleados": número,
+    "infraestructura": "descripción breve"
+  }},
+  "alertas_siem": [
+    {{
+      "id": "ALT-001",
+      "timestamp": "2024-03-15 02:14:33",
+      "severidad": "CRITICA",
+      "categoria": "Credential Access",
+      "sistema": "hostname",
+      "titulo": "Título técnico de la alerta",
+      "descripcion": "Descripción técnica detallada con IOCs.",
+      "ip_origen": "x.x.x.x",
+      "ip_destino": "x.x.x.x",
+      "usuario": "dominio\\\\usuario",
+      "proceso": "proceso.exe",
+      "regla_disparada": "SIGMA: nombre_regla"
+    }}
+  ],
+  "logs": [
+    {{
+      "id": "LOG-001",
+      "timestamp": "2024-03-15 02:13:55",
+      "fuente": "fuente del log",
+      "sistema": "hostname",
+      "nivel": "WARNING",
+      "event_id": "4625",
+      "mensaje": "Mensaje completo y realista del log con todos los campos del SO.",
+      "relevante": true
+    }}
+  ],
+  "red": {{
+    "hosts": [
+      {{
+        "id": "host-1",
+        "nombre": "hostname",
+        "ip": "10.0.0.x",
+        "tipo": "tipo de servidor",
+        "os": "OS específico con versión",
+        "estado": "comprometido|sospechoso|limpio",
+        "servicios": ["servicio:puerto"],
+        "notas": "qué ocurrió en este host"
+      }}
+    ],
+    "conexiones": [
+      {{
+        "origen": "host-id",
+        "destino": "host-id",
+        "puerto": 445,
+        "protocolo": "SMB",
+        "estado": "maliciosa|sospechosa|legitima",
+        "bytes": 48320,
+        "timestamp": "2024-03-15 02:18:00",
+        "descripcion": "descripción técnica"
+      }}
+    ]
+  }},
+  "iocs": {{
+    "ips_maliciosas": ["x.x.x.x"],
+    "hashes_maliciosos": ["sha256:a3f9...realista_64chars"],
+    "dominios_maliciosos": ["dominio.tld"],
+    "procesos_sospechosos": ["proceso.exe o script.sh"],
+    "usuarios_comprometidos": ["dominio\\\\usuario o linuxuser"],
+    "regkeys_persistencia": ["ruta\\\\completa\\\\registro o /etc/cron.d/malicious"]
+  }},
+  "artefactos_forenses": [
+    {{
+      "tipo": "prefetch|registry|evtx|bash_history|crontab|memory_dump",
+      "nombre": "nombre del artefacto",
+      "contenido": "contenido simulado realista",
+      "relevancia": "por qué es importante para la investigación"
+    }}
+  ],
+  "preguntas": [
+    {{
+      "id": 1,
+      "categoria": "Reconocimiento inicial",
+      "pregunta": "Pregunta técnica específica con respuesta exacta extraíble del escenario",
+      "placeholder": "Ej: formato esperado",
+      "tipo": "ip|hash|proceso|tecnica_mitre|usuario|hostname|puerto|timestamp",
+      "respuesta_correcta": "respuesta exacta",
+      "pista": "Pista específica indicando dónde buscar"
+    }}
+  ],
+  "solucion": {{
+    "resumen": "Explicación técnica completa del ataque. 4-5 frases.",
+    "cadena_ataque": ["[HH:MM] Paso 1 detallado", "[HH:MM] Paso 2 detallado"],
+    "tecnicas_mitre": ["T1XXX - Nombre Técnica"],
+    "respuestas_correctas_explicadas": [{{"id": 1, "respuesta": "valor", "ubicacion": "dónde encontrarlo", "explicacion": "por qué es correcto"}}],
+    "lecciones": "Qué mejorar en detección y respuesta."
+  }}
+}}
+
+Genera exactamente {cfg['num_alertas']} alertas, {cfg['num_logs']} logs, {cfg['num_hosts']} hosts y {cfg['num_preguntas']} preguntas.
+Las preguntas deben cubrir: IP atacante, técnica MITRE principal, credencial/usuario comprometido, herramienta/proceso malicioso, host afectado, y preguntas específicas del tipo {tipo}."""
+
 
 @router.post("/lab/generar")
-async def generar_lab(email: str = Depends(get_current_user)):
+async def generar_lab(
+    request_data: dict = None,
+    email: str = Depends(get_current_user)
+):
     db   = get_db()
     user = await db.users.find_one({"email": email})
     if not user:
@@ -547,140 +813,60 @@ async def generar_lab(email: str = Depends(get_current_user)):
     grupo = get_grupo_arena(arena)
     cfg   = LAB_CONFIG_POR_NIVEL.get(grupo, LAB_CONFIG_POR_NIVEL["Bronce"])
 
-    prompt = f"""Eres un experto en ciberseguridad ofensiva y defensiva creando un laboratorio SOC profesional estilo Blue Team Labs Online / TryHackMe SOC Level 1.
+    # Tipo y SO — aleatorio si no se especifica
+    datos = request_data or {}
+    tipo  = datos.get("tipo", random.choice(list(LAB_TIPOS.keys())))
+    so    = datos.get("so", random.choice(["Windows", "Linux"]))
+    modo  = datos.get("modo", "investigacion")  # investigacion | certificacion | arena
 
-NIVEL: {grupo} ({cfg['dificultad']})
-DESCRIPCIÓN: {cfg['descripcion']}
-AMENAZAS A SIMULAR: {cfg['amenazas']}
-TTPs MITRE ATT&CK: {cfg['ttps']}
-
-═══ REQUISITOS CRÍTICOS DE COHERENCIA ═══
-1. Todos los datos (IPs, hostnames, usuarios, hashes, procesos, timestamps) DEBEN ser coherentes entre sí a lo largo de todo el escenario
-2. Los mismos IOCs deben aparecer en MÚLTIPLES fuentes (alerta + log + red) para que el analista pueda correlacionar
-3. IPs internas: SOLO rango 10.0.0.x (ej: 10.0.0.5, 10.0.0.10, 10.0.0.50)
-4. IPs externas: rangos públicos reales como 185.220.x.x, 45.33.x.x, 94.102.x.x (NUNCA 192.168.x.x ni 10.x.x.x)
-5. Hostnames realistas: CORP-DC01, WEB-SRV-02, WORKSTATION-JSMITH, LAPTOP-MGARCIA, FILE-SRV-01
-6. Usuarios de dominio: CORP\\jsmith, CORP\\svc_backup, NT AUTHORITY\\SYSTEM, CORP\\administrator
-7. Timestamps en PROGRESIÓN LÓGICA mostrando la cadena del ataque
-8. Incluir 2-3 logs/alertas de RUIDO (actividad legítima) marcados con "relevante": false
-9. Event IDs reales: 4625=login fallido, 4624=login exitoso, 4688=proceso creado, 4648=logon explicit, 7045=nuevo servicio
-
-Devuelve ÚNICAMENTE JSON válido:
-
-{{
-  "titulo": "Operación [NombreCreativo] — descripción corta",
-  "descripcion": "Contexto narrativo 2-3 frases con detalles técnicos.",
-  "objetivo": "El analista debe reconstruir: [cadena completa del ataque]",
-  "nivel": "{grupo}",
-  "alertas_siem": [
-    {{
-      "id": "ALT-001",
-      "timestamp": "2024-03-15 02:14:33",
-      "severidad": "CRITICA",
-      "categoria": "Credential Access",
-      "sistema": "CORP-DC01",
-      "titulo": "Multiple Failed Logon Attempts - Possible Brute Force",
-      "descripcion": "Descripción técnica detallada.",
-      "ip_origen": "185.220.101.47",
-      "ip_destino": "10.0.0.5",
-      "usuario": "CORP\\\\administrator",
-      "proceso": "lsass.exe",
-      "regla_disparada": "SIGMA: Multiple Failed Authentications From Single Source"
-    }}
-  ],
-  "logs": [
-    {{
-      "id": "LOG-001",
-      "timestamp": "2024-03-15 02:13:55",
-      "fuente": "Windows Security",
-      "sistema": "CORP-DC01",
-      "nivel": "WARNING",
-      "event_id": "4625",
-      "mensaje": "Mensaje completo del log en formato realista.",
-      "relevante": true
-    }}
-  ],
-  "red": {{
-    "hosts": [
-      {{
-        "id": "host-1",
-        "nombre": "CORP-DC01",
-        "ip": "10.0.0.5",
-        "tipo": "Domain Controller",
-        "os": "Windows Server 2019",
-        "estado": "comprometido",
-        "servicios": ["LDAP:389", "DNS:53", "Kerberos:88", "SMB:445"],
-        "notas": "Descripción de qué ocurrió en este host."
-      }}
-    ],
-    "conexiones": [
-      {{
-        "origen": "host-1",
-        "destino": "host-2",
-        "puerto": 445,
-        "protocolo": "SMB",
-        "estado": "maliciosa",
-        "bytes": 48320,
-        "timestamp": "2024-03-15 02:18:00",
-        "descripcion": "Descripción de la conexión."
-      }}
-    ]
-  }},
-  "iocs": {{
-    "ips_maliciosas": ["185.220.101.47"],
-    "hashes_maliciosos": ["sha256:a3f9..."],
-    "dominios_maliciosos": ["evil-c2.example.com"],
-    "procesos_sospechosos": ["mimikatz.exe"],
-    "usuarios_comprometidos": ["CORP\\\\jsmith"],
-    "regkeys_persistencia": ["HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\WindowsUpdate"]
-  }},
-  "preguntas": [
-    {{
-      "id": 1,
-      "categoria": "Reconocimiento inicial",
-      "pregunta": "¿Cuál es la dirección IP externa desde la que se originó el ataque?",
-      "placeholder": "Ej: 185.220.101.47",
-      "tipo": "texto_corto",
-      "respuesta_correcta": "185.220.101.47",
-      "pista": "Filtra las alertas de autenticación fallida y busca la IP origen."
-    }}
-  ],
-  "solucion": {{
-    "resumen": "Explicación técnica completa. 4-5 frases.",
-    "cadena_ataque": ["1. [timestamp] paso 1", "2. [timestamp] paso 2"],
-    "tecnicas_mitre": ["T1110 - Brute Force"],
-    "respuestas_correctas_explicadas": [{{"id": 1, "respuesta": "185.220.101.47", "explicacion": "Visible en ALT-001"}}],
-    "lecciones": "Cómo mejorar la detección."
-  }}
-}}
-
-Genera exactamente {cfg['num_alertas']} alertas SIEM, {cfg['num_logs']} logs, {cfg['num_hosts']} hosts y {cfg['num_preguntas']} preguntas.
-Preguntas en orden: IP ataque, técnica MITRE, credencial comprometida, herramienta maliciosa, host afectado, y más según nivel."""
+    tipo_cfg = LAB_TIPOS.get(tipo, LAB_TIPOS["forense"])
+    prompt   = build_lab_prompt(grupo, tipo, so, cfg, tipo_cfg)
 
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.75,
-            max_tokens=7000,
+            temperature=0.8,
+            max_tokens=8000,
             response_format={"type": "json_object"}
         )
         escenario = json.loads(response.choices[0].message.content)
+
+        # Asegurar campos de metadatos
+        escenario["tipo_lab"]          = tipo
+        escenario["sistema_operativo"] = so
+        escenario["nivel"]             = grupo
+        escenario["dificultad"]        = cfg["dificultad"]
+
         lab_doc = {
-            "email_usuario": email, "arena": arena, "grupo": grupo,
-            "escenario": escenario, "estado": "activo",
-            "inicio": time.time(), "respuestas": {},
+            "email_usuario": email,
+            "arena":  arena,
+            "grupo":  grupo,
+            "tipo":   tipo,
+            "so":     so,
+            "modo":   modo,
+            "escenario": escenario,
+            "estado": "activo",
+            "inicio": time.time(),
+            "respuestas": {},
         }
         result = await db.labs.insert_one(lab_doc)
         lab_id = str(result.inserted_id)
+
+        # Devolver sin solución ni respuestas correctas
         escenario_publico = json.loads(json.dumps(escenario))
         escenario_publico.pop("solucion", None)
         for p in escenario_publico.get("preguntas", []):
             p.pop("respuesta_correcta", None)
         escenario_publico["lab_id"] = lab_id
+        escenario_publico["modo"]   = modo
+        escenario_publico["copas_base"] = cfg["copas_base"]
+        escenario_publico["xp_base"]    = cfg["xp_base"]
+
         return escenario_publico
+
     except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Error parseando respuesta de la IA: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error parseando respuesta IA: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando laboratorio: {str(e)}")
 
@@ -689,85 +875,135 @@ Preguntas en orden: IP ataque, técnica MITRE, credencial comprometida, herramie
 async def evaluar_lab(payload: dict, email: str = Depends(get_current_user)):
     from bson import ObjectId
     db = get_db()
+
     lab_id         = payload.get("lab_id")
     respuestas     = payload.get("respuestas", {})
     informe_libre  = payload.get("informe_libre", "")
     queries_usadas = payload.get("queries_usadas", [])
+    modo           = payload.get("modo", "investigacion")
+
     if not lab_id:
         raise HTTPException(status_code=400, detail="lab_id requerido")
     lab = await db.labs.find_one({"_id": ObjectId(lab_id), "email_usuario": email})
     if not lab:
         raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
+
     escenario = lab["escenario"]
     grupo     = lab["grupo"]
+    tipo      = lab.get("tipo", "forense")
+    cfg       = LAB_CONFIG_POR_NIVEL.get(grupo, LAB_CONFIG_POR_NIVEL["Bronce"])
+
     preguntas_eval = []
     for p in escenario.get("preguntas", []):
         pid = str(p["id"])
         preguntas_eval.append({
-            "id": p["id"], "categoria": p["categoria"], "pregunta": p["pregunta"],
+            "id":                p["id"],
+            "categoria":         p["categoria"],
+            "pregunta":          p["pregunta"],
+            "tipo":              p.get("tipo", "texto"),
             "respuesta_correcta": p.get("respuesta_correcta", ""),
-            "respuesta_usuario":  respuestas.get(pid, respuestas.get(p["id"], "")),
+            "respuesta_usuario": respuestas.get(pid, respuestas.get(p["id"], "")),
         })
+
     cmds_terminal = [q for q in queries_usadas if q.startswith("CMD:")]
     busquedas     = [q for q in queries_usadas if q.startswith("SEARCH:")]
-    prompt_eval = f"""Eres un evaluador experto SOC. Evalúa las respuestas de este analista en un laboratorio de nivel {grupo}.
+    herramientas  = [q for q in queries_usadas if q.startswith("OPEN:")]
 
-ESCENARIO: {escenario.get('titulo', '')}
+    tiempo_usado  = payload.get("tiempo_usado", 0)
+    copas_base    = cfg["copas_base"]
+    xp_base       = cfg["xp_base"]
+
+    prompt_eval = f"""Eres un evaluador experto SOC. Evalúa las respuestas de este analista.
+
+ESCENARIO: {escenario.get('titulo', '')} | NIVEL: {grupo} | TIPO: {tipo}
 {escenario.get('descripcion', '')}
 
-PREGUNTAS CON RESPUESTAS CORRECTAS Y RESPUESTAS DEL ANALISTA:
+PREGUNTAS Y RESPUESTAS:
 {json.dumps(preguntas_eval, ensure_ascii=False, indent=2)}
 
-INFORME LIBRE: "{informe_libre}"
+INFORME LIBRE DEL ANALISTA: "{informe_libre}"
 
-ACTIVIDAD: {len(queries_usadas)} interacciones totales, {len(cmds_terminal)} comandos terminal, {len(busquedas)} búsquedas logs.
+ACTIVIDAD DEL ANALISTA:
+- Total interacciones: {len(queries_usadas)}
+- Comandos terminal ejecutados: {len(cmds_terminal)}
+- Búsquedas en logs: {len(busquedas)}
+- Herramientas abiertas: {len(herramientas)}
+- Tiempo empleado: {tiempo_usado} segundos
 
-CRITERIOS (0-10 por pregunta):
-- Exacta o keyword correcta: 10 pts
-- Mismo concepto diferente formato: 7-8 pts
-- Parcialmente correcta: 4-6 pts
-- Incorrecta con razonamiento: 1-3 pts
-- Sin respuesta: 0 pts
+CRITERIOS DE PUNTUACIÓN (0-10 por pregunta):
+- Respuesta exacta o keyword principal correcta: 10 pts
+- Mismo concepto, formato diferente (ej: IP con/sin espacios): 9 pts
+- Concepto correcto, valor ligeramente distinto: 7-8 pts
+- Parcialmente correcta (mitad del valor): 4-6 pts
+- Incorrecta pero con razonamiento: 1-3 pts
+- Sin respuesta o completamente errónea: 0 pts
 
-BONUS: informe detallado +10, 5+ comandos +3, 10+ interacciones +5, 15+ interacciones +8.
+BONUS POINTS:
+- Informe detallado (>100 palabras con técnica MITRE): +10 pts
+- 5+ comandos terminal usados: +3 pts
+- 10+ interacciones totales: +5 pts
+- 15+ interacciones totales: +8 pts (no acumulable con anterior)
 
-SKILLS (delta 0.0-0.3, malo true/false):
-- siem_queries, forense_digital, threat_hunting, analisis_logs, inteligencia_amenazas
+SKILLS A EVALUAR (delta 0.0-0.3, malo true si el analista claramente no sabe):
+{json.dumps([s for s in LAB_TIPOS.get(tipo, LAB_TIPOS['forense'])['skills']], ensure_ascii=False)}
 
-Devuelve ÚNICAMENTE JSON:
+Devuelve ÚNICAMENTE JSON válido:
 {{
-  "puntuacion_preguntas": <suma>,
+  "puntuacion_preguntas": <número>,
   "puntuacion_informe": <0-10>,
   "puntuacion_queries": <0-8>,
   "puntuacion_total": <suma>,
   "puntuacion_normalizada": <0-100>,
-  "feedback_preguntas": [{{"id":1,"puntos":0,"correcto":false,"respuesta_correcta":"...","feedback":"..."}}],
-  "feedback_general": "3-4 frases valoración global",
+  "feedback_preguntas": [
+    {{
+      "id": 1,
+      "puntos": 0,
+      "correcto": false,
+      "respuesta_correcta": "valor exacto",
+      "respuesta_usuario": "lo que escribió",
+      "feedback": "explicación de por qué es correcto/incorrecto"
+    }}
+  ],
+  "feedback_general": "3-4 frases valorando la calidad del análisis, qué hizo bien y qué mejorar",
   "cadena_ataque_descubierta": <0-100>,
   "skills_mejoradas": {{
-    "siem_queries": {{"delta":0.0,"malo":false}},
-    "forense_digital": {{"delta":0.0,"malo":false}},
-    "threat_hunting": {{"delta":0.0,"malo":false}},
-    "analisis_logs": {{"delta":0.0,"malo":false}},
-    "inteligencia_amenazas": {{"delta":0.0,"malo":false}}
+    "forense_digital":        {{"delta": 0.0, "malo": false}},
+    "analisis_logs":          {{"delta": 0.0, "malo": false}},
+    "threat_hunting":         {{"delta": 0.0, "malo": false}},
+    "inteligencia_amenazas":  {{"delta": 0.0, "malo": false}},
+    "respuesta_incidentes":   {{"delta": 0.0, "malo": false}},
+    "deteccion_amenazas":     {{"delta": 0.0, "malo": false}},
+    "siem_queries":           {{"delta": 0.0, "malo": false}}
   }},
   "solucion_completa": {{
-    "resumen": "...",
-    "cadena_ataque": ["1. paso", "2. paso"],
-    "tecnicas_mitre": ["T1xxx - Nombre"],
-    "lecciones": "..."
+    "resumen": "explicación completa del ataque",
+    "cadena_ataque": ["[HH:MM] paso 1", "[HH:MM] paso 2"],
+    "tecnicas_mitre": ["T1XXX - Nombre"],
+    "lecciones": "qué mejorar en detección y respuesta"
   }}
 }}"""
+
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt_eval}],
-            temperature=0.2, max_tokens=2800,
+            temperature=0.2,
+            max_tokens=3000,
             response_format={"type": "json_object"}
         )
         resultado  = json.loads(response.choices[0].message.content)
         puntuacion = max(0, min(100, resultado.get("puntuacion_normalizada", 0)))
-        xp_ganada  = round(50 + puntuacion)
+
+        # Calcular XP y copas según modo y puntuación
+        xp_ganada    = round(xp_base * (puntuacion / 100))
+        copas_ganadas = 0
+        if modo == "arena":
+            copas_ganadas = round(copas_base * (puntuacion / 100))
+        elif modo == "certificacion":
+            copas_ganadas = round(copas_base * 0.5 * (puntuacion / 100))
+        # modo investigacion: sin copas
+
+        # Aplicar skills y actualizar usuario
         skills_mejora     = resultado.get("skills_mejoradas", {})
         user              = await db.users.find_one({"email": email})
         skills_actuales   = user.get("skills", {s: 0.0 for s in SKILLS_LIST})
@@ -775,53 +1011,46 @@ Devuelve ÚNICAMENTE JSON:
         skills_nuevas, nuevo_streak = aplicar_skills(
             skills_actuales, skills_mejora, skills_streak_bad, lab["arena"]
         )
-        nueva_xp = user["xp"] + xp_ganada
-        tier     = calcular_tier(nueva_xp)
-        await db.users.update_one({"email": email}, {"$set": {
-            "xp": nueva_xp, "tier": tier,
-            "skills": skills_nuevas, "skills_streak_bad": nuevo_streak,
-        }})
+        nueva_xp    = user["xp"] + xp_ganada
+        nuevas_copas = max(0, user.get("copas", 0) + copas_ganadas)
+        tier        = calcular_tier(nueva_xp)
+        arena_nueva = get_arena_por_copas(nuevas_copas)
+
+        update_fields = {
+            "xp":                nueva_xp,
+            "tier":              tier,
+            "skills":            skills_nuevas,
+            "skills_streak_bad": nuevo_streak,
+        }
+        if copas_ganadas > 0:
+            update_fields["copas"] = nuevas_copas
+            update_fields["arena"] = arena_nueva
+
+        await db.users.update_one({"email": email}, {"$set": update_fields})
         await db.labs.update_one(
             {"_id": ObjectId(lab_id)},
-            {"$set": {"estado": "completado", "resultado": resultado, "fin": time.time(), "respuestas": respuestas}}
+            {"$set": {
+                "estado":    "completado",
+                "resultado": resultado,
+                "fin":       time.time(),
+                "respuestas": respuestas,
+            }}
         )
-        resultado["xp_ganada"]     = xp_ganada
-        resultado["skills_nuevas"] = skills_nuevas
-        resultado["tier"]          = tier
+
+        resultado["xp_ganada"]      = xp_ganada
+        resultado["copas_ganadas"]  = copas_ganadas
+        resultado["skills_nuevas"]  = skills_nuevas
+        resultado["tier"]           = tier
+        resultado["arena"]          = arena_nueva if copas_ganadas > 0 else lab["arena"]
+        resultado["modo"]           = modo
         return resultado
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error evaluando laboratorio: {str(e)}")
 
 
-@router.get("/lab/activo")
-async def get_lab_activo(email: str = Depends(get_current_user)):
-    db  = get_db()
-    lab = await db.labs.find_one({"email_usuario": email, "estado": "activo"}, sort=[("inicio", -1)])
-    if not lab:
-        return {"lab_activo": False}
-    escenario = lab.get("escenario", {})
-    escenario_publico = json.loads(json.dumps(escenario))
-    escenario_publico.pop("solucion", None)
-    for p in escenario_publico.get("preguntas", []):
-        p.pop("respuesta_correcta", None)
-    escenario_publico["lab_id"] = str(lab["_id"])
-    escenario_publico["inicio"] = lab.get("inicio")
-    return {"lab_activo": True, "escenario": escenario_publico}
-
-
-@router.get("/lab/historial")
-async def historial_labs(email: str = Depends(get_current_user)):
-    db   = get_db()
-    labs = await db.labs.find(
-        {"email_usuario": email, "estado": "completado"},
-        {"escenario.logs": 0, "escenario.solucion": 0}
-    ).sort("fin", -1).limit(10).to_list(10)
-    for lab in labs:
-        lab["_id"] = str(lab["_id"])
-    return labs
-
-
 # ── AVATAR ────────────────────────────────────────────────────────────────────
+import requests as req_sync
 from fastapi.responses import Response as FastAPIResponse
 
 @router.get("/avatar/proxy")
