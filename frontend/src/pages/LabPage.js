@@ -1,126 +1,72 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Draggable from 'react-draggable';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
-const API       = 'https://socblast-production.up.railway.app/api';
-const DRAFT_KEY = 'socblast_lab_draft';
-
-/* ─── API ─────────────────────────────────────────────────────────────────── */
-const apiFetch = async (path, token, opts = {}) => {
-  if (!token) throw new Error('Sin sesión activa');
+const API = 'https://socblast-production.up.railway.app/api';
+function getToken() { return localStorage.getItem('token'); }
+async function apiFetch(path, opts = {}) {
   const r = await fetch(`${API}${path}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', ...(opts.headers||{}) },
     ...opts,
   });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.statusText);
   return r.json();
-};
-
-const clock = () => new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-/* ─── HOOK ARRASTRE NATIVO (sin react-draggable) ─────────────────────────── */
-function useDrag(initialPos) {
-  const [pos, setPos] = useState(initialPos);
-  const dragging = useRef(false);
-  const offset   = useRef({ x: 0, y: 0 });
-  const posRef   = useRef(pos);
-  posRef.current = pos;
-
-  const onMouseDown = useCallback((e) => {
-    if (e.button !== 0) return;
-    dragging.current = true;
-    offset.current = { x: e.clientX - posRef.current.x, y: e.clientY - posRef.current.y };
-    e.preventDefault();
-
-    const onMove = (ev) => {
-      if (!dragging.current) return;
-      setPos({
-        x: Math.max(0, Math.min(ev.clientX - offset.current.x, window.innerWidth - 120)),
-        y: Math.max(0, Math.min(ev.clientY - offset.current.y, window.innerHeight - 80)),
-      });
-    };
-    const onUp = () => { dragging.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, []);
-
-  return [pos, onMouseDown, setPos];
 }
 
-/* ─── VENTANA ─────────────────────────────────────────────────────────────── */
-let ZI = 100;
+const ONBOARDING_KEY = 'socblast_lab_onboarding_done';
+const ONBOARDING_STEPS = [
+  { icon:'🖥️', titulo:'Bienvenido al Laboratorio SOC', desc:'Aquí practicas análisis forense real. La IA genera una máquina comprometida y tú debes investigar qué pasó, cómo entró el atacante y cómo remediarlo. Sin límite de tiempo.' },
+  { icon:'💻', titulo:'Un ordenador de verdad', desc:'Verás un escritorio real (Windows o Linux según el escenario). Abre las aplicaciones haciendo doble clic en los iconos: SIEM, Terminal, Explorador de logs, Monitor de red e Informe.' },
+  { icon:'🔍', titulo:'Investiga libremente', desc:'Usa la Terminal para ejecutar comandos, filtra logs, analiza conexiones de red. Cuantas más herramientas uses, más puntos consigues. Tú decides dónde mirar.' },
+  { icon:'📝', titulo:'Responde y envía tu informe', desc:'Abre "Incident Report", responde las preguntas de investigación y redacta tu análisis. La IA evaluará tu trabajo y recibirás XP y mejoras de habilidades.' },
+];
 
-function Win({ id, title, icon, children, onClose, onFocus, focused, initX, initY, initW, initH }) {
-  const [pos, dragStart] = useDrag({ x: initX, y: initY });
-  const [size, setSize]  = useState({ w: initW || 700, h: initH || 480 });
-  const [max, setMax]    = useState(false);
-  const [zi, setZi]      = useState(ZI++);
-  const resRef           = useRef(null);
-
-  const bringFront = () => { const z = ZI++; setZi(z); onFocus(id); };
-
-  const startResize = (e) => {
-    e.stopPropagation(); e.preventDefault();
-    resRef.current = { sx: e.clientX, sy: e.clientY, sw: size.w, sh: size.h };
-    const mv = (ev) => {
-      if (!resRef.current) return;
-      setSize({
-        w: Math.max(340, resRef.current.sw + ev.clientX - resRef.current.sx),
-        h: Math.max(260, resRef.current.sh + ev.clientY - resRef.current.sy),
-      });
-    };
-    const up = () => { resRef.current = null; window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
-    window.addEventListener('mousemove', mv);
-    window.addEventListener('mouseup', up);
-  };
-
-  const titleDrag = (e) => { bringFront(); if (!max) dragStart(e); };
-
+function Onboarding({ onFinish }) {
+  const [step, setStep] = useState(0);
+  const s = ONBOARDING_STEPS[step];
+  const isLast = step === ONBOARDING_STEPS.length - 1;
   return (
-    <div
-      onMouseDown={bringFront}
-      style={{
-        position: 'fixed',
-        left: max ? 0 : pos.x, top: max ? 0 : pos.y,
-        width: max ? '100vw' : size.w, height: max ? 'calc(100vh - 40px)' : size.h,
-        zIndex: zi,
-        display: 'flex', flexDirection: 'column',
-        background: '#fff', borderRadius: max ? 0 : 8,
-        border: focused ? '1.5px solid #0078d4' : '1px solid rgba(255,255,255,.15)',
-        boxShadow: focused ? '0 24px 64px rgba(0,0,0,.6)' : '0 4px 24px rgba(0,0,0,.35)',
-        overflow: 'hidden',
-        fontFamily: "'Segoe UI', Inter, sans-serif",
-        userSelect: 'none',
-      }}
-    >
-      {/* barra de título */}
-      <div
-        onMouseDown={titleDrag}
-        style={{
-          height: 34, background: focused ? '#1a2744' : '#2d3a52',
-          display: 'flex', alignItems: 'center', padding: '0 0 0 12px',
-          cursor: 'move', flexShrink: 0, gap: 8,
-        }}
-      >
-        <span style={{ fontSize: 14 }}>{icon}</span>
-        <span style={{ flex: 1, fontSize: 12, color: '#e2e8f0', fontWeight: 600, userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
-        <WinBtn label="─" onClick={(e) => { e.stopPropagation(); onClose(id, 'min'); }} />
-        <WinBtn label={max ? '❐' : '□'} onClick={(e) => { e.stopPropagation(); setMax(m => !m); }} />
-        <WinBtn label="✕" red onClick={(e) => { e.stopPropagation(); onClose(id, 'close'); }} />
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.82)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter',sans-serif" }}>
+      <div style={{ background:'#fff',borderRadius:16,padding:'40px 44px',maxWidth:480,width:'90%',boxShadow:'0 24px 64px rgba(0,0,0,0.4)',textAlign:'center' }}>
+        <div style={{ fontSize:52,marginBottom:16 }}>{s.icon}</div>
+        <div style={{ fontSize:20,fontWeight:800,color:'#0f172a',marginBottom:12 }}>{s.titulo}</div>
+        <div style={{ fontSize:14,color:'#475569',lineHeight:1.8,marginBottom:32 }}>{s.desc}</div>
+        <div style={{ display:'flex',gap:6,justifyContent:'center',marginBottom:28 }}>
+          {ONBOARDING_STEPS.map((_,i)=>(<div key={i} style={{ width:i===step?20:8,height:8,borderRadius:4,background:i===step?'#4f46e5':'#e2e8f0',transition:'all 0.3s' }}/>))}
+        </div>
+        <div style={{ display:'flex',gap:10 }}>
+          {step>0&&(<button onClick={()=>setStep(s=>s-1)} style={{ flex:1,padding:'12px 0',borderRadius:10,border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',fontSize:14,fontWeight:600,cursor:'pointer' }}>← Anterior</button>)}
+          <button onClick={()=>isLast?onFinish():setStep(s=>s+1)} style={{ flex:2,padding:'12px 0',borderRadius:10,border:'none',background:'linear-gradient(135deg,#4f46e5,#7c3aed)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer' }}>
+            {isLast?'¡Empezar laboratorio! 🚀':'Siguiente →'}
+          </button>
+        </div>
+        <button onClick={onFinish} style={{ marginTop:12,background:'none',border:'none',color:'#94a3b8',fontSize:12,cursor:'pointer' }}>Saltar tutorial</button>
       </div>
+    </div>
+  );
+}
 
-      {/* contenido */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {children}
-      </div>
-
-      {/* resize */}
-      {!max && (
-        <div
-          onMouseDown={startResize}
-          style={{ position: 'absolute', bottom: 0, right: 0, width: 16, height: 16, cursor: 'nwse-resize', zIndex: 10 }}
-        >
-          <svg width="16" height="16"><path d="M3 13L13 3M7 13L13 7M11 13L13 11" stroke="rgba(148,163,184,.5)" strokeWidth="1.5" /></svg>
+function BootScreen({ so, onDone }) {
+  const [lines, setLines] = useState([]);
+  const [done, setDone] = useState(false);
+  const WIN_LINES = ['','  Starting Windows...','  Microsoft Windows [Version 10.0.19045.3803]','  (c) Microsoft Corporation. All rights reserved.','','  Loading CORP domain policies...','  Applying security baseline......................... [DONE]','  Starting Windows Defender Antivirus.............. [DONE]','  Connecting to CORP-DC01.corp.local............... [DONE]','  Mounting network drives.......................... [DONE]','  Loading SOC workstation profile.................','','  ██████████████████████████████  100%','','  Welcome, SOC Analyst.'];
+  const LIN_LINES = ['[ 0.000000] Linux version 5.15.0-soc (gcc 11.3.0)','[ 0.001234] BIOS-provided physical RAM map','[ 0.423100] Loading initial ramdisk ...','[ 1.204500] systemd[1]: Starting SOC Workstation v2.4...','[ 1.890200] [  OK  ] Started Network Manager','[ 2.103400] [  OK  ] Started OpenSSH Server Daemon','[ 2.450100] [  OK  ] Started Splunk Universal Forwarder','[ 2.901200] [  OK  ] Started Elastic Agent','[ 3.104500] [  OK  ] Reached target Multi-User System','','Ubuntu 22.04.3 LTS soc-workstation tty1','','soc-analyst login: analyst','Password: ••••••••','','Last login: Today from CORP-DC01','Welcome to SoCBlast Forensic Environment.'];
+  const bootLines = so==='linux' ? LIN_LINES : WIN_LINES;
+  useEffect(()=>{
+    let i=0;
+    const iv=setInterval(()=>{ if(i<bootLines.length){setLines(l=>[...l,bootLines[i]]);i++;}else{clearInterval(iv);setTimeout(()=>{setDone(true);setTimeout(onDone,500);},700);} },so==='linux'?110:160);
+    return()=>clearInterval(iv);
+  },[]);
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:1000,background:so==='windows'?'#000080':'#0d1117',display:'flex',alignItems:'center',justifyContent:'center',transition:'opacity 0.5s',opacity:done?0:1,fontFamily:"'Courier New',monospace" }}>
+      {so==='windows'?(
+        <div style={{ textAlign:'center',color:'#fff' }}>
+          <div style={{ fontSize:56,marginBottom:20 }}>🪟</div>
+          <div style={{ fontSize:13,lineHeight:2.1 }}>{lines.map((l,i)=>(<div key={i} style={{ opacity:i===lines.length-1?1:0.7 }}>{l}</div>))}</div>
+        </div>
+      ):(
+        <div style={{ width:'100%',maxWidth:680,padding:'0 40px',color:'#00ff41',fontSize:12,lineHeight:1.8 }}>
+          {lines.map((l,i)=>(<div key={i} style={{ color:l.includes('OK')?'#10b981':l.includes('login')||l.includes('Password')?'#f59e0b':'#00ff41',opacity:i===lines.length-1?1:0.8 }}>{l}</div>))}
         </div>
       )}
     </div>
@@ -128,1105 +74,473 @@ function Win({ id, title, icon, children, onClose, onFocus, focused, initX, init
 }
 
 function WinBtn({ label, onClick, red }) {
-  const [h, setH] = useState(false);
+  const [h,setH]=useState(false);
+  return (<div onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{ width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',background:h?(red?'#ef4444':'rgba(255,255,255,0.15)'):'transparent',borderRadius:3,cursor:'pointer',color:'#fff',fontSize:11,transition:'background 0.15s' }}>{label}</div>);
+}
+
+function AppWindow({ app, so, children, onClose, onMinimize, onFocus, isFocused, isMinimized, defaultPos, defaultSize }) {
+  const nodeRef=useRef(null);
+  const [maximized,setMax]=useState(false);
+  if(isMinimized) return null;
+  const isLinux=so==='linux';
+  const titleBg=isFocused?(isLinux?'#11111b':'#1e293b'):(isLinux?'#1a1a2a':'#374151');
+  const winBg=isLinux?'#1e1e2e':'#ffffff';
+  const borderC=isFocused?(isLinux?'#7c3aed':'#3b82f6'):'rgba(255,255,255,0.1)';
+  const sz=defaultSize||{w:700,h:480};
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ width: 46, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: h ? (red ? '#c42b1c' : 'rgba(255,255,255,.15)') : 'transparent', cursor: 'pointer', color: '#e2e8f0', fontSize: red ? 11 : 13, transition: 'background .1s' }}
-    >
-      {label}
+    <Draggable nodeRef={nodeRef} handle=".win-tb" defaultPosition={defaultPos||{x:60,y:30}} onStart={onFocus} bounds="parent">
+      <div ref={nodeRef} onClick={onFocus} style={{ position:'absolute',zIndex:isFocused?50:10,width:maximized?'100%':sz.w,height:maximized?'calc(100% - 0px)':sz.h,top:maximized?0:undefined,left:maximized?0:undefined,background:winBg,border:`1px solid ${borderC}`,borderRadius:maximized?0:(isLinux?10:6),boxShadow:isFocused?'0 20px 60px rgba(0,0,0,0.5)':'0 4px 20px rgba(0,0,0,0.3)',display:'flex',flexDirection:'column',overflow:'hidden',transition:'box-shadow 0.2s',fontFamily:isLinux?"'Ubuntu Mono','Fira Code',monospace":"'Segoe UI','Inter',sans-serif" }}>
+        <div className="win-tb" style={{ height:34,background:titleBg,display:'flex',alignItems:'center',padding:'0 10px',gap:8,cursor:'move',flexShrink:0,borderBottom:'1px solid rgba(255,255,255,0.1)',userSelect:'none' }}>
+          {isLinux&&(<div style={{ display:'flex',gap:6,marginRight:4 }}><div onClick={e=>{e.stopPropagation();onClose();}} style={{ width:12,height:12,borderRadius:'50%',background:'#ef4444',cursor:'pointer' }}/><div onClick={e=>{e.stopPropagation();onMinimize();}} style={{ width:12,height:12,borderRadius:'50%',background:'#f59e0b',cursor:'pointer' }}/><div onClick={e=>{e.stopPropagation();setMax(m=>!m);}} style={{ width:12,height:12,borderRadius:'50%',background:'#10b981',cursor:'pointer' }}/></div>)}
+          <span style={{ fontSize:13 }}>{app.icon}</span>
+          <span style={{ fontSize:12,color:'#fff',fontWeight:600,flex:1 }}>{app.label}</span>
+          {!isLinux&&(<div style={{ display:'flex',gap:1 }}><WinBtn label="─" onClick={e=>{e.stopPropagation();onMinimize();}}/><WinBtn label="⛶" onClick={e=>{e.stopPropagation();setMax(m=>!m);}}/><WinBtn label="✕" onClick={e=>{e.stopPropagation();onClose();}} red/></div>)}
+        </div>
+        <div style={{ flex:1,overflow:'hidden',display:'flex',flexDirection:'column' }}>{children}</div>
+      </div>
+    </Draggable>
+  );
+}
+
+function DesktopIcon({ app, onOpen, so }) {
+  const [h,setH]=useState(false);
+  if(so==='linux') return (<div onDoubleClick={onOpen} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} title={app.label} style={{ width:52,height:52,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',background:h?'rgba(255,255,255,0.18)':'rgba(255,255,255,0.08)',cursor:'pointer',transition:'all 0.2s',transform:h?'scale(1.1)':'scale(1)',fontSize:24 }}>{app.icon}</div>);
+  return (<div onDoubleClick={onOpen} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'8px 6px',borderRadius:6,cursor:'pointer',background:h?'rgba(255,255,255,0.22)':'transparent',transition:'background 0.15s',width:76 }}><div style={{ fontSize:34 }}>{app.icon}</div><div style={{ fontSize:11,color:'#fff',textAlign:'center',lineHeight:1.2,textShadow:'0 1px 3px rgba(0,0,0,0.9)',fontWeight:500 }}>{app.label}</div></div>);
+}
+
+function WinDesktop({ children, apps, openApp, taskbarApps, focusedApp, minimizedApps, onTaskbarClick }) {
+  return (
+    <div style={{ width:'100%',height:'100%',position:'relative',background:'linear-gradient(160deg,#1e3a8a,#1d4ed8)',overflow:'hidden',fontFamily:"'Segoe UI',sans-serif" }}>
+      <div style={{ position:'absolute',inset:0,opacity:0.03,backgroundImage:'radial-gradient(circle,#fff 1px,transparent 1px)',backgroundSize:'32px 32px' }}/>
+      <div style={{ position:'absolute',top:20,left:20,display:'flex',flexDirection:'column',gap:16 }}>
+        {apps.map(a=>(<DesktopIcon key={a.id} app={a} onOpen={()=>openApp(a.id)} so="windows"/>))}
+      </div>
+      <div style={{ position:'absolute',inset:0,bottom:40 }}>{children}</div>
+      <div style={{ position:'absolute',bottom:0,left:0,right:0,height:40,background:'rgba(10,15,30,0.96)',backdropFilter:'blur(10px)',borderTop:'1px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',padding:'0 8px',gap:4,zIndex:200 }}>
+        <div style={{ width:32,height:32,borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20 }}>🪟</div>
+        <div style={{ width:1,height:24,background:'rgba(255,255,255,0.15)',margin:'0 4px' }}/>
+        {taskbarApps.map(a=>(<div key={a.id} onClick={()=>onTaskbarClick(a.id)} style={{ padding:'4px 12px',borderRadius:4,cursor:'pointer',fontSize:11,background:focusedApp===a.id?'rgba(255,255,255,0.2)':minimizedApps.includes(a.id)?'rgba(255,255,255,0.05)':'rgba(255,255,255,0.1)',color:'#fff',display:'flex',alignItems:'center',gap:6,border:focusedApp===a.id?'1px solid rgba(255,255,255,0.3)':'1px solid transparent',transition:'all 0.15s' }}><span>{a.icon}</span><span style={{ fontWeight:500 }}>{a.label}</span></div>))}
+        <div style={{ marginLeft:'auto',color:'rgba(255,255,255,0.7)',fontSize:11,padding:'0 12px' }}>{new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
     </div>
   );
 }
 
-/* ─── SIEM ────────────────────────────────────────────────────────────────── */
-function SIEMApp({ alertas, onQuery }) {
-  const [sel, setSel] = useState(null);
-  const [flt, setFlt] = useState('TODAS');
-  const [view, setView] = useState('lista');
-  const SEV = { CRITICA: '#dc2626', ALTA: '#ea580c', MEDIA: '#d97706', BAJA: '#16a34a' };
-  const filtered = flt === 'TODAS' ? alertas : alertas.filter(a => a.severidad === flt);
-  const sorted = [...alertas].sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
-
+function LinuxDesktop({ children, apps, openApp, taskbarApps, focusedApp, onTaskbarClick }) {
   return (
-    <div style={{ display: 'flex', height: '100%', fontSize: 12 }}>
-      {/* sidebar */}
-      <div style={{ width: 320, borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', background: '#fff' }}>
-        {/* filtros */}
-        <div style={{ padding: '8px 10px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: 4, flexWrap: 'wrap', background: '#f8fafc', flexShrink: 0 }}>
-          {['TODAS', 'CRITICA', 'ALTA', 'MEDIA', 'BAJA'].map(s => (
-            <button key={s} onClick={() => setFlt(s)}
-              style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${s === 'TODAS' ? '#e2e8f0' : SEV[s] || '#e2e8f0'}`, background: flt === s ? (SEV[s] || '#4f46e5') + '22' : 'transparent', color: flt === s ? (SEV[s] || '#4f46e5') : '#64748b' }}>
-              {s}
-            </button>
-          ))}
-          <button onClick={() => setView(v => v === 'lista' ? 'timeline' : 'lista')}
-            style={{ marginLeft: 'auto', fontSize: 10, padding: '3px 8px', borderRadius: 4, cursor: 'pointer', border: '1px solid #e2e8f0', background: view === 'timeline' ? '#0078d422' : 'transparent', color: view === 'timeline' ? '#0078d4' : '#64748b', fontWeight: 600 }}>
-            {view === 'lista' ? '⏱ Timeline' : '≡ Lista'}
-          </button>
-        </div>
-
-        {/* lista / timeline */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {view === 'lista' ? filtered.map(a => (
-            <div key={a.id} onClick={() => { setSel(a); onQuery(`SIEM:${a.id}`); }}
-              style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', borderLeft: `3px solid ${sel?.id === a.id ? SEV[a.severidad] || '#4f46e5' : 'transparent'}`, background: sel?.id === a.id ? (SEV[a.severidad] || '#4f46e5') + '08' : 'transparent' }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
-                <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 3, background: (SEV[a.severidad] || '#666') + '18', color: SEV[a.severidad] || '#666', border: `1px solid ${SEV[a.severidad] || '#666'}30` }}>{a.severidad}</span>
-                <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 'auto' }}>{a.timestamp?.slice(11, 19)}</span>
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', lineHeight: 1.3, marginBottom: 2 }}>{a.titulo}</div>
-              <div style={{ fontSize: 11, color: '#64748b' }}>{a.sistema} · {a.id}</div>
-            </div>
-          )) : (
-            <div style={{ padding: '10px 8px' }}>
-              {sorted.map((a, i) => (
-                <div key={a.id} onClick={() => { setSel(a); onQuery(`SIEM:${a.id}`); }} style={{ display: 'flex', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: SEV[a.severidad] || '#64748b', marginTop: 2 }} />
-                    {i < sorted.length - 1 && <div style={{ width: 2, flex: 1, background: '#e2e8f0', margin: '2px 0' }} />}
-                  </div>
-                  <div style={{ flex: 1, paddingBottom: 8 }}>
-                    <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace', marginBottom: 2 }}>{a.timestamp?.slice(11, 19)}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: sel?.id === a.id ? '#0078d4' : '#0f172a' }}>{a.titulo}</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>{a.sistema}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {filtered.length === 0 && <div style={{ padding: 20, color: '#94a3b8', textAlign: 'center' }}>Sin alertas para este filtro</div>}
-        </div>
-        <div style={{ padding: '4px 10px', borderTop: '1px solid #e2e8f0', fontSize: 10, color: '#94a3b8', background: '#f8fafc', flexShrink: 0 }}>
-          {filtered.length} alertas · {alertas.filter(a => a.severidad === 'CRITICA').length} críticas
+    <div style={{ width:'100%',height:'100%',position:'relative',background:'linear-gradient(160deg,#1a1a2e,#16213e,#0f3460)',overflow:'hidden',fontFamily:"'Ubuntu','Inter',sans-serif" }}>
+      <div style={{ position:'absolute',top:0,left:0,right:0,height:28,background:'rgba(0,0,0,0.65)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',padding:'0 14px',gap:20,zIndex:200,borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+        <span style={{ fontSize:12,fontWeight:800,color:'#e2e8f0' }}>SoCBlast OS</span>
+        <span style={{ fontSize:11,color:'rgba(255,255,255,0.4)' }}>Forensic Workstation</span>
+        <div style={{ marginLeft:'auto',display:'flex',gap:16,alignItems:'center' }}>
+          {taskbarApps.map(a=>(<div key={a.id} onClick={()=>onTaskbarClick(a.id)} style={{ fontSize:11,color:focusedApp===a.id?'#fff':'rgba(255,255,255,0.55)',cursor:'pointer',fontWeight:focusedApp===a.id?700:400 }}>{a.icon} {a.label}</div>))}
+          <span style={{ fontSize:11,color:'rgba(255,255,255,0.4)' }}>{new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</span>
         </div>
       </div>
+      <div style={{ position:'absolute',left:0,top:28,bottom:0,width:66,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',borderRight:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',alignItems:'center',paddingTop:14,gap:8,zIndex:200 }}>
+        {apps.map(a=>(<DesktopIcon key={a.id} app={a} onOpen={()=>openApp(a.id)} so="linux"/>))}
+      </div>
+      <div style={{ position:'absolute',top:28,left:66,right:0,bottom:0 }}>{children}</div>
+    </div>
+  );
+}
 
-      {/* detalle */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#fff' }}>
-        {sel ? (
-          <>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 4, background: (SEV[sel.severidad] || '#666') + '18', color: SEV[sel.severidad] || '#666', border: `1px solid ${SEV[sel.severidad] || '#666'}30` }}>{sel.severidad}</span>
-              <span style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>{sel.timestamp}</span>
-              <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 'auto', fontFamily: 'monospace' }}>{sel.id}</span>
-            </div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8, lineHeight: 1.3 }}>{sel.titulo}</h3>
-            <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.7, marginBottom: 16 }}>{sel.descripcion}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', background: '#f8fafc', borderRadius: 8, padding: 14 }}>
-              {[['Sistema', sel.sistema], ['Categoría', sel.categoria], ['IP Origen', sel.ip_origen], ['IP Destino', sel.ip_destino], ['Usuario', sel.usuario], ['Proceso', sel.proceso], ['Regla SIEM', sel.regla_disparada]].filter(([, v]) => v).map(([k, v]) => (
-                <div key={k}><div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>{k}</div><div style={{ fontSize: 11, fontWeight: 600, color: '#1d4ed8', fontFamily: 'monospace', wordBreak: 'break-all' }}>{v}</div></div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, color: '#94a3b8' }}>
-            <div style={{ fontSize: 48 }}>🖥️</div>
-            <div style={{ fontSize: 13 }}>Haz clic en una alerta para ver el detalle</div>
-            <div style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center', maxWidth: 220 }}>Filtra por severidad o cambia a vista Timeline para ver la cronología</div>
+function SIEMApp({ alertas, so }) {
+  const [sel,setSel]=useState(null);
+  const [filter,setFilter]=useState('TODAS');
+  const dk=so==='linux';
+  const bg=dk?'#1e1e2e':'#f8fafc', bg2=dk?'#13131f':'#fff', tc1=dk?'#e2e8f0':'#0f172a', tc2=dk?'#94a3b8':'#475569', bc=dk?'#2a2a3d':'#e2e8f0';
+  const SC={CRITICA:'#ef4444',ALTA:'#f97316',MEDIA:'#f59e0b',BAJA:'#10b981'};
+  const filtered=filter==='TODAS'?alertas:alertas.filter(a=>a.severidad===filter);
+  return (
+    <div style={{ display:'flex',height:'100%',background:bg,fontSize:12,color:tc1 }}>
+      <div style={{ width:310,borderRight:`1px solid ${bc}`,display:'flex',flexDirection:'column' }}>
+        <div style={{ padding:'8px 10px',borderBottom:`1px solid ${bc}`,display:'flex',gap:4,flexWrap:'wrap',flexShrink:0 }}>
+          {['TODAS','CRITICA','ALTA','MEDIA','BAJA'].map(s=>(<button key={s} onClick={()=>setFilter(s)} style={{ fontSize:10,padding:'3px 8px',borderRadius:4,cursor:'pointer',fontWeight:700,border:`1px solid ${s==='TODAS'?bc:SC[s]||bc}`,background:filter===s?(SC[s]||'#4f46e5')+'22':'transparent',color:filter===s?(SC[s]||'#4f46e5'):tc2 }}>{s}</button>))}
+        </div>
+        <div style={{ flex:1,overflow:'auto' }}>
+          {filtered.map(a=>(<div key={a.id} onClick={()=>setSel(a)} style={{ padding:'10px 12px',borderBottom:`1px solid ${bc}`,cursor:'pointer',background:sel?.id===a.id?(SC[a.severidad]||'#4f46e5')+'11':'transparent',borderLeft:`3px solid ${sel?.id===a.id?SC[a.severidad]||'#4f46e5':'transparent'}`,transition:'all 0.15s' }}>
+            <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:3 }}><span style={{ fontSize:9,fontWeight:800,padding:'1px 6px',borderRadius:3,background:(SC[a.severidad]||'#666')+'22',color:SC[a.severidad]||'#666',border:`1px solid ${SC[a.severidad]||'#666'}44` }}>{a.severidad}</span><span style={{ fontSize:10,color:tc2,marginLeft:'auto' }}>{a.timestamp?.slice(11,19)}</span></div>
+            <div style={{ fontSize:12,fontWeight:600,color:tc1,lineHeight:1.3,marginBottom:2 }}>{a.titulo}</div>
+            <div style={{ fontSize:11,color:tc2 }}>{a.sistema} · {a.categoria}</div>
+          </div>))}
+        </div>
+      </div>
+      <div style={{ flex:1,padding:16,overflow:'auto',background:bg2 }}>
+        {sel?(<>
+          <div style={{ display:'flex',gap:8,alignItems:'center',marginBottom:12 }}><span style={{ fontSize:10,fontWeight:800,padding:'3px 10px',borderRadius:4,background:(SC[sel.severidad]||'#666')+'22',color:SC[sel.severidad]||'#666',border:`1px solid ${SC[sel.severidad]||'#666'}44` }}>{sel.severidad}</span><span style={{ fontSize:11,color:tc2 }}>{sel.timestamp}</span></div>
+          <div style={{ fontSize:15,fontWeight:700,color:tc1,marginBottom:8 }}>{sel.titulo}</div>
+          <div style={{ fontSize:12,color:tc2,lineHeight:1.7,marginBottom:14 }}>{sel.descripcion}</div>
+          <div style={{ background:dk?'#13131f':'#f1f5f9',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 16px' }}>
+            {[['Sistema',sel.sistema],['Categoría',sel.categoria],['IP Origen',sel.ip_origen],['IP Destino',sel.ip_destino],['Usuario',sel.usuario],['Proceso',sel.proceso],['Regla SIEM',sel.regla_disparada]].filter(([,v])=>v).map(([k,v])=>(<div key={k}><div style={{ fontSize:10,color:tc2,marginBottom:1 }}>{k}</div><div style={{ fontSize:11,fontWeight:600,color:dk?'#7dd3fc':'#1d4ed8',fontFamily:'monospace' }}>{v}</div></div>))}
           </div>
-        )}
+        </>):(<div style={{ color:tc2,textAlign:'center',paddingTop:60,fontSize:13 }}>Selecciona una alerta para ver el detalle</div>)}
       </div>
     </div>
   );
 }
 
-/* ─── TERMINAL ────────────────────────────────────────────────────────────── */
-function TerminalApp({ escenario, onQuery }) {
-  const [hist, setHist] = useState([{ t: 'sys', v: 'Microsoft Windows [Version 10.0.19045.3803]\n(c) Microsoft Corporation. All rights reserved.\n\nEscribe "help" para ver todos los comandos.' }]);
-  const [inp, setInp]   = useState('');
-  const [cmds, setCmds] = useState([]);
-  const [ci, setCi]     = useState(-1);
-  const bot    = useRef(null);
-  const inpRef = useRef(null);
-
-  const iocs    = escenario?.iocs || {};
-  const logs    = escenario?.logs || [];
-  const hosts   = escenario?.red?.hosts || [];
-  const conns   = escenario?.red?.conexiones || [];
-  const alertas = escenario?.alertas_siem || [];
-
-  const run = useCallback((raw) => {
-    const cmd = raw.trim();
-    if (!cmd) return;
-    onQuery(`CMD:${cmd}`);
-    setCmds(p => [cmd, ...p]);
-    setCi(-1);
-
-    const lc = cmd.toLowerCase();
-    let out = '';
-
-    if (lc === 'cls') { setHist([]); setInp(''); return; }
-    if (lc === 'history') { out = cmds.length ? cmds.map((c, i) => `  ${(cmds.length - i).toString().padStart(3)}  ${c}`).join('\n') : '(historial vacío)'; }
-    else if (lc === 'help') {
-      out = `╔══════════════════════════════════════════════════════════════╗
-║              COMANDOS DISPONIBLES — SOC Terminal             ║
-╠══════════════════════════════════════════════════════════════╣
-║  SISTEMA                                                     ║
-║    whoami            usuario actual                          ║
-║    hostname          nombre del equipo                       ║
-║    ipconfig          configuración de red                    ║
-║    ipconfig /all     detalles completos                      ║
-║    systeminfo        información del sistema                 ║
-║                                                              ║
-║  PROCESOS Y RED                                              ║
-║    tasklist          procesos en ejecución                   ║
-║    tasklist /svc     procesos con servicios                  ║
-║    netstat -an       todas las conexiones                    ║
-║    netstat -b        conexiones con proceso                  ║
-║    ping <ip>         comprobar conectividad                  ║
-║    nslookup <dom>    resolver DNS                            ║
-║                                                              ║
-║  ARCHIVOS Y REGISTRO                                         ║
-║    dir               listar directorio                       ║
-║    dir /s            listar recursivo                        ║
-║    type <archivo>    mostrar contenido                       ║
-║    find <texto>      buscar en logs                          ║
-║    grep <patron>     buscar patrón en logs                   ║
-║    reg query         consultar registro Windows              ║
-║    wmic process      info procesos (WMIC)                    ║
-║                                                              ║
-║  INVESTIGACIÓN                                               ║
-║    ioc               IOCs del escenario                      ║
-║    hosts             hosts de la red                         ║
-║    alerts            resumen alertas SIEM                    ║
-║    connections       conexiones activas                      ║
-║    history           historial de comandos                   ║
-║    cls               limpiar pantalla                        ║
-╚══════════════════════════════════════════════════════════════╝`;
-    }
-    else if (lc === 'whoami')   out = 'CORP\\analyst';
-    else if (lc === 'hostname') out = 'SOC-WORKSTATION-01';
-    else if (lc === 'ipconfig') out = `Adaptador Ethernet:\n   IPv4: 10.0.0.50\n   Máscara: 255.255.255.0\n   Gateway: 10.0.0.1\n   DNS: 10.0.0.5`;
-    else if (lc === 'ipconfig /all') out = `Host: SOC-WORKSTATION-01\nDominio: corp.local\nMAC: 00-0C-29-AB-CD-EF\nIPv4: 10.0.0.50\nMáscara: 255.255.255.0\nGateway: 10.0.0.1\nDNS: 10.0.0.5`;
-    else if (lc === 'systeminfo') out = `Hostname:    SOC-WORKSTATION-01\nOS:          Windows 10 Pro 19045\nDominio:     CORP\nDC:          CORP-DC01\nZona horaria: UTC+01:00 Madrid`;
-    else if (lc === 'tasklist') {
-      const procs = iocs.procesos_sospechosos || [];
-      const base = ['Imagen                   PID  Sesión       Mem', '======================== ==== ============ ========', 'System                   4    Services     1.580K', 'svchost.exe              892  Services     12.340K', 'explorer.exe             1456 Console      48.200K', 'splunk-admon.exe         2100 Services     18.320K'];
-      procs.forEach((p, i) => base.push(`${p.slice(0, 24).padEnd(24)} ${(1200 + i).toString().padEnd(4)} Console      24.${300 + i}K  ← SOSPECHOSO`));
-      out = base.join('\n');
-    }
-    else if (lc === 'tasklist /svc') {
-      const procs = iocs.procesos_sospechosos || [];
-      const base = ['Imagen                   PID   Servicios', '======================== ===== =========', 'System                   4     N/A', 'svchost.exe              892   DcomLaunch, PlugPlay', 'splunk-admon.exe         2100  SplunkForwarder'];
-      procs.forEach((p, i) => base.push(`${p.slice(0, 24).padEnd(24)} ${(1200 + i).toString().padEnd(5)} ← SIN SERVICIO REGISTRADO`));
-      out = base.join('\n');
-    }
-    else if (lc === 'netstat -an') {
-      const lines = ['Conexiones activas\n', '  Proto  Local                  Externo                Estado', '  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING', '  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING', '  TCP    0.0.0.0:3389           0.0.0.0:0              LISTENING'];
-      conns.forEach(c => { const f = hosts.find(h => h.id === c.origen); const t = hosts.find(h => h.id === c.destino); lines.push(`  TCP    ${(f?.ip || '10.0.0.x') + ':' + c.puerto}`.padEnd(27) + `${(t?.ip || '0.0.0.0') + ':' + c.puerto}`.padEnd(23) + (c.estado === 'maliciosa' ? 'ESTABLISHED ← SOSPECHOSO' : 'ESTABLISHED')); });
-      out = lines.join('\n');
-    }
-    else if (lc === 'netstat -b') {
-      const lines = ['Conexiones activas (con proceso)\n']; const procs = iocs.procesos_sospechosos || [];
-      conns.forEach((c, i) => { const t = hosts.find(h => h.id === c.destino); lines.push(`  TCP    10.0.0.50:${49000 + i}     ${t?.ip || '0.0.0.0'}:${c.puerto}    ${c.estado === 'maliciosa' ? 'ESTABLISHED ← SOSPECHOSO' : 'ESTABLISHED'}`); lines.push(`  [${procs[i] || 'svchost.exe'}]`); });
-      out = lines.join('\n');
-    }
-    else if (lc === 'connections') {
-      out = conns.length ? ['CONEXIONES ACTIVAS:', '─'.repeat(60), ...conns.map(c => { const f = hosts.find(h => h.id === c.origen); const t = hosts.find(h => h.id === c.destino); return `${f?.nombre || 'externo'} (${f?.ip || '?'}) → ${t?.nombre || 'externo'} (${t?.ip || '?'}) :${c.puerto} ${c.protocolo} [${c.estado?.toUpperCase()}]`; })].join('\n') : '(sin conexiones registradas)';
-    }
-    else if (lc === 'dir') {
-      const files = logs.slice(0, 6).map(l => `${l.timestamp?.slice(0, 10).replace(/-/g, '/')}  ${l.sistema}.log`);
-      out = `Directorio de C:\\Users\\analyst\n\n${['<DIR>  Desktop', '<DIR>  Downloads', '<DIR>  logs', ...files].join('\n')}\n\n${logs.length} archivos de log`;
-    }
-    else if (lc === 'dir /s') out = logs.map(l => `C:\\Users\\analyst\\logs\\${l.sistema}.log`).join('\n') || '(vacío)';
-    else if (lc === 'reg query') {
-      const keys = iocs.regkeys_persistencia || [];
-      out = keys.length ? keys.map(k => `${k}\n    REG_SZ    C:\\Windows\\Temp\\svc_update.exe ← SOSPECHOSO`).join('\n\n') : 'Sin entradas sospechosas.\nUsa: reg query HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run';
-    }
-    else if (lc === 'wmic process') {
-      const procs = iocs.procesos_sospechosos || [];
-      out = ['Caption                  ProcessId  CommandLine', 'System                   4          N/A', 'svchost.exe              892        C:\\Windows\\System32\\svchost.exe', 'explorer.exe             1456       C:\\Windows\\explorer.exe', ...procs.map((p, i) => `${p.slice(0, 24).padEnd(24)} ${(1200 + i).toString().padEnd(10)} C:\\Windows\\Temp\\${p} ← SOSPECHOSO`)].join('\n');
-    }
-    else if (lc === 'ioc') {
-      const parts = ['═══ IOCs del escenario ═══'];
-      if (iocs.ips_maliciosas?.length)       parts.push(`IPs maliciosas:\n  ${iocs.ips_maliciosas.join('\n  ')}`);
-      if (iocs.hashes_maliciosos?.length)    parts.push(`Hashes:\n  ${iocs.hashes_maliciosos.join('\n  ')}`);
-      if (iocs.dominios_maliciosos?.length)  parts.push(`Dominios C2:\n  ${iocs.dominios_maliciosos.join('\n  ')}`);
-      if (iocs.procesos_sospechosos?.length) parts.push(`Procesos sospechosos:\n  ${iocs.procesos_sospechosos.join('\n  ')}`);
-      if (iocs.usuarios_comprometidos?.length) parts.push(`Usuarios comprometidos:\n  ${iocs.usuarios_comprometidos.join('\n  ')}`);
-      if (iocs.regkeys_persistencia?.length) parts.push(`Registry persistence:\n  ${iocs.regkeys_persistencia.join('\n  ')}`);
-      out = parts.join('\n\n');
-    }
-    else if (lc === 'hosts') {
-      out = hosts.length
-        ? ['HOST                 IP               ESTADO        TIPO', '='.repeat(65), ...hosts.map(h => `${h.nombre.padEnd(20)} ${h.ip.padEnd(15)}  ${(h.estado || '').toUpperCase().padEnd(12)} ${h.tipo}`)].join('\n')
-        : '(sin hosts)';
-    }
-    else if (lc === 'alerts') {
-      out = alertas.length
-        ? alertas.map(a => `[${(a.severidad || '').padEnd(8)}] ${a.timestamp?.slice(11, 19) || '--:--:--'} ${a.titulo} — ${a.sistema}`).join('\n')
-        : '(sin alertas SIEM)';
-    }
-    else if (lc.startsWith('ping ')) {
-      const ip = lc.slice(5).trim();
-      const known = hosts.find(h => h.ip === ip || h.nombre.toLowerCase() === ip);
-      if (known) out = `Haciendo ping a ${known.nombre} [${known.ip}]:\nRespuesta: tiempo=1ms TTL=128\nRespuesta: tiempo<1ms TTL=128\n\nPaquetes: enviados=3, recibidos=3, perdidos=0`;
-      else if (iocs.ips_maliciosas?.includes(ip)) out = `Haciendo ping a ${ip}:\nRespuesta: tiempo=124ms TTL=52  ← IP EXTERNA SOSPECHOSA\n\nPaquetes: enviados=3, recibidos=3, perdidos=0`;
-      else out = `Haciendo ping a ${ip}:\nTiempo de espera agotado.\n\nPaquetes: enviados=3, recibidos=0, perdidos=3 (100%)`;
-    }
-    else if (lc.startsWith('nslookup ')) {
-      const dom = lc.slice(9).trim();
-      const mal = iocs.dominios_maliciosos?.includes(dom);
-      out = `Servidor: CORP-DC01.corp.local\nAddress: 10.0.0.5\n\n${mal ? `Nombre: ${dom}\nAddress: ${iocs.ips_maliciosas?.[0] || '185.220.101.47'}  ← DOMINIO MALICIOSO` : `*** No se puede encontrar ${dom}: Non-existent domain`}`;
-    }
-    else if (lc.startsWith('find ')) {
-      const pat = lc.slice(5).trim().replace(/["']/g, '');
-      const m = logs.filter(l => l.mensaje?.toLowerCase().includes(pat.toLowerCase()));
-      out = m.length ? `Resultados para "${pat}":\n${'─'.repeat(50)}\n${m.map(l => `[${l.sistema}] ${l.timestamp?.slice(11, 19)} ${l.mensaje}`).join('\n')}\n\n${m.length} resultado(s)` : `find: "${pat}" — sin coincidencias`;
-    }
-    else if (lc.startsWith('grep ')) {
-      const pat = lc.slice(5).trim();
-      const m = logs.filter(l => l.mensaje?.toLowerCase().includes(pat.toLowerCase()));
-      out = m.length ? m.map(l => `[${l.sistema}] ${l.mensaje}`).join('\n') : `grep: "${pat}" — sin coincidencias`;
-    }
-    else if (lc.startsWith('type ')) {
-      const f = lc.slice(5).trim();
-      const l = logs.find(l => l.sistema?.toLowerCase().includes(f) || l.id?.toLowerCase() === f);
-      out = l ? `--- ${l.sistema} (${l.fuente}) ---\n${l.timestamp}  EventID:${l.event_id || '?'}  [${l.nivel}]\n\n${l.mensaje}` : `type: No se encuentra: "${f}"`;
-    }
-    else out = `'${cmd}' no se reconoce. Escribe "help" para ver los comandos.`;
-
-    setHist(h => [...h, { t: 'in', v: `C:\\Users\\analyst>${cmd}` }, { t: 'out', v: out }]);
-    setInp('');
-  }, [cmds, logs, hosts, conns, alertas, iocs, onQuery]);
-
-  useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }); }, [hist]);
-
+function LogApp({ logs, so, onQuery }) {
+  const [search,setSearch]=useState('');
+  const [nivel,setNivel]=useState('TODOS');
+  const [onlyRel,setRel]=useState(false);
+  const dk=so==='linux';
+  const bg=dk?'#1e1e2e':'#fff', tc1=dk?'#e2e8f0':'#0f172a', tc2=dk?'#94a3b8':'#64748b', bc=dk?'#2a2a3d':'#e2e8f0';
+  const NC={ERROR:'#ef4444',WARNING:'#f59e0b',INFO:dk?'#94a3b8':'#64748b'};
+  const filtered=logs.filter(l=>{ if(nivel!=='TODOS'&&l.nivel!==nivel)return false; if(onlyRel&&!l.relevante)return false; if(search&&!JSON.stringify(l).toLowerCase().includes(search.toLowerCase()))return false; return true; });
+  const hs=v=>{ setSearch(v); if(v.length>2)onQuery(`SEARCH:${v}`); };
   return (
-    <div onClick={() => inpRef.current?.focus()} style={{ flex: 1, background: '#0c0c0c', color: '#ccc', fontFamily: "'Cascadia Code','Consolas',monospace", fontSize: 12, display: 'flex', flexDirection: 'column', cursor: 'text' }}>
-      <div style={{ padding: '5px 10px', background: '#1a1a1a', borderBottom: '1px solid #2a2a2a', fontSize: 11, color: '#555', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Símbolo del sistema — CORP\analyst@SOC-WORKSTATION-01</span>
-        <span style={{ fontSize: 10, color: '#333' }}>{hosts.length} hosts · {logs.length} logs</span>
+    <div style={{ display:'flex',flexDirection:'column',height:'100%',background:bg,color:tc1,fontSize:12 }}>
+      <div style={{ padding:'8px 12px',borderBottom:`1px solid ${bc}`,display:'flex',gap:8,alignItems:'center',flexShrink:0,flexWrap:'wrap' }}>
+        <input value={search} onChange={e=>hs(e.target.value)} placeholder="Filtrar: IP, proceso, usuario, Event ID..." style={{ flex:1,minWidth:160,padding:'6px 10px',borderRadius:6,border:`1px solid ${bc}`,background:dk?'#13131f':'#f8fafc',color:tc1,fontSize:11,outline:'none',fontFamily:'monospace' }}/>
+        {['TODOS','ERROR','WARNING','INFO'].map(n=>(<button key={n} onClick={()=>setNivel(n)} style={{ fontSize:10,padding:'4px 8px',borderRadius:4,cursor:'pointer',fontWeight:700,border:`1px solid ${NC[n]||bc}`,background:nivel===n?(NC[n]||'#4f46e5')+'22':'transparent',color:nivel===n?NC[n]||'#4f46e5':tc2 }}>{n}</button>))}
+        <label style={{ fontSize:11,color:tc2,display:'flex',gap:4,alignItems:'center',cursor:'pointer',whiteSpace:'nowrap' }}><input type="checkbox" checked={onlyRel} onChange={e=>setRel(e.target.checked)} style={{ accentColor:'#4f46e5' }}/>Solo relevantes</label>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
-        {hist.map((h, i) => (
-          <pre key={i} style={{ margin: 0, marginBottom: 4, whiteSpace: 'pre-wrap', lineHeight: 1.65, color: h.t === 'in' ? '#fff' : h.t === 'sys' ? '#888' : '#ccc', fontFamily: 'inherit' }}>{h.v}</pre>
-        ))}
-        <div ref={bot} />
+      <div style={{ flex:1,overflow:'auto',padding:8 }}>
+        {filtered.map(l=>(<div key={l.id} style={{ padding:'6px 10px',borderRadius:5,marginBottom:3,fontFamily:'monospace',background:dk?(l.relevante?'#13131f':'#0d0d1a'):(l.relevante?'#f8fafc':'#fafafa'),border:`1px solid ${l.relevante?bc:dk?'#1a1a2a':'#f1f5f9'}`,opacity:l.relevante?1:0.55 }}>
+          <div style={{ display:'flex',gap:8,alignItems:'center',marginBottom:2,flexWrap:'wrap' }}>
+            <span style={{ fontSize:10,color:tc2 }}>{l.timestamp?.slice(11,19)}</span>
+            <span style={{ fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:3,color:NC[l.nivel]||tc2,background:(NC[l.nivel]||tc2)+'18',border:`1px solid ${NC[l.nivel]||tc2}33` }}>{l.nivel}</span>
+            <span style={{ fontSize:10,color:dk?'#7dd3fc':'#2563eb',fontWeight:600 }}>{l.sistema}</span>
+            <span style={{ fontSize:10,color:tc2 }}>{l.fuente}</span>
+            {l.event_id&&<span style={{ fontSize:9,color:tc2,border:`1px solid ${bc}`,padding:'0 4px',borderRadius:3 }}>EID:{l.event_id}</span>}
+            {!l.relevante&&<span style={{ fontSize:9,color:tc2,marginLeft:'auto' }}>ruido</span>}
+          </div>
+          <div style={{ fontSize:11,color:l.relevante?tc1:tc2,lineHeight:1.5,wordBreak:'break-all' }}>{l.mensaje}</div>
+        </div>))}
+        {filtered.length===0&&<div style={{ textAlign:'center',color:tc2,paddingTop:40 }}>{search?`Sin resultados para "${search}"`:'Sin logs'}</div>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', borderTop: '1px solid #2a2a2a', flexShrink: 0 }}>
-        <span style={{ color: '#ccc', marginRight: 6, whiteSpace: 'nowrap' }}>C:\Users\analyst&gt;</span>
-        <input
-          ref={inpRef} autoFocus value={inp}
-          onChange={e => setInp(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') run(inp);
-            else if (e.key === 'ArrowUp') { const ni = Math.min(ci + 1, cmds.length - 1); setCi(ni); setInp(cmds[ni] || ''); }
-            else if (e.key === 'ArrowDown') { const ni = Math.max(ci - 1, -1); setCi(ni); setInp(ni === -1 ? '' : cmds[ni] || ''); }
-          }}
-          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 12, fontFamily: 'inherit' }}
-          placeholder="escribe un comando..." />
-      </div>
+      <div style={{ padding:'4px 12px',borderTop:`1px solid ${bc}`,fontSize:10,color:tc2 }}>{filtered.length} de {logs.length} entradas · {logs.filter(l=>l.relevante).length} relevantes</div>
     </div>
   );
 }
 
-/* ─── LOG EXPLORER ────────────────────────────────────────────────────────── */
-function LogApp({ logs, onQuery }) {
-  const [search, setSearch] = useState('');
-  const [nivel,  setNivel]  = useState('TODOS');
-  const [onlyRel, setRel]   = useState(false);
-  const [sel, setSel]       = useState(null);
-  const NVC = { ERROR: '#dc2626', WARNING: '#d97706', INFO: '#64748b' };
+function TerminalApp({ escenario, so, onQuery }) {
+  const [history,setHistory]=useState([{ type:'out',text:so==='windows'?'Microsoft Windows [Version 10.0.19045]\nEscriba "help" para ver los comandos disponibles.\n':'analyst@soc-workstation:~$ _\nEscriba "help" para ver los comandos disponibles.\n' }]);
+  const [input,setInput]=useState('');
+  const [cmdHist,setCmdHist]=useState([]);
+  const [histIdx,setHistIdx]=useState(-1);
+  const bottomRef=useRef(null);
+  const prompt=so==='windows'?'C:\\Users\\analyst> ':'analyst@soc:~$ ';
+  const iocs=escenario?.iocs||{};
+  const alertas=escenario?.alertas_siem||[];
+  const logs=escenario?.logs||[];
+  const hosts=escenario?.red?.hosts||[];
+  const conns=escenario?.red?.conexiones||[];
+  const EC={comprometido:'#ef4444',sospechoso:'#f59e0b',limpio:'#10b981',maliciosa:'#ef4444',legitima:'#10b981',sospechosa:'#f59e0b'};
 
-  const filtered = logs.filter(l => {
-    if (nivel !== 'TODOS' && l.nivel !== nivel) return false;
-    if (onlyRel && !l.relevante) return false;
-    if (search && !JSON.stringify(l).toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
-
-  const hs = v => { setSearch(v); if (v.length > 2) onQuery(`SEARCH:${v}`); };
-
-  const hl = (text, term) => {
-    if (!term || term.length < 2 || !text) return text;
-    const idx = (text || '').toLowerCase().indexOf(term.toLowerCase());
-    if (idx === -1) return text;
-    return <>{text.slice(0, idx)}<mark style={{ background: '#fef08a', color: '#0f172a', borderRadius: 2 }}>{text.slice(idx, idx + term.length)}</mark>{text.slice(idx + term.length)}</>;
+  const CMDS = {
+    help:()=>`Comandos disponibles:\n  whoami          usuario actual\n  ifconfig        configuración de red\n  netstat -an     conexiones activas\n  ps aux          procesos en ejecución\n  ls / dir        listar archivos\n  cat <archivo>   contenido de archivo\n  grep <patron>   buscar en logs\n  ioc             IOCs del escenario\n  hosts           hosts de la red\n  alerts          resumen alertas SIEM\n  clear           limpiar terminal`,
+    whoami:()=>so==='windows'?'CORP\\analyst':'analyst (uid=1000, grupos: sudo,soc-analysts)',
+    ifconfig:()=>`eth0: inet 10.0.0.50  netmask 255.255.255.0  broadcast 10.0.0.255\n      ether 00:0c:29:ab:cd:ef\nlo:   inet 127.0.0.1  netmask 255.0.0.0`,
+    ipconfig:()=>`Adaptador Ethernet:\n   Dirección IPv4: 10.0.0.50\n   Máscara de subred: 255.255.255.0\n   Puerta de enlace: 10.0.0.1`,
+    'netstat -an':()=>{const l=['Proto  Local               Externo             Estado'];conns.forEach(c=>{const f=hosts.find(h=>h.id===c.origen);const t=hosts.find(h=>h.id===c.destino);l.push(`TCP    ${f?.ip||'10.0.0.x'}:${c.puerto||445}     ${t?.ip||'0.0.0.0'}:${c.puerto||445}  ${c.estado==='maliciosa'?'ESTABLISHED':'LISTEN'}`);});if(!conns.length)l.push('(sin conexiones activas)');return l.join('\n');},
+    'ps aux':()=>{const p=iocs.procesos_sospechosos||[];const b=['PID   USER    STAT  COMMAND','1     root    Ss    /sbin/init','234   root    S     sshd','891   analyst S     bash'];p.forEach((pr,i)=>b.push(`${1200+i}   SYSTEM  R     ${pr}  ← SOSPECHOSO`));return b.join('\n');},
+    tasklist:()=>{const p=iocs.procesos_sospechosos||[];const b=['Imagen                   PID  Sesión   Mem','======================== ==== ======== =======','System                   4    Services 1.580 KB','svchost.exe              892  Services 12.340 KB'];p.forEach((pr,i)=>b.push(`${pr.slice(0,25).padEnd(25)}${1200+i}  Console  48.${200+i} KB  ← SOSPECHOSO`));return b.join('\n');},
+    ls:()=>`Desktop/  Documents/  Downloads/  logs/  evidence/\n\nlogs/:\n${logs.slice(0,6).map(l=>`${l.timestamp?.slice(0,10)}_${l.sistema}.log`).join('\n')||'(vacío)'}`,
+    dir:()=>`Directorio C:\\Users\\analyst\n\n${logs.slice(0,6).map(l=>`${l.timestamp?.slice(0,10)}  ${l.sistema}.log`).join('\n')||'(vacío)'}\n  ${logs.length} archivos`,
+    ioc:()=>{const l=['═══ IOCs del escenario ═══'];if(iocs.ips_maliciosas?.length)l.push(`IPs maliciosas:\n  ${iocs.ips_maliciosas.join('\n  ')}`);if(iocs.hashes_maliciosos?.length)l.push(`Hashes:\n  ${iocs.hashes_maliciosos.join('\n  ')}`);if(iocs.dominios_maliciosos?.length)l.push(`Dominios C2:\n  ${iocs.dominios_maliciosos.join('\n  ')}`);if(iocs.procesos_sospechosos?.length)l.push(`Procesos sospechosos:\n  ${iocs.procesos_sospechosos.join('\n  ')}`);if(iocs.usuarios_comprometidos?.length)l.push(`Usuarios comprometidos:\n  ${iocs.usuarios_comprometidos.join('\n  ')}`);return l.join('\n\n');},
+    hosts:()=>hosts.length?hosts.map(h=>`[${h.estado?.toUpperCase()}] ${h.nombre.padEnd(20)} ${h.ip.padEnd(16)} ${h.tipo}`).join('\n'):'(sin hosts)',
+    alerts:()=>alertas.length?alertas.map(a=>`[${a.severidad}] ${a.timestamp?.slice(11,19)} ${a.titulo} (${a.sistema})`).join('\n'):'(sin alertas)',
+    clear:()=>null,
   };
 
-  return (
-    <div style={{ display: 'flex', height: '100%', background: '#fff', fontSize: 12 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, borderRight: sel ? '1px solid #e2e8f0' : 'none' }}>
-        {/* toolbar */}
-        <div style={{ padding: '8px 10px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', background: '#f8fafc', flexShrink: 0 }}>
-          <input value={search} onChange={e => hs(e.target.value)} placeholder="Filtrar: IP, proceso, Event ID, usuario, hash..."
-            style={{ flex: 1, minWidth: 140, padding: '6px 10px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 11, outline: 'none', fontFamily: 'monospace' }} />
-          {['TODOS', 'ERROR', 'WARNING', 'INFO'].map(n => (
-            <button key={n} onClick={() => setNivel(n)}
-              style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${NVC[n] || '#e2e8f0'}`, background: nivel === n ? (NVC[n] || '#4f46e5') + '22' : 'transparent', color: nivel === n ? NVC[n] || '#4f46e5' : '#64748b' }}>
-              {n}
-            </button>
-          ))}
-          <label style={{ fontSize: 11, color: '#64748b', display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <input type="checkbox" checked={onlyRel} onChange={e => setRel(e.target.checked)} style={{ accentColor: '#0078d4' }} /> Solo relevantes
-          </label>
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
-          {filtered.map(l => (
-            <div key={l.id} onClick={() => { setSel(sel?.id === l.id ? null : l); onQuery(`LOG:${l.id}`); }}
-              style={{ padding: '7px 10px', borderRadius: 5, marginBottom: 3, fontFamily: 'Consolas,monospace', background: sel?.id === l.id ? '#eff6ff' : l.relevante ? '#fff' : '#fafafa', border: `1px solid ${sel?.id === l.id ? '#0078d4' : l.relevante ? '#e2e8f0' : '#f1f5f9'}`, opacity: l.relevante ? 1 : .55, cursor: 'pointer' }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>{l.timestamp?.slice(11, 19)}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, color: NVC[l.nivel] || '#64748b', background: (NVC[l.nivel] || '#64748b') + '18', border: `1px solid ${NVC[l.nivel] || '#64748b'}30` }}>{l.nivel}</span>
-                <span style={{ fontSize: 10, color: '#1d4ed8', fontWeight: 600 }}>{l.sistema}</span>
-                <span style={{ fontSize: 10, color: '#64748b' }}>{l.fuente}</span>
-                {l.event_id && <span style={{ fontSize: 9, color: '#64748b', border: '1px solid #e2e8f0', padding: '0 4px', borderRadius: 3 }}>EID:{l.event_id}</span>}
-                {!l.relevante && <span style={{ fontSize: 9, color: '#94a3b8', marginLeft: 'auto' }}>ruido</span>}
-              </div>
-              <div style={{ fontSize: 11, color: l.relevante ? '#0f172a' : '#94a3b8', lineHeight: 1.5, wordBreak: 'break-all' }}>{hl(l.mensaje, search)}</div>
-            </div>
-          ))}
-          {filtered.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: '#94a3b8' }}>{search ? `Sin resultados para "${search}"` : 'Sin logs'}</div>}
-        </div>
-
-        <div style={{ padding: '4px 10px', borderTop: '1px solid #e2e8f0', fontSize: 10, color: '#94a3b8', background: '#f8fafc', flexShrink: 0 }}>
-          {filtered.length}/{logs.length} · {logs.filter(l => l.relevante).length} relevantes
-        </div>
-      </div>
-
-      {/* panel detalle */}
-      {sel && (
-        <div style={{ width: 280, overflowY: 'auto', padding: 14, background: '#f8fafc', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 10 }}>Detalle del log</div>
-          {[['ID', sel.id], ['Timestamp', sel.timestamp], ['Sistema', sel.sistema], ['Fuente', sel.fuente], ['Nivel', sel.nivel], ['Event ID', sel.event_id], ['Relevante', sel.relevante ? 'Sí' : 'No (ruido)']].filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => (
-            <div key={k} style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>{k}</div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#0f172a', fontFamily: 'monospace', wordBreak: 'break-all' }}>{String(v)}</div>
-            </div>
-          ))}
-          <div style={{ marginTop: 10 }}>
-            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 4 }}>Mensaje completo</div>
-            <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6, background: '#fff', padding: '8px 10px', borderRadius: 6, border: '1px solid #e2e8f0', fontFamily: 'monospace', wordBreak: 'break-all' }}>{sel.mensaje}</div>
-          </div>
-          <button onClick={() => setSel(null)} style={{ marginTop: 10, width: '100%', padding: '6px 0', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 11, cursor: 'pointer' }}>Cerrar ✕</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── NETWORK MONITOR ─────────────────────────────────────────────────────── */
-function NetworkApp({ red }) {
-  const [sel, setSel]   = useState(null);
-  const [view, setView] = useState('lista');
-  const hosts = red?.hosts || [];
-  const conns = red?.conexiones || [];
-  const EC = { comprometido: '#dc2626', sospechoso: '#d97706', limpio: '#16a34a', maliciosa: '#dc2626', sospechosa: '#d97706', legitima: '#16a34a' };
-
-  const getPos = (idx, total) => {
-    if (total === 1) return { x: 250, y: 150 };
-    const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
-    return { x: 250 + Math.cos(angle) * 130, y: 150 + Math.sin(angle) * 100 };
+  const run=(cmd)=>{
+    const t=cmd.trim();
+    if(!t)return;
+    onQuery(`CMD:${t}`);
+    setCmdHist(h=>[cmd,...h]);
+    setHistIdx(-1);
+    let out='';
+    const tl=t.toLowerCase();
+    if(tl==='clear'){setHistory([{type:'out',text:''}]);return;}
+    else if(tl.startsWith('grep ')){
+      const pat=tl.slice(5).trim();
+      if(!pat){out='Uso: grep <patrón>';}else{const m=logs.filter(l=>l.mensaje.toLowerCase().includes(pat));out=m.length?m.map(l=>`[${l.sistema}] ${l.mensaje}`).join('\n'):`Sin coincidencias para "${pat}"`;}
+    }else if(tl.startsWith('cat ')){
+      const f=tl.slice(4).trim();
+      const l=logs.find(l=>l.sistema.toLowerCase().includes(f)||l.id?.toLowerCase()===f);
+      out=l?`--- ${l.sistema} ---\n${l.timestamp} [${l.nivel}] ${l.mensaje}`:`cat: ${f}: No existe el archivo`;
+    }else if(CMDS[tl]){out=CMDS[tl]();if(out===null){setHistory([{type:'out',text:''}]);return;}}
+    else{out=`${so==='linux'?'-bash: ':''}${cmd}: comando no reconocido. Escribe "help".`;}
+    setHistory(h=>[...h,{type:'in',text:`${prompt}${cmd}`},{type:'out',text:out}]);
+    setInput('');
   };
-  const positions = hosts.reduce((acc, h, i) => ({ ...acc, [h.id]: getPos(i, hosts.length) }), {});
+
+  useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}); },[history]);
 
   return (
-    <div style={{ display: 'flex', height: '100%', fontSize: 12, background: '#fff' }}>
-      {/* sidebar */}
-      <div style={{ width: 240, borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '8px 10px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: 4, background: '#f8fafc', flexShrink: 0 }}>
-          <button onClick={() => setView('lista')} style={{ flex: 1, fontSize: 10, padding: '3px 0', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${view === 'lista' ? '#0078d4' : '#e2e8f0'}`, background: view === 'lista' ? '#0078d422' : 'transparent', color: view === 'lista' ? '#0078d4' : '#64748b' }}>≡ Lista</button>
-          <button onClick={() => setView('mapa')} style={{ flex: 1, fontSize: 10, padding: '3px 0', borderRadius: 4, cursor: 'pointer', fontWeight: 700, border: `1px solid ${view === 'mapa' ? '#0078d4' : '#e2e8f0'}`, background: view === 'mapa' ? '#0078d422' : 'transparent', color: view === 'mapa' ? '#0078d4' : '#64748b' }}>🌐 Mapa</button>
-        </div>
-
-        {view === 'lista' ? (
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>Hosts ({hosts.length})</div>
-            {hosts.map(h => (
-              <div key={h.id} onClick={() => setSel(h)}
-                style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: sel?.id === h.id ? (EC[h.estado] || '#0078d4') + '08' : 'transparent' }}>
-                <div style={{ width: 9, height: 9, borderRadius: '50%', background: EC[h.estado] || '#94a3b8', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.nombre}</div>
-                  <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>{h.ip}</div>
-                </div>
-                <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 8, background: (EC[h.estado] || '#94a3b8') + '18', color: EC[h.estado] || '#94a3b8', fontWeight: 700, flexShrink: 0 }}>{h.estado?.toUpperCase()}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ flex: 1, overflow: 'hidden', padding: 8, display: 'flex', flexDirection: 'column' }}>
-            <svg width="100%" viewBox="0 0 500 300" style={{ flex: 1 }}>
-              {conns.map((c, i) => {
-                const from = positions[c.origen]; const to = positions[c.destino];
-                if (!from || !to) return null;
-                return (
-                  <g key={i}>
-                    <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={EC[c.estado] || '#94a3b8'} strokeWidth={c.estado === 'maliciosa' ? 2 : 1} strokeDasharray={c.estado === 'maliciosa' ? '5,3' : 'none'} opacity={c.estado === 'maliciosa' ? .9 : .5} />
-                    <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 4} fontSize="8" fill={EC[c.estado] || '#94a3b8'} textAnchor="middle">{c.protocolo}:{c.puerto}</text>
-                  </g>
-                );
-              })}
-              {hosts.map(h => {
-                const pos = positions[h.id]; if (!pos) return null;
-                const isSel = sel?.id === h.id;
-                return (
-                  <g key={h.id} onClick={() => setSel(h)} style={{ cursor: 'pointer' }}>
-                    <circle cx={pos.x} cy={pos.y} r={isSel ? 20 : 16} fill="#fff" stroke={EC[h.estado] || '#94a3b8'} strokeWidth={isSel ? 2.5 : 1.5} />
-                    <text x={pos.x} y={pos.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={EC[h.estado] || '#64748b'} fontWeight="700">{h.tipo?.includes('Controller') ? 'DC' : h.tipo?.includes('Server') ? 'SRV' : 'WS'}</text>
-                    <text x={pos.x} y={pos.y + 28} textAnchor="middle" fontSize="8" fill="#374151">{h.nombre?.length > 12 ? h.nombre.slice(0, 12) + '…' : h.nombre}</text>
-                    <text x={pos.x} y={pos.y + 38} textAnchor="middle" fontSize="7.5" fill="#94a3b8">{h.ip}</text>
-                  </g>
-                );
-              })}
-            </svg>
-            <div style={{ display: 'flex', gap: 10, padding: '4px 0', justifyContent: 'center', flexShrink: 0 }}>
-              {[['comprometido', '#dc2626'], ['sospechoso', '#d97706'], ['limpio', '#16a34a']].map(([l, c]) => (
-                <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 7, height: 7, borderRadius: '50%', background: c }} /><span style={{ fontSize: 9, color: '#64748b' }}>{l}</span></div>
-              ))}
-            </div>
-          </div>
-        )}
+    <div style={{ flex:1,background:'#0d1117',color:'#c9d1d9',fontFamily:"'Fira Code','JetBrains Mono','Courier New',monospace",fontSize:12,display:'flex',flexDirection:'column' }}>
+      <div style={{ flex:1,overflow:'auto',padding:'10px 14px' }}>
+        {history.map((h,i)=>(<div key={i} style={{ marginBottom:2,whiteSpace:'pre-wrap',lineHeight:1.6,color:h.type==='in'?'#58a6ff':h.type==='sys'?'#7ee787':'#c9d1d9' }}>{h.text}</div>))}
+        <div ref={bottomRef}/>
       </div>
-
-      {/* detalle host */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-        {sel ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div style={{ width: 11, height: 11, borderRadius: '50%', background: EC[sel.estado] || '#94a3b8' }} />
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{sel.nombre}</span>
-              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 8, background: (EC[sel.estado] || '#94a3b8') + '18', color: EC[sel.estado] || '#94a3b8', fontWeight: 700 }}>{sel.estado?.toUpperCase()}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', background: '#f8fafc', borderRadius: 8, padding: 12, marginBottom: 12 }}>
-              {[['IP', sel.ip], ['Tipo', sel.tipo], ['OS', sel.os]].filter(([, v]) => v).map(([k, v]) => (
-                <div key={k}><div style={{ fontSize: 10, color: '#94a3b8' }}>{k}</div><div style={{ fontSize: 11, fontWeight: 600, color: '#1d4ed8', fontFamily: 'monospace' }}>{v}</div></div>
-              ))}
-            </div>
-            {sel.servicios?.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 5 }}>SERVICIOS:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                  {sel.servicios.map(s => <span key={s} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: '#f1f5f9', color: '#0f172a', fontFamily: 'monospace', border: '1px solid #e2e8f0' }}>{s}</span>)}
-                </div>
-              </div>
-            )}
-            {sel.notas && <div style={{ padding: 10, background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a', fontSize: 11, color: '#92400e', lineHeight: 1.5, marginBottom: 12 }}>⚠ {sel.notas}</div>}
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Conexiones</div>
-            {(red?.conexiones || []).filter(c => c.origen === sel.id || c.destino === sel.id).length === 0
-              ? <div style={{ fontSize: 11, color: '#94a3b8' }}>Sin conexiones registradas</div>
-              : (red?.conexiones || []).filter(c => c.origen === sel.id || c.destino === sel.id).map((c, i) => {
-                const other = c.origen === sel.id ? hosts.find(h => h.id === c.destino) : hosts.find(h => h.id === c.origen);
-                const EC2 = { comprometido: '#dc2626', sospechoso: '#d97706', limpio: '#16a34a', maliciosa: '#dc2626', sospechosa: '#d97706', legitima: '#16a34a' };
-                return (
-                  <div key={i} style={{ padding: '8px 12px', borderRadius: 6, marginBottom: 4, background: '#f8fafc', border: `1px solid ${EC2[c.estado] || '#e2e8f0'}44`, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: EC2[c.estado] || '#94a3b8', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#0f172a' }}>{c.origen === sel.id ? '→' : '←'} {other?.nombre || 'externo'} ({other?.ip || '?'})</span>
-                    <span style={{ fontSize: 10, color: '#64748b' }}>{c.protocolo}:{c.puerto}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: EC2[c.estado] || '#94a3b8', flexShrink: 0 }}>{c.estado?.toUpperCase()}</span>
-                  </div>
-                );
-              })
-            }
-          </>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, color: '#94a3b8' }}>
-            <div style={{ fontSize: 48 }}>🌐</div>
-            <div style={{ fontSize: 13 }}>Haz clic en un host para ver detalles</div>
-            <div style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center', maxWidth: 200 }}>Usa la vista Mapa para ver las conexiones visualmente</div>
-          </div>
-        )}
+      <div style={{ display:'flex',alignItems:'center',borderTop:'1px solid #21262d',padding:'8px 14px',flexShrink:0 }}>
+        <span style={{ color:'#7ee787',marginRight:6,fontSize:12,whiteSpace:'nowrap' }}>{prompt}</span>
+        <input autoFocus value={input} onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==='Enter')run(input); else if(e.key==='ArrowUp'){const i=Math.min(histIdx+1,cmdHist.length-1);setHistIdx(i);setInput(cmdHist[i]||'');} else if(e.key==='ArrowDown'){const i=Math.max(histIdx-1,-1);setHistIdx(i);setInput(i===-1?'':cmdHist[i]||'');} }}
+          style={{ flex:1,background:'transparent',border:'none',outline:'none',color:'#58a6ff',fontSize:12,fontFamily:'inherit' }}
+          placeholder="escribe un comando..."
+        />
       </div>
     </div>
   );
 }
 
-/* ─── INCIDENT REPORT ─────────────────────────────────────────────────────── */
-function ReportApp({ preguntas, labId, onSubmit, submitting, queriesCount }) {
-  const loadDraft = () => { try { const d = JSON.parse(localStorage.getItem(`${DRAFT_KEY}:${labId}`) || '{}'); return { resp: d.resp || {}, inf: d.inf || '' }; } catch { return { resp: {}, inf: '' }; } };
-  const init = loadDraft();
-  const [resp, setResp] = useState(init.resp);
-  const [inf,  setInf]  = useState(init.inf);
-  const [tab,  setTab]  = useState('preguntas');
-  const [saved, setSaved] = useState(false);
-  const acc = '#0078d4';
-  const respondidas = preguntas.filter(p => resp[String(p.id)]?.trim()).length;
-
-  useEffect(() => {
-    if (!labId) return;
-    localStorage.setItem(`${DRAFT_KEY}:${labId}`, JSON.stringify({ resp, inf }));
-    setSaved(true);
-    const t = setTimeout(() => setSaved(false), 1500);
-    return () => clearTimeout(t);
-  }, [resp, inf, labId]);
-
-  const handleSubmit = () => { onSubmit({ respuestas: resp, informe_libre: inf }); localStorage.removeItem(`${DRAFT_KEY}:${labId}`); };
-
+function NetworkApp({ red, so }) {
+  const [sel,setSel]=useState(null);
+  const dk=so==='linux';
+  const bg=dk?'#1e1e2e':'#fff', tc1=dk?'#e2e8f0':'#0f172a', tc2=dk?'#94a3b8':'#64748b', bc=dk?'#2a2a3d':'#e2e8f0';
+  const hosts=red?.hosts||[];
+  const conns=red?.conexiones||[];
+  const EC={comprometido:'#ef4444',sospechoso:'#f59e0b',limpio:'#10b981',maliciosa:'#ef4444',sospechosa:'#f59e0b',legitima:'#10b981'};
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', fontSize: 13 }}>
-      {/* tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', flexShrink: 0, background: '#f8fafc', alignItems: 'center' }}>
-        {['preguntas', 'informe'].map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            style={{ padding: '10px 18px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: tab === t ? '#fff' : 'transparent', color: tab === t ? acc : '#64748b', borderBottom: tab === t ? `2px solid ${acc}` : '2px solid transparent' }}>
-            {t === 'preguntas' ? `📋 Preguntas (${respondidas}/${preguntas.length})` : '📝 Informe libre'}
-          </button>
-        ))}
-        {saved && <span style={{ marginLeft: 'auto', marginRight: 12, fontSize: 10, color: '#10b981' }}>✓ Guardado</span>}
+    <div style={{ display:'flex',height:'100%',background:bg,color:tc1,fontSize:12 }}>
+      <div style={{ width:260,borderRight:`1px solid ${bc}`,overflow:'auto' }}>
+        <div style={{ padding:'8px 12px',borderBottom:`1px solid ${bc}`,fontSize:11,fontWeight:700,color:tc2,textTransform:'uppercase',letterSpacing:'0.05em' }}>Hosts ({hosts.length})</div>
+        {hosts.map(h=>(<div key={h.id} onClick={()=>setSel(h)} style={{ padding:'10px 12px',borderBottom:`1px solid ${bc}`,cursor:'pointer',background:sel?.id===h.id?(EC[h.estado]||'#4f46e5')+'11':'transparent',display:'flex',alignItems:'center',gap:10,transition:'background 0.15s' }}>
+          <div style={{ width:10,height:10,borderRadius:'50%',background:EC[h.estado]||tc2,flexShrink:0 }}/>
+          <div style={{ flex:1 }}><div style={{ fontWeight:600,fontSize:12,color:tc1 }}>{h.nombre}</div><div style={{ fontSize:10,color:tc2,fontFamily:'monospace' }}>{h.ip}</div></div>
+          <span style={{ fontSize:9,padding:'1px 6px',borderRadius:10,background:(EC[h.estado]||tc2)+'22',color:EC[h.estado]||tc2,fontWeight:700 }}>{h.estado?.toUpperCase()}</span>
+        </div>))}
       </div>
+      <div style={{ flex:1,overflow:'auto',padding:16 }}>
+        {sel?(<>
+          <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:12 }}>
+            <div style={{ width:12,height:12,borderRadius:'50%',background:EC[sel.estado]||tc2 }}/>
+            <span style={{ fontSize:16,fontWeight:800,color:tc1 }}>{sel.nombre}</span>
+            <span style={{ fontSize:10,padding:'2px 8px',borderRadius:10,background:(EC[sel.estado]||tc2)+'22',color:EC[sel.estado]||tc2,fontWeight:700 }}>{sel.estado?.toUpperCase()}</span>
+          </div>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 20px',background:dk?'#13131f':'#f8fafc',borderRadius:8,padding:12,marginBottom:12 }}>
+            {[['IP',sel.ip],['Tipo',sel.tipo],['OS',sel.os]].filter(([,v])=>v).map(([k,v])=>(<div key={k}><div style={{ fontSize:10,color:tc2 }}>{k}</div><div style={{ fontSize:12,fontWeight:600,color:dk?'#7dd3fc':'#1d4ed8',fontFamily:'monospace' }}>{v}</div></div>))}
+          </div>
+          {sel.servicios?.length>0&&(<div style={{ marginBottom:12 }}><div style={{ fontSize:10,color:tc2,marginBottom:6 }}>SERVICIOS:</div><div style={{ display:'flex',flexWrap:'wrap',gap:4 }}>{sel.servicios.map(s=>(<span key={s} style={{ fontSize:10,padding:'2px 8px',borderRadius:4,background:dk?'#2a2a3d':'#e2e8f0',color:tc1,fontFamily:'monospace' }}>{s}</span>))}</div></div>)}
+          {sel.notas&&(<div style={{ marginBottom:12,padding:10,background:dk?'#1a1a2e':'#fef3c7',borderRadius:8,border:`1px solid ${dk?'#2a2a3d':'#fde68a'}`,fontSize:11,color:dk?'#fde68a':'#92400e',lineHeight:1.5 }}>⚠ {sel.notas}</div>)}
+          <div style={{ fontSize:11,fontWeight:700,color:tc2,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8 }}>Conexiones</div>
+          {conns.filter(c=>c.origen===sel.id||c.destino===sel.id).map((c,i)=>{
+            const ot=c.origen===sel.id?hosts.find(h=>h.id===c.destino):hosts.find(h=>h.id===c.origen);
+            return (<div key={i} style={{ padding:'8px 12px',borderRadius:6,marginBottom:4,background:dk?'#13131f':'#f8fafc',border:`1px solid ${EC[c.estado]||bc}44`,display:'flex',alignItems:'center',gap:10 }}>
+              <div style={{ width:8,height:8,borderRadius:'50%',background:EC[c.estado]||tc2,flexShrink:0 }}/>
+              <span style={{ fontFamily:'monospace',fontSize:11,color:tc1 }}>{c.origen===sel.id?'→':'←'} {ot?.nombre||'externo'} ({ot?.ip||'?'})</span>
+              <span style={{ fontSize:10,color:tc2 }}>{c.protocolo}:{c.puerto}</span>
+              <span style={{ marginLeft:'auto',fontSize:9,fontWeight:700,color:EC[c.estado]||tc2 }}>{c.estado?.toUpperCase()}</span>
+            </div>);
+          })}
+          {conns.filter(c=>c.origen===sel.id||c.destino===sel.id).length===0&&<div style={{ fontSize:11,color:tc2 }}>Sin conexiones para este host</div>}
+        </>):(<div style={{ color:tc2,textAlign:'center',paddingTop:60,fontSize:13 }}>Selecciona un host para ver detalles y conexiones</div>)}
+      </div>
+    </div>
+  );
+}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
-        {tab === 'preguntas' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-            {preguntas.map(p => (
-              <div key={p.id} style={{ border: `1px solid ${resp[String(p.id)] ? acc + '44' : '#e2e8f0'}`, borderRadius: 10, padding: '13px 15px', background: resp[String(p.id)] ? '#f0f9ff' : '#fafafa' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: resp[String(p.id)] ? '#10b98122' : '#f1f5f9', border: `1px solid ${resp[String(p.id)] ? '#10b981' : '#e2e8f0'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: resp[String(p.id)] ? '#10b981' : '#94a3b8' }}>
-                    {resp[String(p.id)] ? '✓' : p.id}
+function ReportApp({ preguntas, so, onSubmit, submitting, queriesCount }) {
+  const [resp,setResp]=useState({});
+  const [inf,setInf]=useState('');
+  const [tab,setTab]=useState('preguntas');
+  const dk=so==='linux';
+  const bg=dk?'#1e1e2e':'#fff', tc1=dk?'#e2e8f0':'#0f172a', tc2=dk?'#94a3b8':'#64748b', bc=dk?'#2a2a3d':'#e2e8f0', acc='#4f46e5';
+  const respondidas=preguntas.filter(p=>resp[String(p.id)]?.trim()).length;
+  return (
+    <div style={{ display:'flex',flexDirection:'column',height:'100%',background:bg,color:tc1,fontSize:13,fontFamily:"'Inter','Segoe UI',sans-serif" }}>
+      <div style={{ display:'flex',borderBottom:`1px solid ${bc}`,flexShrink:0 }}>
+        {['preguntas','informe'].map(t=>(<button key={t} onClick={()=>setTab(t)} style={{ padding:'10px 20px',border:'none',cursor:'pointer',fontSize:12,fontWeight:700,background:tab===t?(dk?'#13131f':'#f8fafc'):'transparent',color:tab===t?acc:tc2,borderBottom:tab===t?`2px solid ${acc}`:'2px solid transparent',transition:'all 0.15s' }}>
+          {t==='preguntas'?`📋 Preguntas (${respondidas}/${preguntas.length})`:'📝 Informe libre'}
+        </button>))}
+      </div>
+      <div style={{ flex:1,overflow:'auto',padding:16 }}>
+        {tab==='preguntas'?(
+          <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
+            {preguntas.map(p=>(
+              <div key={p.id} style={{ border:`1px solid ${resp[String(p.id)]?acc+'44':bc}`,borderRadius:10,padding:'14px 16px',background:dk?'#13131f':'#f8fafc',transition:'border-color 0.2s' }}>
+                <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:8 }}>
+                  <div style={{ width:24,height:24,borderRadius:'50%',flexShrink:0,background:resp[String(p.id)]?'#10b98122':(dk?'#2a2a3d':'#e2e8f0'),border:`1px solid ${resp[String(p.id)]?'#10b981':bc}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:resp[String(p.id)]?'#10b981':tc2 }}>
+                    {resp[String(p.id)]?'✓':p.id}
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: acc, textTransform: 'uppercase', letterSpacing: '.04em' }}>{p.categoria}</span>
+                  <span style={{ fontSize:11,fontWeight:700,color:acc }}>{p.categoria}</span>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', lineHeight: 1.6, marginBottom: 9 }}>{p.pregunta}</div>
-                <input value={resp[String(p.id)] || ''} onChange={e => setResp(r => ({ ...r, [String(p.id)]: e.target.value }))}
-                  placeholder={p.placeholder || 'Escribe tu respuesta aquí...'}
-                  style={{ width: '100%', padding: '8px 11px', borderRadius: 6, border: `1px solid ${resp[String(p.id)] ? acc + '66' : '#e2e8f0'}`, background: '#fff', color: '#0f172a', fontSize: 12, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start', marginTop: 7, padding: '5px 9px', borderRadius: 5, background: '#fffbeb', border: '1px solid #fde68a' }}>
+                {/* PREGUNTA SIEMPRE VISIBLE ENCIMA DEL INPUT */}
+                <div style={{ fontSize:13,fontWeight:600,color:tc1,lineHeight:1.6,marginBottom:10 }}>{p.pregunta}</div>
+                <input
+                  value={resp[String(p.id)]||''} onChange={e=>setResp(r=>({...r,[String(p.id)]:e.target.value}))}
+                  placeholder={p.placeholder||'Escribe tu respuesta aquí...'}
+                  style={{ width:'100%',padding:'9px 12px',borderRadius:7,border:`1px solid ${bc}`,background:dk?'#1e1e2e':'#fff',color:tc1,fontSize:12,outline:'none',boxSizing:'border-box',transition:'border-color 0.2s',fontFamily:'inherit' }}
+                  onFocus={e=>e.target.style.borderColor=acc} onBlur={e=>e.target.style.borderColor=bc}
+                />
+                {/* PISTA SIEMPRE VISIBLE DEBAJO DEL INPUT */}
+                <div style={{ display:'flex',gap:6,alignItems:'flex-start',marginTop:8,padding:'6px 10px',borderRadius:6,background:dk?'#1a1a2e':'#fffbeb',border:`1px solid ${dk?'#2a2a3d':'#fde68a'}` }}>
                   <span>💡</span>
-                  <span style={{ fontSize: 11, color: '#92400e', lineHeight: 1.5 }}>{p.pista}</span>
+                  <span style={{ fontSize:11,color:dk?'#fde68a':'#92400e',lineHeight:1.5 }}>{p.pista}</span>
                 </div>
               </div>
             ))}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 5 }}><span>Progreso</span><span>{respondidas}/{preguntas.length}</span></div>
-              <div style={{ height: 5, background: '#f1f5f9', borderRadius: 3 }}><div style={{ height: '100%', borderRadius: 3, width: `${preguntas.length > 0 ? (respondidas / preguntas.length) * 100 : 0}%`, background: `linear-gradient(90deg,${acc},#106ebe)` }} /></div>
+            <div style={{ padding:'8px 0' }}>
+              <div style={{ display:'flex',justifyContent:'space-between',fontSize:11,color:tc2,marginBottom:6 }}><span>Progreso</span><span>{respondidas}/{preguntas.length}</span></div>
+              <div style={{ height:6,background:bc,borderRadius:3 }}><div style={{ height:'100%',borderRadius:3,width:`${preguntas.length>0?(respondidas/preguntas.length)*100:0}%`,background:`linear-gradient(90deg,${acc},#7c3aed)`,transition:'width 0.4s ease' }}/></div>
             </div>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.7, padding: '8px 10px', background: '#f8fafc', borderRadius: 7, border: '1px solid #e2e8f0' }}>
-              Describe la cadena del ataque: vector de entrada, técnicas MITRE, sistemas afectados, movimiento lateral y remediación. Un buen análisis suma hasta <strong>+10 puntos extra</strong>.
-            </div>
-            <textarea value={inf} onChange={e => setInf(e.target.value)} placeholder="Escribe tu análisis técnico completo del incidente..."
-              style={{ minHeight: 200, padding: '12px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#0f172a', fontSize: 12, lineHeight: 1.7, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>Palabras: {inf.trim().split(/\s+/).filter(Boolean).length}</div>
+        ):(
+          <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+            <div style={{ fontSize:12,color:tc2,lineHeight:1.7 }}>Describe la cadena completa del ataque: vector de entrada, técnicas usadas, sistemas afectados, movimiento lateral, persistencia y acciones de remediación. Un buen informe suma hasta +10 puntos extra.</div>
+            <textarea value={inf} onChange={e=>setInf(e.target.value)} placeholder="Escribe aquí tu análisis técnico completo del incidente..." style={{ minHeight:240,padding:'12px 14px',borderRadius:8,border:`1px solid ${bc}`,background:dk?'#13131f':'#f8fafc',color:tc1,fontSize:12,lineHeight:1.7,outline:'none',resize:'vertical',fontFamily:'inherit' }} onFocus={e=>e.target.style.borderColor=acc} onBlur={e=>e.target.style.borderColor=bc}/>
           </div>
         )}
       </div>
-
-      <div style={{ padding: '10px 14px', borderTop: '1px solid #e2e8f0', flexShrink: 0, background: '#f8fafc' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 11, color: '#64748b' }}>
-          <span>🔍 <strong style={{ color: acc }}>{queriesCount}</strong> herramientas usadas</span>
-          <span>✅ <strong style={{ color: respondidas === preguntas.length ? '#10b981' : acc }}>{respondidas}/{preguntas.length}</strong></span>
+      <div style={{ padding:'12px 16px',borderTop:`1px solid ${bc}`,flexShrink:0,background:dk?'#13131f':'#f8fafc' }}>
+        <div style={{ display:'flex',justifyContent:'space-between',marginBottom:10,fontSize:11,color:tc2 }}>
+          <span>Herramientas usadas: <strong style={{ color:acc }}>{queriesCount}</strong> interacciones</span>
+          <span>Preguntas: <strong style={{ color:respondidas===preguntas.length?'#10b981':acc }}>{respondidas}/{preguntas.length}</strong></span>
         </div>
-        <button onClick={handleSubmit} disabled={submitting || respondidas === 0}
-          style={{ width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', background: submitting || respondidas === 0 ? '#e2e8f0' : 'linear-gradient(135deg,#10b981,#059669)', color: submitting || respondidas === 0 ? '#94a3b8' : '#fff', fontSize: 13, fontWeight: 700, cursor: submitting || respondidas === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          {submitting ? '⏳ Evaluando con IA...' : '📤 Enviar análisis'}
+        <button onClick={()=>onSubmit({respuestas:resp,informe_libre:inf})} disabled={submitting||respondidas===0} style={{ width:'100%',padding:'13px 0',borderRadius:8,border:'none',background:submitting||respondidas===0?(dk?'#2a2a3d':'#e2e8f0'):'linear-gradient(135deg,#10b981,#059669)',color:submitting||respondidas===0?tc2:'#fff',fontSize:13,fontWeight:700,cursor:submitting||respondidas===0?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.2s' }}>
+          {submitting?'⏳ Evaluando con IA...':'📤 Enviar análisis para evaluación'}
         </button>
-        {respondidas === 0 && <div style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: 5 }}>Responde al menos una pregunta para enviar</div>}
       </div>
     </div>
   );
 }
 
-/* ─── PANTALLA RESULTADOS ─────────────────────────────────────────────────── */
-function Resultados({ resultado, escenario, onNew, onDash }) {
-  const [tab, setTab] = useState('resumen');
-  const pct   = Math.round(resultado.puntuacion_normalizada || 0);
-  const color = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
-  const SL    = { siem_queries: 'SIEM & Queries', forense_digital: 'Forense Digital', threat_hunting: 'Threat Hunting', analisis_logs: 'Análisis de Logs', inteligencia_amenazas: 'Intel. Amenazas' };
-
+function ResultadosScreen({ resultado, escenario, onNuevoLab, onDashboard }) {
+  const [tab,setTab]=useState('resumen');
+  const pct=Math.round(resultado.puntuacion_normalizada||0);
+  const color=pct>=80?'#10b981':pct>=50?'#f59e0b':'#ef4444';
+  const SL={siem_queries:'SIEM & Queries',forense_digital:'Forense Digital',threat_hunting:'Threat Hunting',analisis_logs:'Análisis de Logs',inteligencia_amenazas:'Intel. Amenazas'};
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4ff', fontFamily: 'Inter,Segoe UI,sans-serif', padding: 32, color: '#0f172a' }}>
-      <div style={{ maxWidth: 860, margin: '0 auto' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: '28px 32px', marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,.06)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Laboratorio completado</div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.5px' }}>{escenario?.titulo || 'Lab SOC'}</div>
-            <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{escenario?.nivel}</div>
-          </div>
-          <div style={{ textAlign: 'right' }}><div style={{ fontSize: 56, fontWeight: 900, color, lineHeight: 1 }}>{pct}</div><div style={{ fontSize: 12, color: '#64748b' }}>/100</div></div>
+    <div style={{ minHeight:'100vh',background:'#f0f4ff',fontFamily:"'Inter','Segoe UI',sans-serif",padding:32,color:'#0f172a' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}`}</style>
+      <div style={{ maxWidth:860,margin:'0 auto',animation:'fadeUp 0.4s ease' }}>
+        <div style={{ background:'#fff',borderRadius:16,padding:'28px 32px',marginBottom:20,boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+          <div><div style={{ fontSize:12,color:'#64748b',fontWeight:600,marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em' }}>Laboratorio completado</div><div style={{ fontSize:22,fontWeight:800,color:'#0f172a',letterSpacing:'-0.5px' }}>{escenario?.titulo||'Lab SOC'}</div></div>
+          <div style={{ textAlign:'right' }}><div style={{ fontSize:52,fontWeight:900,color,lineHeight:1 }}>{pct}</div><div style={{ fontSize:12,color:'#64748b' }}>/ 100 puntos</div></div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-          {[['⚡ XP', `+${resultado.xp_ganada || 0}`, '#4f46e5'], ['🔗 Cadena', `${resultado.cadena_ataque_descubierta || 0}%`, color], ['🔍 Queries', `+${resultado.puntuacion_queries || 0}pts`, '#10b981'], ['📋 Informe', `+${resultado.puntuacion_informe || 0}pts`, '#f59e0b']].map(([l, v, c]) => (
-            <div key={l} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 18px' }}><div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{l}</div><div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div></div>
-          ))}
+        <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20 }}>
+          {[['⚡ XP Ganada',`+${resultado.xp_ganada||0}`,'#4f46e5'],['🔗 Cadena descubierta',`${resultado.cadena_ataque_descubierta||0}%`,color],['🔍 Bonus queries',`+${resultado.puntuacion_queries||0} pts`,'#10b981'],['📋 Bonus informe',`+${resultado.puntuacion_informe||0} pts`,'#f59e0b']].map(([l,v,c])=>(<div key={l} style={{ background:'#fff',border:'1px solid #e2e8f0',borderRadius:12,padding:'16px 18px' }}><div style={{ fontSize:11,color:'#64748b',marginBottom:4 }}>{l}</div><div style={{ fontSize:22,fontWeight:800,color:c }}>{v}</div></div>))}
         </div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-          {['resumen', 'preguntas', 'skills', 'solucion'].map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              style={{ padding: '8px 18px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `1px solid ${tab === t ? '#0078d4' : '#e2e8f0'}`, background: tab === t ? '#0078d408' : '#fff', color: tab === t ? '#0078d4' : '#64748b' }}>
-              {t === 'resumen' ? '📊 Resumen' : t === 'preguntas' ? '❓ Preguntas' : t === 'skills' ? '📈 Skills' : '🔓 Solución'}
-            </button>
-          ))}
+        <div style={{ display:'flex',gap:6,marginBottom:14 }}>
+          {['resumen','preguntas','skills','solucion'].map(t=>(<button key={t} onClick={()=>setTab(t)} style={{ padding:'8px 18px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700,border:`1px solid ${tab===t?'#4f46e5':'#e2e8f0'}`,background:tab===t?'#4f46e511':'#fff',color:tab===t?'#4f46e5':'#64748b',transition:'all 0.15s' }}>{t==='resumen'?'📊 Resumen':t==='preguntas'?'❓ Preguntas':t==='skills'?'📈 Skills':'🔓 Solución'}</button>))}
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 24, marginBottom: 20, minHeight: 200 }}>
-          {tab === 'resumen' && <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8 }}>{resultado.feedback_general}</p>}
-          {tab === 'preguntas' && (resultado.feedback_preguntas || []).map(fp => (
-            <div key={fp.id} style={{ padding: '13px 15px', borderRadius: 10, background: fp.correcto ? '#f0fdf4' : '#fef2f2', border: `1px solid ${fp.correcto ? '#bbf7d0' : '#fecaca'}`, marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><span style={{ fontSize: 18 }}>{fp.correcto ? '✅' : '❌'}</span><span style={{ fontSize: 13, fontWeight: 700 }}>Pregunta {fp.id}</span><span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: fp.correcto ? '#bbf7d0' : '#fecaca', color: fp.correcto ? '#15803d' : '#dc2626' }}>{fp.puntos}/10</span></div>
-              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Correcta: <span style={{ color: '#1d4ed8', fontWeight: 600, fontFamily: 'monospace' }}>{fp.respuesta_correcta}</span></div>
-              <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.6 }}>{fp.feedback}</div>
+        <div style={{ background:'#fff',border:'1px solid #e2e8f0',borderRadius:14,padding:24,marginBottom:20 }}>
+          {tab==='resumen'&&<p style={{ fontSize:14,color:'#374151',lineHeight:1.8 }}>{resultado.feedback_general}</p>}
+          {tab==='preguntas'&&(
+            <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+              {(resultado.feedback_preguntas||[]).map(fp=>(<div key={fp.id} style={{ padding:'14px 16px',borderRadius:10,background:fp.correcto?'#f0fdf4':'#fef2f2',border:`1px solid ${fp.correcto?'#bbf7d0':'#fecaca'}` }}>
+                <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:6 }}><span style={{ fontSize:18 }}>{fp.correcto?'✅':'❌'}</span><span style={{ fontSize:13,fontWeight:700 }}>Pregunta {fp.id}</span><span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:6,background:fp.correcto?'#bbf7d0':'#fecaca',color:fp.correcto?'#15803d':'#dc2626' }}>{fp.puntos}/10 pts</span></div>
+                <div style={{ fontSize:12,color:'#64748b',marginBottom:4 }}>Respuesta correcta: <span style={{ color:'#1d4ed8',fontWeight:600,fontFamily:'monospace' }}>{fp.respuesta_correcta}</span></div>
+                <div style={{ fontSize:12,color:'#374151',lineHeight:1.6 }}>{fp.feedback}</div>
+              </div>))}
             </div>
-          ))}
-          {tab === 'skills' && <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {Object.entries(resultado.skills_mejoradas || {}).map(([sk, d]) => {
-              const delta = typeof d === 'object' ? d.delta : d;
-              return (
-                <div key={sk} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 164, fontSize: 13, color: '#374151', fontWeight: 600 }}>{SL[sk] || sk}</div>
-                  <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}><div style={{ height: '100%', borderRadius: 4, width: `${(delta / 0.3) * 100}%`, background: delta >= 0.2 ? '#10b981' : delta > 0 ? '#f59e0b' : '#e2e8f0' }} /></div>
-                  <div style={{ width: 52, fontSize: 13, color: delta > 0 ? '#10b981' : '#94a3b8', textAlign: 'right', fontWeight: 700 }}>{delta > 0 ? `+${delta.toFixed(2)}` : '—'}</div>
-                </div>
-              );
-            })}
-          </div>}
-          {tab === 'solucion' && resultado.solucion_completa && (
+          )}
+          {tab==='skills'&&(
+            <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
+              {Object.entries(resultado.skills_mejoradas||{}).map(([sk,d])=>{ const delta=typeof d==='object'?d.delta:d; return (<div key={sk} style={{ display:'flex',alignItems:'center',gap:14 }}><div style={{ width:160,fontSize:13,color:'#374151',fontWeight:600 }}>{SL[sk]||sk}</div><div style={{ flex:1,height:8,background:'#e2e8f0',borderRadius:4 }}><div style={{ height:'100%',borderRadius:4,width:`${(delta/0.3)*100}%`,background:delta>=0.2?'#10b981':delta>0?'#f59e0b':'#e2e8f0',transition:'width 0.7s ease' }}/></div><div style={{ width:52,fontSize:13,color:delta>0?'#10b981':'#94a3b8',textAlign:'right',fontWeight:700 }}>{delta>0?`+${delta.toFixed(2)}`:'—'}</div></div>); })}
+            </div>
+          )}
+          {tab==='solucion'&&resultado.solucion_completa&&(
             <div>
-              <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, marginBottom: 16 }}>{resultado.solucion_completa.resumen}</p>
-              {(resultado.solucion_completa.cadena_ataque || []).map((p, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, background: '#0078d408', border: '1px solid #0078d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#0078d4' }}>{i + 1}</div>
-                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.6, paddingTop: 3 }}>{p}</div>
-                </div>
-              ))}
-              {resultado.solucion_completa.tecnicas_mitre?.length > 0 && (
-                <div style={{ marginTop: 14, marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>TTPs MITRE ATT&CK:</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {resultado.solucion_completa.tecnicas_mitre.map(t => <span key={t} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, background: '#ede9fe', color: '#7c3aed', fontWeight: 700 }}>{t}</span>)}
-                  </div>
-                </div>
-              )}
-              {resultado.solucion_completa.lecciones && (
-                <div style={{ padding: 14, background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#92400e', marginBottom: 4 }}>💡 LECCIONES APRENDIDAS</div>
-                  <div style={{ fontSize: 12, color: '#78350f', lineHeight: 1.7 }}>{resultado.solucion_completa.lecciones}</div>
-                </div>
-              )}
+              <p style={{ fontSize:13,color:'#374151',lineHeight:1.8,marginBottom:16 }}>{resultado.solucion_completa.resumen}</p>
+              <div style={{ marginBottom:16 }}><div style={{ fontSize:11,fontWeight:800,color:'#64748b',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10 }}>Cadena del ataque:</div>
+              {(resultado.solucion_completa.cadena_ataque||[]).map((p,i)=>(<div key={i} style={{ display:'flex',gap:12,marginBottom:8 }}><div style={{ width:24,height:24,borderRadius:'50%',flexShrink:0,background:'#4f46e511',border:'1px solid #4f46e5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#4f46e5' }}>{i+1}</div><div style={{ fontSize:12,color:'#374151',lineHeight:1.6,paddingTop:3 }}>{p}</div></div>))}</div>
+              {resultado.solucion_completa.tecnicas_mitre?.length>0&&(<div style={{ marginBottom:14 }}><div style={{ fontSize:11,fontWeight:800,color:'#64748b',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8 }}>TTPs MITRE ATT&CK:</div><div style={{ display:'flex',flexWrap:'wrap',gap:6 }}>{resultado.solucion_completa.tecnicas_mitre.map(t=>(<span key={t} style={{ fontSize:11,padding:'3px 10px',borderRadius:6,background:'#ede9fe',color:'#7c3aed',fontWeight:700 }}>{t}</span>))}</div></div>)}
+              <div style={{ padding:14,background:'#fffbeb',borderRadius:10,border:'1px solid #fde68a' }}><div style={{ fontSize:11,fontWeight:800,color:'#92400e',marginBottom:4 }}>💡 LECCIONES APRENDIDAS</div><div style={{ fontSize:12,color:'#78350f',lineHeight:1.7 }}>{resultado.solucion_completa.lecciones}</div></div>
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onNew} style={{ flex: 1, padding: '14px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#0078d4,#106ebe)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>🔬 Nuevo laboratorio</button>
-          <button onClick={onDash} style={{ flex: 1, padding: '14px 0', borderRadius: 10, background: '#fff', border: '1px solid #e2e8f0', color: '#374151', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>← Dashboard</button>
+        <div style={{ display:'flex',gap:12 }}>
+          <button onClick={onNuevoLab} style={{ flex:1,padding:'14px 0',borderRadius:10,border:'none',background:'linear-gradient(135deg,#4f46e5,#7c3aed)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer' }}>🔬 Nuevo laboratorio</button>
+          <button onClick={onDashboard} style={{ flex:1,padding:'14px 0',borderRadius:10,background:'#fff',border:'1px solid #e2e8f0',color:'#374151',fontSize:14,fontWeight:700,cursor:'pointer' }}>← Dashboard</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── MODAL CONFIRMACIÓN SALIDA ───────────────────────────────────────────── */
-function ModalSalir({ onConfirm, onCancel }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: '36px 40px', maxWidth: 420, width: '90%', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,.4)' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>¿Abandonar el laboratorio?</h2>
-        <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.7, marginBottom: 28 }}>Tu progreso se perderá. Las respuestas del Incident Report están guardadas localmente, pero el escenario no se podrá recuperar.</p>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '13px 0', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Seguir investigando</button>
-          <button onClick={onConfirm} style={{ flex: 1, padding: '13px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#ef4444,#dc2626)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Sí, salir</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── BOOT SCREEN ─────────────────────────────────────────────────────────── */
-const BOOT_LINES = [
-  '', '  Starting Windows...', '  Microsoft Windows [Version 10.0.19045.3803]',
-  '  (c) Microsoft Corporation. All rights reserved.', '',
-  '  Loading CORP domain policies.......................... [OK]',
-  '  Starting Windows Defender Antivirus Service.......... [OK]',
-  '  Connecting to CORP-DC01.corp.local................... [OK]',
-  '  Loading Splunk Universal Forwarder................... [OK]',
-  '  Loading SOC Analyst workstation profile..............',
-  '', '  ████████████████████████████████  100%', '',
-  '  Welcome, SOC Analyst. Stay alert.',
-];
-
-function BootScreen({ onDone }) {
-  const [lines, setLines] = useState([]);
-  const [fading, setFading] = useState(false);
-  useEffect(() => {
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i < BOOT_LINES.length) { setLines(l => [...l, BOOT_LINES[i++]]); }
-      else { clearInterval(iv); setTimeout(() => { setFading(true); setTimeout(onDone, 700); }, 900); }
-    }, 120);
-    return () => clearInterval(iv);
-  }, []);
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000080', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Courier New',monospace", zIndex: 9000, opacity: fading ? 0 : 1, transition: 'opacity .7s' }}>
-      <div style={{ fontSize: 64, marginBottom: 16 }}>🪟</div>
-      <div style={{ fontSize: 13, color: '#fff', lineHeight: 2.1, textAlign: 'center' }}>
-        {lines.map((l, i) => <div key={i} style={{ opacity: i === lines.length - 1 ? 1 : 0.7 }}>{l || '\u00a0'}</div>)}
-      </div>
-    </div>
-  );
-}
-
-/* ─── DESKTOP ICON ────────────────────────────────────────────────────────── */
-function DIcon({ id, icon, label, isOpen, badge, onClick }) {
-  const [h, setH] = useState(false);
-  return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '8px 6px', borderRadius: 6, background: h ? 'rgba(255,255,255,.22)' : isOpen ? 'rgba(255,255,255,.1)' : 'transparent', cursor: 'pointer', width: 76, userSelect: 'none', position: 'relative', border: isOpen ? '1px solid rgba(255,255,255,.2)' : '1px solid transparent' }}
-    >
-      <div style={{ fontSize: 30, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }}>{icon}</div>
-      <div style={{ fontSize: 11, color: '#fff', textAlign: 'center', lineHeight: 1.3, textShadow: '0 1px 4px rgba(0,0,0,.9)', fontWeight: 500 }}>{label}</div>
-      {badge && <div style={{ position: 'absolute', top: 4, right: 8, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '2px solid rgba(30,58,138,.8)' }} />}
-    </div>
-  );
-}
-
-/* ─── TASKBAR BTN ─────────────────────────────────────────────────────────── */
-function TBtn({ icon, label, active, minimized, onClick }) {
-  const [h, setH] = useState(false);
-  return (
-    <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 4, background: active ? 'rgba(255,255,255,.22)' : h ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.05)', border: active ? '1px solid rgba(255,255,255,.3)' : '1px solid transparent', cursor: 'pointer', maxWidth: 150, opacity: minimized ? .65 : 1 }}>
-      <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
-      <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-      {active && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#38bdf8', marginLeft: 'auto', flexShrink: 0 }} />}
-    </div>
-  );
-}
-
-/* ─── APPS CONFIG ─────────────────────────────────────────────────────────── */
-const APPS = [
-  { id: 'siem',    label: 'SIEM Alerts',     icon: '🖥️', iX: 100, iY: 60,  iW: 740, iH: 520 },
-  { id: 'logs',    label: 'Log Explorer',    icon: '📋', iX: 140, iY: 90,  iW: 700, iH: 500 },
-  { id: 'network', label: 'Network Monitor', icon: '🌐', iX: 180, iY: 120, iW: 680, iH: 480 },
-  { id: 'terminal',label: 'Terminal',        icon: '💻', iX: 220, iY: 150, iW: 660, iH: 420 },
-  { id: 'report',  label: 'Incident Report', icon: '📝', iX: 260, iY: 90,  iW: 600, iH: 580 },
-];
-
-/* ─── MAIN ────────────────────────────────────────────────────────────────── */
 export default function LabPage() {
-  const navigate       = useNavigate();
-  const { token }      = useAuth();
-  const [fase, setFase]           = useState('intro');
-  const [escenario, setEscenario] = useState(null);
-  const [resultado, setResultado] = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState('');
-  const [queries, setQueries]     = useState([]);
-  const [tickTime, setTickTime]   = useState(clock());
-  const [focused, setFocused]     = useState(null);
-  const [reportBadge, setRB]      = useState(false);
-  const [showBoot, setShowBoot]   = useState(false);
-  const [modalSalir, setModalSalir] = useState(false);
-  const idleRef = useRef(null);
+  const navigate=useNavigate();
+  const [fase,setFase]=useState('intro');
+  const [escenario,setEscenario]=useState(null);
+  const [resultado,setResultado]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [submitting,setSubmitting]=useState(false);
+  const [error,setError]=useState('');
+  const [showBoot,setShowBoot]=useState(false);
+  const [queriesLog,setQueriesLog]=useState([]);
+  const [showOnboarding,setShowOnboarding]=useState(false);
 
-  // estado ventanas: { open, minimized }
-  const initWins = () => APPS.reduce((a, app) => ({ ...a, [app.id]: { open: false, minimized: false } }), {});
-  const [wins, setWins] = useState(initWins);
+  const APPS=[
+    {id:'siem',label:'SIEM Alerts',icon:'🖥️'},
+    {id:'logs',label:'Log Explorer',icon:'📋'},
+    {id:'network',label:'Network Monitor',icon:'🌐'},
+    {id:'terminal',label:'Terminal',icon:'💻'},
+    {id:'report',label:'Incident Report',icon:'📝'},
+  ];
+  const DPOS={siem:{x:20,y:10},logs:{x:360,y:10},network:{x:20,y:300},terminal:{x:360,y:290},report:{x:160,y:60}};
+  const DSZ={siem:{w:320,h:420},logs:{w:350,h:420},network:{w:330,h:360},terminal:{w:370,h:310},report:{w:480,h:540}};
 
-  useEffect(() => { const iv = setInterval(() => setTickTime(clock()), 15000); return () => clearInterval(iv); }, []);
+  const [wins,setWins]=useState(APPS.reduce((a,app)=>({...a,[app.id]:{open:false,minimized:false}}),{}));
+  const [focused,setFocused]=useState(null);
 
-  // badge report si lleva 8 min sin abrirlo
-  useEffect(() => {
-    if (fase !== 'lab' || !escenario) return;
-    idleRef.current = setTimeout(() => { if (!wins.report?.open) setRB(true); }, 8 * 60 * 1000);
-    return () => clearTimeout(idleRef.current);
-  }, [fase, escenario]);
+  const so=escenario?.so||(escenario?.titulo?.toLowerCase().includes('linux')?'linux':'windows');
 
-  // atajos teclado
-  useEffect(() => {
-    if (fase !== 'lab') return;
-    const map = { '1': 'siem', '2': 'logs', '3': 'network', '4': 'terminal', '5': 'report' };
-    const h = (e) => { if (e.ctrlKey && map[e.key]) { e.preventDefault(); openApp(map[e.key]); } };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, [fase, wins]);
+  useEffect(()=>{ if(!localStorage.getItem(ONBOARDING_KEY))setShowOnboarding(true); },[]);
 
-  const onQuery = useCallback(q => setQueries(p => p.includes(q) ? p : [...p, q]), []);
+  const onQuery=useCallback((q)=>{ setQueriesLog(p=>p.includes(q)?p:[...p,q]); },[]);
 
-  const openApp = (id) => {
-    setWins(w => ({ ...w, [id]: { open: true, minimized: false } }));
-    setFocused(id);
-    onQuery(`OPEN:${id}`);
-    if (id === 'report') setRB(false);
-  };
-  const closeApp = (id, action) => {
-    if (action === 'min') setWins(w => ({ ...w, [id]: { ...w[id], minimized: true } }));
-    else setWins(w => ({ ...w, [id]: { open: false, minimized: false } }));
-  };
-  const taskClick = (id) => {
-    const w = wins[id];
-    if (!w?.open) { openApp(id); return; }
-    if (w.minimized) { setWins(ww => ({ ...ww, [id]: { ...ww[id], minimized: false } })); setFocused(id); }
-    else if (focused === id) setWins(ww => ({ ...ww, [id]: { ...ww[id], minimized: true } }));
-    else setFocused(id);
-  };
+  const openApp=id=>{ setWins(w=>({...w,[id]:{open:true,minimized:false}})); setFocused(id); onQuery(`OPEN:${id}`); };
+  const closeApp=id=>setWins(w=>({...w,[id]:{...w[id],open:false}}));
+  const minApp=id=>setWins(w=>({...w,[id]:{...w[id],minimized:true}}));
+  const focusApp=id=>setFocused(id);
+  const taskbarClick=id=>{ const w=wins[id]; if(!w?.open)return; if(w.minimized){setWins(ww=>({...ww,[id]:{...ww[id],minimized:false}}));setFocused(id);} else if(focused===id)minApp(id); else focusApp(id); };
 
-  const iniciarLab = async () => {
-    setLoading(true); setError('');
-    try {
-      const d = await apiFetch('/lab/generar', token, { method: 'POST' });
-      setEscenario(d); setQueries([]); setShowBoot(true);
-    } catch (e) { setError(e.message || 'Error generando el laboratorio'); }
-    finally { setLoading(false); }
-  };
+  const iniciarLab=async()=>{ setLoading(true);setError(''); try{ const d=await apiFetch('/lab/generar',{method:'POST'}); setEscenario(d); setQueriesLog([]); setShowBoot(true); }catch(e){setError(e.message||'Error generando el lab');} finally{setLoading(false);} };
 
-  const enviar = async ({ respuestas, informe_libre }) => {
-    setSubmitting(true); setError('');
-    try {
-      const d = await apiFetch('/lab/evaluar', token, { method: 'POST', body: JSON.stringify({ lab_id: escenario.lab_id, respuestas, informe_libre, queries_usadas: queries }) });
-      setResultado(d); setFase('resultado');
-    } catch (e) { setError(e.message || 'Error evaluando'); }
-    finally { setSubmitting(false); }
-  };
+  const enviarAnalisis=async({respuestas,informe_libre})=>{ setSubmitting(true);setError(''); try{ const d=await apiFetch('/lab/evaluar',{method:'POST',body:JSON.stringify({lab_id:escenario.lab_id,respuestas,informe_libre,queries_usadas:queriesLog})}); setResultado(d); setFase('resultado'); }catch(e){setError(e.message||'Error evaluando');} finally{setSubmitting(false);} };
 
-  const nuevoLab = () => { setEscenario(null); setResultado(null); setFase('intro'); setWins(initWins()); setQueries([]); setRB(false); };
+  const nuevoLab=()=>{ setEscenario(null);setResultado(null);setFase('intro'); setWins(APPS.reduce((a,app)=>({...a,[app.id]:{open:false,minimized:false}}),{})); };
 
-  const intentarSalir = () => {
-    if (fase === 'lab') setModalSalir(true);
-    else navigate('/dashboard');
-  };
-
-  /* ── boot screen ── */
-  if (showBoot) return <BootScreen onDone={() => { setShowBoot(false); setFase('lab'); }} />;
-
-  /* ── intro ── */
-  /* ── INTRO — pega esto en LabPage.js reemplazando el bloque if (fase === 'intro') ── */
-  if (fase === 'intro') return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(150deg,#f0f4ff 0%,#f8f9ff 40%,#f5f0ff 100%)', fontFamily:"'Inter',sans-serif", display:'flex', flexDirection:'column' }}>
-      <style>{`
-        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-        .tool-card:hover{transform:translateY(-3px)!important;box-shadow:0 8px 28px rgba(0,0,0,0.1)!important;}
-        .start-btn:hover{filter:brightness(1.08);transform:translateY(-2px)!important;}
-      `}</style>
-
-      {/* navbar */}
-      <nav style={{ height:56, background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', borderBottom:'1px solid #e8eaf0', boxShadow:'0 1px 12px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 40px', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }} onClick={() => navigate('/')}>
-          <img src="/logosoc.png" alt="SocBlast" style={{ height:28 }}/>
-          <span style={{ fontSize:15, fontWeight:800, color:'#0f172a' }}>Soc<span style={{ color:'#4f46e5' }}>Blast</span></span>
+  if(fase==='intro') return (
+    <div style={{ minHeight:'100vh',background:'#f0f4ff',fontFamily:"'Inter','Segoe UI',sans-serif",display:'flex',alignItems:'center',justifyContent:'center' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}`}</style>
+      {showOnboarding&&<Onboarding onFinish={()=>{localStorage.setItem(ONBOARDING_KEY,'1');setShowOnboarding(false);}}/>}
+      <div style={{ maxWidth:580,width:'90%',animation:'fadeUp 0.4s ease' }}>
+        <div style={{ textAlign:'center',marginBottom:32 }}>
+          <div style={{ fontSize:52,marginBottom:12 }}>🔬</div>
+          <h1 style={{ fontSize:28,fontWeight:900,color:'#0f172a',margin:'0 0 8px',letterSpacing:'-0.8px' }}>Laboratorio SOC</h1>
+          <p style={{ fontSize:15,color:'#64748b',lineHeight:1.7,margin:0 }}>Accede a una máquina comprometida. Investiga el incidente con las herramientas del SOC y redacta tu informe forense.</p>
         </div>
-        <button onClick={() => navigate('/dashboard')}
-          style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'1px solid #e2e8f0', color:'#64748b', padding:'6px 14px', borderRadius:8, fontSize:13, cursor:'pointer', fontWeight:500 }}>
-          ← Dashboard
-        </button>
-      </nav>
-
-      {/* contenido */}
-      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
-        <div style={{ maxWidth:700, width:'100%', animation:'fadeUp .4s ease' }}>
-
-          {/* header */}
-          <div style={{ textAlign:'center', marginBottom:36 }}>
-            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:100, background:'rgba(5,150,105,0.08)', border:'1px solid rgba(5,150,105,0.2)', marginBottom:20 }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', background:'#059669', animation:'pulse 2s infinite' }}/>
-              <span style={{ fontSize:11, color:'#059669', fontWeight:700, letterSpacing:2, textTransform:'uppercase' }}>Laboratorio Forense SOC</span>
-            </div>
-            <h1 style={{ fontSize:40, fontWeight:900, color:'#0f172a', margin:'0 0 14px', letterSpacing:'-1.5px', lineHeight:1.1 }}>
-              Investiga el ataque.<br/>
-              <span style={{ color:'#059669' }}>Reconstruye lo que pasó.</span>
-            </h1>
-            <p style={{ fontSize:15, color:'#64748b', lineHeight:1.75, margin:'0 auto', maxWidth:500 }}>
-              El ataque ya ocurrió. Llegas después. Tienes tiempo ilimitado para analizar la evidencia y escribir tu informe forense profesional.
-            </p>
+        <div style={{ background:'#fff',borderRadius:16,padding:'28px 32px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0',marginBottom:20 }}>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:24 }}>
+            {[['🖥️','SIEM Alerts','Alertas del sistema'],['📋','Log Explorer','Logs filtrables'],['🌐','Network Monitor','Hosts y conexiones'],['💻','Terminal','Comandos reales'],['📝','Incident Report','Preguntas + informe IA'],['⏱','Sin límite de tiempo','Investiga a fondo']].map(([icon,title,desc])=>(<div key={title} style={{ display:'flex',gap:10,padding:'10px 12px',borderRadius:10,background:'#f8fafc',border:'1px solid #e2e8f0' }}><span style={{ fontSize:20,flexShrink:0 }}>{icon}</span><div><div style={{ fontSize:12,fontWeight:700,color:'#0f172a',marginBottom:2 }}>{title}</div><div style={{ fontSize:11,color:'#64748b' }}>{desc}</div></div></div>))}
           </div>
-
-          {/* sesiones vs labs */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
-            <div style={{ padding:'18px 20px', borderRadius:14, background:'#fff', border:'1px solid #e8eaf0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
-                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(37,99,235,0.08)', border:'1px solid rgba(37,99,235,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Sesiones</div>
-                  <div style={{ fontSize:11, color:'#94a3b8' }}>SOC en tiempo real</div>
-                </div>
-              </div>
-              <p style={{ fontSize:12, color:'#64748b', lineHeight:1.65, margin:0 }}>Timer activo, presión, copas y ranking. Mide tu reacción ante un incidente en curso.</p>
-            </div>
-            <div style={{ padding:'18px 20px', borderRadius:14, background:'rgba(5,150,105,0.03)', border:'2px solid rgba(5,150,105,0.22)', boxShadow:'0 2px 12px rgba(5,150,105,0.07)' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
-                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(5,150,105,0.1)', border:'1px solid rgba(5,150,105,0.22)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:700, color:'#059669' }}>Labs — ahora</div>
-                  <div style={{ fontSize:11, color:'#059669', opacity:.7 }}>Forense post-mortem</div>
-                </div>
-              </div>
-              <p style={{ fontSize:12, color:'#475569', lineHeight:1.65, margin:0 }}>Sin timer. Profundidad real. Reconstruye el ataque e informe evaluado por IA.</p>
-            </div>
-          </div>
-
-          {/* herramientas */}
-          <div style={{ background:'#fff', borderRadius:16, border:'1px solid #e8eaf0', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.06)', marginBottom:20 }}>
-            <div style={{ padding:'14px 20px', borderBottom:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#94a3b8', letterSpacing:2, textTransform:'uppercase' }}>Herramientas del laboratorio</span>
-              <div style={{ display:'flex', gap:5 }}>
-                {['Ctrl+1','Ctrl+2','Ctrl+3','Ctrl+4','Ctrl+5'].map(k=>(
-                  <span key={k} style={{ fontSize:9, padding:'2px 6px', borderRadius:4, background:'#f1f5f9', color:'#64748b', fontFamily:'monospace', border:'1px solid #e2e8f0' }}>{k}</span>
-                ))}
-              </div>
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)' }}>
-              {[
-                { label:'SIEM Alerts',     desc:'Alertas y timeline',   color:'#2563eb',
-                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
-                { label:'Log Explorer',    desc:'Logs con highlight',    color:'#7c3aed',
-                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
-                { label:'Network Map',     desc:'Hosts y conexiones',    color:'#059669',
-                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
-                { label:'Terminal',        desc:'20+ comandos',          color:'#0891b2',
-                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> },
-                { label:'Informe Forense', desc:'Evaluado por IA',       color:'#ef4444',
-                  icon:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> },
-              ].map((t,i) => (
-                <div key={i} className="tool-card" style={{ padding:'18px 12px', textAlign:'center', borderRight:i<4?'1px solid #f1f5f9':'none', transition:'all .2s ease', cursor:'default' }}>
-                  <div style={{ width:48, height:48, borderRadius:13, background:`${t.color}08`, border:`1px solid ${t.color}18`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
-                    {t.icon}
-                  </div>
-                  <div style={{ fontSize:12, fontWeight:700, color:'#0f172a', marginBottom:3 }}>{t.label}</div>
-                  <div style={{ fontSize:11, color:'#94a3b8', lineHeight:1.4 }}>{t.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* badges info */}
-          <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
-            {[
-              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, text:'Sin límite de tiempo', color:'#059669' },
-              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, text:'Sube skills de forense e intel', color:'#4f46e5' },
-              { svg:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, text:'Adaptado a tu arena actual', color:'#f59e0b' },
-            ].map((b,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 14px', borderRadius:9, background:'#fff', border:'1px solid #e8eaf0', fontSize:12, color:'#475569', fontWeight:500, boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
-                <span style={{ color:b.color, display:'flex' }}>{b.svg}</span>{b.text}
-              </div>
-            ))}
-          </div>
-
-          {!token && (
-            <div style={{ marginBottom:12, padding:'10px 14px', borderRadius:8, background:'#fef2f2', border:'1px solid #fecaca', fontSize:13, color:'#dc2626', textAlign:'center' }}>
-              No hay sesión activa — <button onClick={() => navigate('/login')} style={{ background:'none', border:'none', color:'#2563eb', cursor:'pointer', textDecoration:'underline', fontSize:13 }}>inicia sesión</button>
-            </div>
-          )}
-
-          <button className="start-btn" onClick={iniciarLab} disabled={loading || !token}
-            style={{ width:'100%', padding:'16px 0', borderRadius:12, border:'none', background:loading||!token?'#e2e8f0':'linear-gradient(135deg,#059669,#10b981)', color:loading||!token?'#94a3b8':'#fff', fontSize:15, fontWeight:700, cursor:loading||!token?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10, boxShadow:loading||!token?'none':'0 4px 20px rgba(5,150,105,0.4)', transition:'all .2s' }}>
-            {loading ? '⏳ Generando escenario forense (~20s)...' : (
-              <>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                Iniciar investigación forense
-              </>
-            )}
+          <button onClick={iniciarLab} disabled={loading} style={{ width:'100%',padding:'15px 0',borderRadius:10,border:'none',background:loading?'#e2e8f0':'linear-gradient(135deg,#4f46e5,#7c3aed)',color:loading?'#94a3b8':'#fff',fontSize:15,fontWeight:700,cursor:loading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,boxShadow:loading?'none':'0 4px 14px rgba(79,70,229,0.3)',transition:'opacity 0.2s' }}>
+            {loading?'⏳ Generando escenario con IA...':'⚡ Iniciar Laboratorio'}
           </button>
-
-          {error && <div style={{ marginTop:10, padding:'10px 14px', borderRadius:8, background:'#fef2f2', border:'1px solid #fecaca', fontSize:12, color:'#dc2626' }}>⚠ {error}</div>}
-          <p style={{ textAlign:'center', fontSize:11, color:'#94a3b8', marginTop:14 }}>Solo XP y habilidades · Sin copas · Escenario generado por IA</p>
+          {error&&<div style={{ marginTop:12,padding:'10px 14px',borderRadius:8,background:'#fef2f2',border:'1px solid #fecaca',fontSize:12,color:'#dc2626' }}>⚠ {error}</div>}
         </div>
+        <div style={{ textAlign:'center',fontSize:12,color:'#94a3b8' }}>El escenario se adapta a tu arena · Solo XP y habilidades, sin copas</div>
       </div>
     </div>
   );
 
-  /* ── resultado ── */
-  if (fase === 'resultado') return <Resultados resultado={resultado} escenario={escenario} onNew={nuevoLab} onDash={() => navigate('/dashboard')} />;
+  if(fase==='resultado') return <ResultadosScreen resultado={resultado} escenario={escenario} onNuevoLab={nuevoLab} onDashboard={()=>navigate('/dashboard')}/>;
 
-  /* ── lab ── */
-  const openApps = APPS.filter(a => wins[a.id]?.open);
+  const taskbarApps=APPS.filter(a=>wins[a.id]?.open);
+  const windows_render=APPS.map(app=>wins[app.id]?.open?(
+    <AppWindow key={app.id} app={app} so={so} onClose={()=>closeApp(app.id)} onMinimize={()=>minApp(app.id)} onFocus={()=>focusApp(app.id)} isFocused={focused===app.id} isMinimized={wins[app.id]?.minimized} defaultPos={DPOS[app.id]} defaultSize={DSZ[app.id]}>
+      {app.id==='siem'&&<SIEMApp alertas={escenario?.alertas_siem||[]} so={so}/>}
+      {app.id==='logs'&&<LogApp logs={escenario?.logs||[]} so={so} onQuery={onQuery}/>}
+      {app.id==='network'&&<NetworkApp red={escenario?.red} so={so}/>}
+      {app.id==='terminal'&&<TerminalApp escenario={escenario} so={so} onQuery={onQuery}/>}
+      {app.id==='report'&&<ReportApp preguntas={escenario?.preguntas||[]} so={so} onSubmit={enviarAnalisis} submitting={submitting} queriesCount={queriesLog.length}/>}
+    </AppWindow>
+  ):null);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', fontFamily: "'Segoe UI',sans-serif", userSelect: 'none', position: 'relative' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        * { box-sizing:border-box }
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-track{background:#f1f5f9}
-        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
-        ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
-        input, textarea { user-select: text !important; }
-      `}</style>
-
-      {modalSalir && <ModalSalir onConfirm={() => navigate('/dashboard')} onCancel={() => setModalSalir(false)} />}
-
-      {/* escritorio */}
-      <div style={{ position: 'absolute', inset: 0, bottom: 40, background: 'linear-gradient(160deg,#1e3a8a 0%,#1d4ed8 45%,#2563eb 75%,#1e40af 100%)' }}>
-        {/* patrón de fondo */}
-        <div style={{ position: 'absolute', inset: 0, opacity: .04, backgroundImage: 'radial-gradient(circle,#fff 1px,transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
-
-        {/* banner objetivo */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '5px 14px', background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 10, zIndex: 50, borderBottom: '1px solid rgba(255,255,255,.1)' }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#fbbf24', letterSpacing: '.06em', flexShrink: 0 }}>🎯 OBJETIVO:</span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{escenario?.objetivo || escenario?.descripcion}</span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,.5)' }}>🔍 <span style={{ color: '#7dd3fc' }}>{queries.length}</span></span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', fontFamily: 'monospace' }}>{escenario?.nivel}</span>
-            <button onClick={intentarSalir} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 5, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.7)', cursor: 'pointer' }}>← Dashboard</button>
-          </div>
-        </div>
-
-        {/* iconos escritorio — columna izquierda */}
-        <div style={{ position: 'absolute', top: 36, left: 14, display: 'flex', flexDirection: 'column', gap: 4, zIndex: 5 }}>
-          {APPS.map(a => (
-            <DIcon
-              key={a.id} id={a.id} icon={a.icon} label={a.label}
-              isOpen={wins[a.id]?.open && !wins[a.id]?.minimized}
-              badge={a.id === 'report' && reportBadge}
-              onClick={() => {
-                if (wins[a.id]?.open && !wins[a.id]?.minimized) {
-                  // si ya está abierta y visible, minimizar
-                  setWins(w => ({ ...w, [a.id]: { ...w[a.id], minimized: true } }));
-                } else {
-                  openApp(a.id);
-                }
-              }}
-            />
-          ))}
-        </div>
-
-        {/* ventanas */}
-        {APPS.map(app => {
-          if (!wins[app.id]?.open || wins[app.id]?.minimized) return null;
-          return (
-            <Win
-              key={app.id}
-              id={app.id}
-              title={app.label}
-              icon={app.icon}
-              onClose={closeApp}
-              onFocus={setFocused}
-              focused={focused === app.id}
-              initX={app.iX}
-              initY={app.iY + 32}
-              initW={app.iW}
-              initH={app.iH}
-            >
-              {app.id === 'siem'     && <SIEMApp    alertas={escenario?.alertas_siem || []} onQuery={onQuery} />}
-              {app.id === 'logs'     && <LogApp     logs={escenario?.logs || []}            onQuery={onQuery} />}
-              {app.id === 'network'  && <NetworkApp red={escenario?.red} />}
-              {app.id === 'terminal' && <TerminalApp escenario={escenario}                  onQuery={onQuery} />}
-              {app.id === 'report'   && <ReportApp  preguntas={escenario?.preguntas || []} labId={escenario?.lab_id} onSubmit={enviar} submitting={submitting} queriesCount={queries.length} />}
-            </Win>
-          );
-        })}
-
-        {error && <div style={{ position: 'fixed', bottom: 60, left: '50%', transform: 'translateX(-50%)', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 20px', color: '#dc2626', fontSize: 12, zIndex: 9998 }}>{error}</div>}
-      </div>
-
-      {/* taskbar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 40, background: 'rgba(8,12,22,.97)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', padding: '0 6px', gap: 3, zIndex: 200 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>🪟</div>
-        <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,.1)', margin: '0 4px' }} />
-        {openApps.map(a => (
-          <TBtn
-            key={a.id} icon={a.icon} label={a.label}
-            active={focused === a.id && !wins[a.id]?.minimized}
-            minimized={wins[a.id]?.minimized}
-            onClick={() => taskClick(a.id)}
-          />
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12, paddingRight: 10 }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>Ctrl+1-5</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,.65)' }}>{tickTime}</span>
-        </div>
-      </div>
+    <div style={{ width:'100vw',height:'100vh',overflow:'hidden',position:'relative' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;600&display=swap');*{box-sizing:border-box}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.3);border-radius:3px}`}</style>
+      {showBoot&&<BootScreen so={so} onDone={()=>{setShowBoot(false);setFase('lab');}}/>}
+      {fase==='lab'&&(so==='linux'
+        ?<LinuxDesktop apps={APPS} openApp={openApp} taskbarApps={taskbarApps} focusedApp={focused} onTaskbarClick={taskbarClick}>{windows_render}</LinuxDesktop>
+        :<WinDesktop apps={APPS} openApp={openApp} taskbarApps={taskbarApps} focusedApp={focused} minimizedApps={APPS.filter(a=>wins[a.id]?.minimized).map(a=>a.id)} onTaskbarClick={taskbarClick}>{windows_render}</WinDesktop>
+      )}
+      {error&&fase==='lab'&&<div style={{ position:'fixed',bottom:60,left:'50%',transform:'translateX(-50%)',background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'10px 20px',color:'#dc2626',fontSize:12,zIndex:300 }}>{error}</div>}
     </div>
   );
 }
