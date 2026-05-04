@@ -10,7 +10,6 @@ const T4    = '#94a3b8';
 const ACC   = '#4f46e5';
 const BG    = '#f0f4ff';
 
-// ── SVG ICONS ─────────────────────────────────────────────────────────────────
 const Icon = ({ d, size=16, color='currentColor', viewBox='0 0 24 24', stroke=true }) => (
   <svg width={size} height={size} viewBox={viewBox} fill={stroke?'none':'currentColor'} stroke={stroke?color:'none'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     {Array.isArray(d) ? d.map((path,i) => <path key={i} d={path}/>) : <path d={d}/>}
@@ -43,7 +42,6 @@ const Planet = ({ type, size = 120 }) => {
   return planets[type] || null;
 };
 
-// ── PARTÍCULAS SUTILES ────────────────────────────────────────────────────────
 const ParticlesBg = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -52,7 +50,7 @@ const ParticlesBg = () => {
     const pts = Array.from({length:80},()=>({
       x:Math.random()*w, y:Math.random()*h,
       vx:(Math.random()-.5)*.7, vy:(Math.random()-.5)*.7,
-     r:Math.random()*2.5+1, o:Math.random()*.30+.12
+      r:Math.random()*2.5+1, o:Math.random()*.30+.12
     }));
     let raf;
     const draw=()=>{
@@ -104,10 +102,10 @@ const LandingPage = () => {
   `;
 
   const arenas = [
-    {name:'Bronce',planet:'bronce',color:'#CD7F32',colorLight:'#fef3c7',cups:'0 — 899', diff:es?'Básico':'Basic',        time:'20 min',desc:es?'Alertas simples. Amenazas identificables. Ideal para comenzar.':'Simple alerts. Identifiable threats. Ideal to start.',pct:25},
-    {name:'Plata', planet:'plata', color:'#64748b',colorLight:'#f1f5f9',cups:'900 — 1.799', diff:es?'Intermedio':'Intermediate',time:'15 min',desc:es?'Correlación de eventos. Señuelos y falsas alertas.':'Event correlation. Decoys and false alerts.',pct:50},
-    {name:'Oro',   planet:'oro',   color:'#F59E0B',colorLight:'#fffbeb',cups:'1.800 — 2.699', diff:es?'Avanzado':'Advanced',    time:'10 min',desc:es?'Múltiples vectores. Logs SIEM/EDR en profundidad.':'Multiple vectors. In-depth SIEM/EDR logs.',pct:75},
-    {name:'Diamante', planet:'elite', color:'#3b82f6',colorLight:'#eff6ff',cups:'2.700+', diff:'Elite', time:'7 min', desc:es?'APT multi-fase. Terminal de comandos. Máxima presión.':'Multi-phase APT. Command terminal. Maximum pressure.',pct:100},
+    {name:'Bronce',   planet:'bronce', color:'#CD7F32', colorLight:'#fef3c7', cups:'0 — 899',    diff:es?'Básico':'Basic',       time:'20 min', desc:es?'Alertas simples. Amenazas identificables. Ideal para comenzar.':'Simple alerts. Identifiable threats. Ideal to start.',pct:25},
+    {name:'Plata',    planet:'plata',  color:'#64748b', colorLight:'#f1f5f9', cups:'900 — 1.799', diff:es?'Intermedio':'Intermediate',time:'15 min',desc:es?'Correlación de eventos. Señuelos y falsas alertas.':'Event correlation. Decoys and false alerts.',pct:50},
+    {name:'Oro',      planet:'oro',    color:'#F59E0B', colorLight:'#fffbeb', cups:'1.800 — 2.699',diff:es?'Avanzado':'Advanced',   time:'10 min', desc:es?'Múltiples vectores. Logs SIEM/EDR en profundidad.':'Multiple vectors. In-depth SIEM/EDR logs.',pct:75},
+    {name:'Diamante', planet:'elite',  color:'#3b82f6', colorLight:'#eff6ff', cups:'2.700+',       diff:'Elite',                    time:'7 min',  desc:es?'APT multi-fase. Terminal de comandos. Máxima presión.':'Multi-phase APT. Command terminal. Maximum pressure.',pct:100},
   ];
 
   const tiers=[
@@ -121,7 +119,6 @@ const LandingPage = () => {
     {tier:8,name:'SOC Legend',    xp:'18.000+',          color:'#A78BFA'},
   ];
 
-  // Feature check item
   const CheckItem = ({ label }) => (
     <div style={{display:'flex',alignItems:'center',gap:'9px',marginBottom:'9px'}}>
       <div style={{width:'18px',height:'18px',borderRadius:'50%',backgroundColor:`${ACC}10`,border:`1px solid ${ACC}28`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -181,7 +178,7 @@ const LandingPage = () => {
               </span>
             </h1>
             <p style={{fontSize:'18px',color:T3,maxWidth:'560px',margin:'0 auto 44px',lineHeight:1.7}}>
-              {es?'Simulaciones de ciberseguridad del mundo real. Investiga alertas, analiza logs y demuestra tu nivel con un certificado verificable.':'Real-world cybersecurity simulations. Investigate alerts, analyze logs and prove your level with a verifiable certificate.'}
+              {es?'Laboratorios de ciberseguridad reales. Investiga alertas, analiza logs y demuestra tu nivel con un certificado verificable.':'Real cybersecurity labs. Investigate alerts, analyze logs and prove your level with a verifiable certificate.'}
             </p>
             <div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap',marginBottom:'72px'}}>
               <button className="btn-primary" onClick={()=>navigate('/register')} style={{padding:'14px 30px',borderRadius:'100px',background:`linear-gradient(135deg,${ACC},#818cf8)`,border:'none',color:'#fff',fontSize:'15px',fontWeight:600,cursor:'pointer',boxShadow:`0 4px 28px rgba(79,70,229,0.3)`,display:'flex',alignItems:'center',gap:'8px'}}>
@@ -203,19 +200,29 @@ const LandingPage = () => {
           <div style={{position:'absolute',bottom:0,left:0,right:0,height:'160px',background:`linear-gradient(to bottom,transparent,${BG})`,zIndex:2,pointerEvents:'none'}}/>
         </div>
 
-        {/* ── SESSIONS ── */}
+        {/* ── LABS — 3 MODOS ── */}
         <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(240,244,255,0.82)',backdropFilter:'blur(12px)'}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
             <div style={{padding:'100px 60px 100px 80px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
-              <p style={{fontSize:'11px',color:ACC,letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>SESSIONS</p>
+              <p style={{fontSize:'11px',color:ACC,letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>LABS</p>
               <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
-                {es?'Sesiones SOC que\nse sienten reales.':'SOC sessions that\nfeel real.'}
+                {es?'Tres modos. Un solo lab.\nResultados reales.':'Three modes. One lab.\nReal results.'}
               </h2>
               <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'28px',maxWidth:'440px'}}>
-                {es?'Cada sesión genera un escenario único. Alertas SIEM/EDR en tiempo real, logs reales y ataques progresivos. La IA evalúa cada decisión.':'Each session generates a unique scenario. Real-time SIEM/EDR alerts, real logs and progressive attacks. AI evaluates every decision.'}
+                {es?'Tres modos en un solo producto: Investigación libre, Certificación con timer y Arena competitivo. Windows o Linux aleatorio. La IA genera un escenario único cada vez.':'Three modes in one product: free Investigation, timed Certification and competitive Arena. Random Windows or Linux. AI generates a unique scenario every time.'}
               </p>
               <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
-                {(es?['Escenarios únicos generados por IA','Alertas SIEM/EDR en tiempo real','Evaluación automática de cada decisión','Sistema de copas y arenas competitivo']:['Unique AI-generated scenarios','Real-time SIEM/EDR alerts','Automatic evaluation of every decision','Competitive cups and arena system']).map((item,i)=>(
+                {(es?[
+                  'Modo Investigación — sin timer, solo XP',
+                  'Modo Certificación — timer 45min, copas x0.5',
+                  'Modo Arena — timer 20min, copas completas',
+                  'Windows o Linux aleatorio en cada lab',
+                ]:[
+                  'Investigation mode — no timer, XP only',
+                  'Certification mode — 45min timer, x0.5 pts',
+                  'Arena mode — 20min timer, full points',
+                  'Random Windows or Linux on every lab',
+                ]).map((item,i)=>(
                   <CheckItem key={i} label={item}/>
                 ))}
               </div>
@@ -224,9 +231,19 @@ const LandingPage = () => {
               <div style={{borderRadius:'16px 0 0 16px',overflow:'hidden',border:`1px solid ${BD}`,borderRight:'none',boxShadow:'-8px 0 40px rgba(79,70,229,0.08)',width:'100%'}}>
                 <div style={{backgroundColor:'#f8fafc',padding:'11px 16px',borderBottom:`1px solid ${BD}`,display:'flex',alignItems:'center',gap:'6px'}}>
                   {['#FF5F57','#FEBC2E','#28C840'].map((c,i)=><div key={i} style={{width:'9px',height:'9px',borderRadius:'50%',backgroundColor:c}}/>)}
-                  <span style={{color:T4,fontSize:'11px',fontFamily:'monospace',marginLeft:'10px'}}>socblast — session active</span>
+                  <span style={{color:T4,fontSize:'11px',fontFamily:'monospace',marginLeft:'10px'}}>socblast — lab · investigación</span>
                 </div>
-                <div style={{backgroundColor:'#0f172a',padding:'28px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:2.2}}>
+                <div style={{backgroundColor:'#0f172a',padding:'20px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:2}}>
+                  {/* Modo selector */}
+                  <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+                    {[
+                      {l:'🔬 Investigación',a:'#6ee7b7',bg:'rgba(110,231,183,0.15)'},
+                      {l:'🏅 Certificación',a:'#fcd34d',bg:'rgba(252,211,77,0.08)'},
+                      {l:'⚡ Arena',         a:'#a5b4fc',bg:'rgba(165,180,252,0.08)'},
+                    ].map((m,i)=>(
+                      <div key={i} style={{padding:'4px 10px',borderRadius:'6px',background:i===0?m.bg:'transparent',border:`1px solid ${i===0?m.a+'40':'rgba(255,255,255,0.06)'}`,fontSize:'10px',color:i===0?m.a:'rgba(255,255,255,0.25)',fontFamily:'system-ui',cursor:'pointer'}}>{m.l}</div>
+                    ))}
+                  </div>
                   <p style={{color:'#f87171'}}>⚠  CRITICAL   Brute force on Active Directory</p>
                   <p style={{color:'#fb923c'}}>   →  src_ip: 185.220.101.45   rate: 94/min</p>
                   <p style={{color:'#818cf8'}}>   →  target: CORP-DC01   port: 445/SMB</p>
@@ -237,12 +254,20 @@ const LandingPage = () => {
                   <p style={{color:'#475569'}}>   $  awaiting analyst response...</p>
                   <p style={{color:ACC}}>   ▌</p>
                 </div>
+                {/* OS badge */}
+                <div style={{backgroundColor:'#1e293b',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',borderTop:'1px solid rgba(255,255,255,0.05)'}}>
+                  <div style={{display:'flex',gap:'12px'}}>
+                    <span style={{fontSize:'11px',color:'rgba(255,255,255,0.3)',fontFamily:'monospace'}}>SO asignado:</span>
+                    <span style={{fontSize:'11px',color:'#89b4fa',fontFamily:'monospace',fontWeight:700}}>🪟 Windows Server 2019</span>
+                  </div>
+                  <span style={{fontSize:'10px',color:'rgba(255,255,255,0.2)',fontFamily:'monospace'}}>aleatorio cada partida</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── LABS ── */}
+        {/* ── LABS FORENSE (antes LABS section) ── */}
         <div style={{position:'relative',zIndex:1,borderTop:`1px solid ${BD}`,backgroundColor:'rgba(248,250,252,0.88)',backdropFilter:'blur(12px)'}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',minHeight:'500px'}}>
             <div style={{display:'flex',alignItems:'center',padding:'60px 40px 60px 0px'}}>
@@ -254,7 +279,7 @@ const LandingPage = () => {
                   <span style={{fontSize:'11px',color:'#10b981',letterSpacing:'1.5px',fontWeight:700}}>SIEM — Operación NightHawk</span>
                   <div style={{display:'flex',alignItems:'center',gap:'5px'}}>
                     <IconMicro size={12} color={T4}/>
-                    <span style={{fontSize:'11px',color:T4}}>LAB</span>
+                    <span style={{fontSize:'11px',color:T4}}>FORENSE</span>
                   </div>
                 </div>
                 <div style={{backgroundColor:'#0f172a',padding:'28px',fontFamily:"'Fira Code',monospace",fontSize:'12px',lineHeight:1.9}}>
@@ -275,28 +300,23 @@ const LandingPage = () => {
               </div>
             </div>
             <div style={{padding:'100px 80px 100px 60px',display:'flex',flexDirection:'column',justifyContent:'center'}}>
-              <p style={{fontSize:'11px',color:'#10b981',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>LABS</p>
+              <p style={{fontSize:'11px',color:'#10b981',letterSpacing:'3px',fontWeight:700,marginBottom:'16px'}}>5 TIPOS DE LAB</p>
               <h2 style={{fontSize:'clamp(26px,3vw,40px)',fontWeight:800,letterSpacing:'-1.2px',color:T1,lineHeight:1.1,marginBottom:'18px'}}>
-                {es?'Investigación forense libre y evaluada.':'Free forensic investigation. Evaluated.'}
+                {es?'Forense, Threat Hunt,\nIR, Malware, OSINT.':'Forensics, Threat Hunt,\nIR, Malware, OSINT.'}
               </h2>
               <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'22px',maxWidth:'440px'}}>
-                {es?'Sin tiempo límite. Explora el SIEM, investiga logs, mapea la red y entrega tu informe. La IA evalúa la profundidad de tu análisis, no la velocidad.':'No time limit. Explore the SIEM, investigate logs, map the network and submit your report. AI evaluates depth, not speed.'}
+                {es?'Cada tipo genera escenarios completamente distintos. Con artefactos específicos, herramientas distintas y preguntas adaptadas. Sin repetición.':'Each type generates completely different scenarios. With specific artifacts, distinct tools and adapted questions. No repetition.'}
               </p>
-              <div style={{padding:'14px 18px',borderRadius:'12px',backgroundColor:'#f0fdf4',border:'1px solid #bbf7d0',marginBottom:'24px',display:'flex',alignItems:'flex-start',gap:'10px'}}>
-                <div style={{marginTop:'1px',flexShrink:0}}><IconBolt size={14} color="#16a34a"/></div>
-                <p style={{fontSize:'13px',color:'#15803d',lineHeight:1.6,margin:0}}>
-                  <strong>{es?'Diferencia clave:':'Key difference:'}</strong> {es?'Las sesiones puntúan velocidad. Los labs puntúan profundidad.':'Sessions score speed. Labs score depth.'}
-                </p>
-              </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'26px'}}>
                 {[
-                  {icon:<IconChart size={15} color="#10b981"/>, l:es?'SIEM con queries':'SIEM queries'},
-                  {icon:<IconSearch size={15} color="#10b981"/>, l:'Log Explorer'},
-                  {icon:<IconNetwork size={15} color="#10b981"/>, l:es?'Mapa de red':'Network Map'},
-                  {icon:<IconCpu size={15} color="#10b981"/>, l:es?'Evaluación IA':'AI Evaluation'},
+                  {color:'#0891b2', l:'🔬 Forense Post-Mortem'},
+                  {color:'#7c3aed', l:'🎯 Threat Hunting'},
+                  {color:'#ef4444', l:'🚨 Incident Response'},
+                  {color:'#dc2626', l:'🦠 Malware Analysis'},
+                  {color:'#059669', l:'🌐 OSINT & Threat Intel'},
+                  {color:'#64748b', l:es?'🎲 Aleatorio':'🎲 Random'},
                 ].map((f,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:'9px',padding:'11px 14px',borderRadius:'10px',backgroundColor:CARD,border:`1px solid ${BD}`}}>
-                    {f.icon}
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:'9px',padding:'10px 14px',borderRadius:'10px',backgroundColor:CARD,border:`1px solid ${f.color}20`,borderLeft:`3px solid ${f.color}`}}>
                     <span style={{fontSize:'13px',color:T2,fontWeight:500}}>{f.l}</span>
                   </div>
                 ))}
@@ -317,13 +337,13 @@ const LandingPage = () => {
                 {es?'Un curso SOC completo\ny estructurado.':'A complete, structured\nSOC course.'}
               </h2>
               <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px',maxWidth:'440px'}}>
-                {es?'12 módulos progresivos divididos en 3 cursos. Con teoría visual, casos prácticos y XP real que sube tu tier.':'12 progressive modules in 3 courses. Visual theory, practical cases and real XP that raises your tier.'}
+                {es?'9 módulos progresivos divididos en 3 cursos. Con teoría visual, casos prácticos y XP real que sube tu tier.':'9 progressive modules in 3 courses. Visual theory, practical cases and real XP that raises your tier.'}
               </p>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
                 {[
-                  {v:'3',    l:es?'Cursos':'Courses',   icon:<IconBook size={16} color={ACC}/>},
-                  {v:'12',   l:es?'Módulos':'Modules',  icon:<IconTarget size={16} color={ACC}/>},
-                  {v:'2.580',l:'XP Total',               icon:<IconBolt size={16} color={ACC}/>},
+                  {v:'3',    l:es?'Cursos':'Courses',  icon:<IconBook size={16} color={ACC}/>},
+                  {v:'9',    l:es?'Módulos':'Modules', icon:<IconTarget size={16} color={ACC}/>},
+                  {v:'2.650',l:'XP Total',              icon:<IconBolt size={16} color={ACC}/>},
                 ].map((s,i)=>(
                   <div key={i} style={{padding:'18px 16px',borderRadius:'14px',backgroundColor:CARD,border:`1px solid ${BD}`,textAlign:'center',boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
                     <div style={{display:'flex',justifyContent:'center',marginBottom:'8px'}}>{s.icon}</div>
@@ -403,14 +423,14 @@ const LandingPage = () => {
                 {es?'Tu progreso.\nTu identidad.':'Your progress.\nYour identity.'}
               </h2>
               <p style={{fontSize:'15px',color:T3,lineHeight:1.8,marginBottom:'32px',maxWidth:'440px'}}>
-                {es?'Cada sesión y lección te da XP. El XP sube tu Tier. Desde SOC Rookie hasta SOC Legend.':'Every session and lesson gives you XP. XP raises your Tier. From SOC Rookie to SOC Legend.'}
+                {es?'Cada lab y lección te da XP. El XP sube tu Tier. Desde SOC Rookie hasta SOC Legend.':'Every lab and lesson gives you XP. XP raises your Tier. From SOC Rookie to SOC Legend.'}
               </p>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
                 {[
-                  {label:es?'Sesión completada':'Session completed',xp:'+50–400 XP',color:ACC,    icon:<IconTarget size={14} color={ACC}/>},
-                  {label:es?'Lección de training':'Training lesson',xp:'+30–70 XP', color:'#818cf8',icon:<IconBook size={14} color="#818cf8"/>},
-                  {label:es?'Sin usar pistas':'No hints used',      xp:'+bonus XP', color:'#10b981',icon:<IconShield size={14} color="#10b981"/>},
-                  {label:es?'Arena Diamante':'Diamond arena',       xp:'+400 XP max',color:'#3b82f6',icon:<IconBolt size={14} color="#3b82f6"/>},
+                  {label:es?'Lab completado':'Lab completed',     xp:'+50–220 XP',  color:ACC,     icon:<IconTarget size={14} color={ACC}/>},
+                  {label:es?'Lección de training':'Training lesson',xp:'+30–70 XP',  color:'#818cf8',icon:<IconBook size={14} color="#818cf8"/>},
+                  {label:es?'Modo Arena':'Arena mode',             xp:'Copas completas',color:'#10b981',icon:<IconShield size={14} color="#10b981"/>},
+                  {label:es?'Arena Diamante':'Diamond arena',      xp:'+220 XP max', color:'#3b82f6',icon:<IconBolt size={14} color="#3b82f6"/>},
                 ].map((item,i)=>(
                   <div key={i} style={{padding:'16px',borderRadius:'12px',backgroundColor:CARD,border:`1px solid ${BD}`,boxShadow:'0 2px 8px rgba(0,0,0,0.04)',display:'flex',flexDirection:'column',gap:'8px'}}>
                     <div style={{display:'flex',alignItems:'center',gap:'7px'}}>
@@ -438,7 +458,6 @@ const LandingPage = () => {
               </p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:'20px'}}>
-              {/* Analistas */}
               <div className="card-hover" style={{padding:'48px',borderRadius:'22px',background:`linear-gradient(145deg,${ACC}05 0%,transparent 100%)`,border:`1px solid ${ACC}14`,position:'relative',overflow:'hidden',boxShadow:'0 4px 20px rgba(79,70,229,0.05)'}}>
                 <div style={{position:'absolute',top:'-30px',right:'-30px',width:'160px',height:'160px',borderRadius:'50%',background:`radial-gradient(circle,${ACC}06,transparent)`,pointerEvents:'none'}}/>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}}>
@@ -452,7 +471,21 @@ const LandingPage = () => {
                   {es?'Entrena con escenarios reales, sube desde Bronce hasta Diamante y obtén un certificado verificable que las empresas buscan.':'Train with real AI scenarios, climb from Bronze to Diamond and get a verifiable certificate companies look for.'}
                 </p>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 20px',marginBottom:'28px'}}>
-                  {(es?['Sesiones SOC únicas con IA','Arenas Bronce → Diamante','Certificado con QR verificable','Ranking global','Training en 12 módulos','XP y skills certificadas']:['Unique AI SOC sessions','Bronze → Diamond arenas','QR-verifiable certificate','Global ranking','12-module training','XP and certified skills']).map((item,j)=>(
+                  {(es?[
+                    'Labs con 3 modos: Investigación, Certificación y Arena',
+                    'Windows o Linux aleatorio en cada lab',
+                    'Certificado con QR verificable',
+                    'Ranking global por copas',
+                    'Training en 9 módulos · 3 cursos',
+                    'XP y skills certificadas',
+                  ]:[
+                    'Labs with 3 modes: Investigation, Certification and Arena',
+                    'Random Windows or Linux on every lab',
+                    'QR-verifiable certificate',
+                    'Global ranking by points',
+                    '9-module training · 3 courses',
+                    'XP and certified skills',
+                  ]).map((item,j)=>(
                     <CheckItem key={j} label={item}/>
                   ))}
                 </div>
@@ -460,7 +493,6 @@ const LandingPage = () => {
                   {es?'Iniciar Training':'Start Training'} <IconArrow size={13} color="#fff"/>
                 </button>
               </div>
-              {/* Empresas */}
               <div className="card-hover" style={{padding:'40px',borderRadius:'22px',background:'linear-gradient(145deg,rgba(124,58,237,0.04) 0%,transparent 100%)',border:'1px solid rgba(124,58,237,0.12)',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'0 4px 20px rgba(124,58,237,0.04)'}}>
                 <div>
                   <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}}>
@@ -507,7 +539,7 @@ const LandingPage = () => {
                     <Planet type={a.planet} size={96}/>
                   </div>
                   <div style={{fontSize:'18px',fontWeight:800,color:a.color,marginBottom:'4px',letterSpacing:'-0.3px'}}>{a.name}</div>
-                  <div style={{fontSize:'10px',color:T4,fontFamily:'monospace',marginBottom:'10px',letterSpacing:'0.5px'}}>{a.cups} copas</div>
+                  <div style={{fontSize:'10px',color:T4,fontFamily:'monospace',marginBottom:'10px',letterSpacing:'0.5px'}}>{a.cups} pts</div>
                   <p style={{fontSize:'12px',color:T3,lineHeight:1.65,marginBottom:'16px'}}>{a.desc}</p>
                   <div style={{padding:'10px 12px',borderRadius:'9px',backgroundColor:`${a.color}06`,border:`1px solid ${a.color}18`,display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
                     <span style={{fontSize:'11px',color:a.color,fontWeight:600}}>{a.diff}</span>
