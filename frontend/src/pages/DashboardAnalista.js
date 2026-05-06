@@ -18,17 +18,11 @@ const SKILL_ABBR = [
 ];
 
 const LAB_TIPOS = [
-  { id:'forense',           label:'Forense',           color:'#0891b2' },
-  { id:'threat_hunt',       label:'Threat Hunt',       color:'#7c3aed' },
+  { id:'forense',           label:'Forense Digital',   color:'#0891b2' },
+  { id:'threat_hunt',       label:'Threat Hunting',    color:'#7c3aed' },
   { id:'incident_response', label:'Incident Response', color:'#ef4444' },
-  { id:'malware',           label:'Malware',           color:'#dc2626' },
+  { id:'malware',           label:'Malware Analysis',  color:'#dc2626' },
   { id:'osint',             label:'OSINT',              color:'#059669' },
-];
-
-const LAB_MODOS = [
-  { id:'investigacion', label:'Investigación', color:'#059669', bg:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)', accent:'#6ee7b7', desc:'Sin timer · Solo XP', icon:'🔬' },
-  { id:'certificacion', label:'Certificación', color:'#d97706', bg:'linear-gradient(135deg,#78350f 0%,#92400e 50%,#b45309 100%)', accent:'#fcd34d', desc:'45 min · Copas x0.5',   icon:'🏅' },
-  { id:'arena',         label:'Arena',         color:'#4f46e5', bg:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#3730a3 100%)', accent:'#a5b4fc', desc:'20 min · Copas',       icon:'⚡' },
 ];
 
 function calcOVR(skills) {
@@ -84,7 +78,7 @@ export default function DashboardAnalista() {
   const [historial,   setHistorial]   = useState([]);
   const [empleoTab,   setEmpleoTab]   = useState('ofertas');
   const [ranking,     setRanking]     = useState([]);
-  const [modoIdx,     setModoIdx]     = useState(0);
+  const [modoTab,     setModoTab]     = useState('investigacion');
 
   useEffect(() => { fetchUser(); }, []);
 
@@ -120,7 +114,6 @@ export default function DashboardAnalista() {
   const avatarConfig = userData?.avatar_config||null;
   const foto       = userData?.foto_perfil||'';
   const totalLabs  = historial.length;
-  const modoActual = LAB_MODOS[modoIdx];
 
   if (!userData) return <SBSpinner/>;
 
@@ -130,7 +123,7 @@ export default function DashboardAnalista() {
         .qb:hover{background:#f0eeff!important;border-color:#c7d2fe!important;}
         .hr:hover{background:#f8f7ff!important;}
         .pb:hover{opacity:.88;transform:translateY(-1px);}
-        .tipo-btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+        .tipo-btn:hover{background:#f0fdf4!important;border-color:#059669!important;}
       `}</style>
 
       <SBNav user={user} avatarConfig={avatarConfig} foto={foto} activePage="/dashboard" navigate={navigate}/>
@@ -174,7 +167,7 @@ export default function DashboardAnalista() {
                 <span style={{fontSize:12,fontWeight:700,color:ac.main}}>{arena}</span>
               </div>
 
-              {/* Stats — Labs en lugar de Sesiones */}
+              {/* Stats */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:18}}>
                 {[
                   {val:ovr,                    label:'OVR Score', color:ac.main},
@@ -228,42 +221,17 @@ export default function DashboardAnalista() {
               <div style={{height:5,borderRadius:3,background:'#ede9fe',overflow:'hidden'}}>
                 <div style={{height:'100%',borderRadius:3,width:`${Math.min(((copas-arenaObj.min)/300)*100,100)}%`,background:`linear-gradient(90deg,${ac.main},${ac.main}cc)`,transition:'width 1s ease'}}/>
               </div>
-              <p style={{fontSize:10,color:'#94a3b8',marginTop:6}}>Gana copas en modo Arena o Certificación</p>
             </div>
           )}
-
-          {/* Tipos de lab */}
-          <div className="s1 sb-card-sm" style={{padding:'16px 18px'}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:12}}>TIPO DE LAB</div>
-            <div style={{display:'flex',flexDirection:'column',gap:6}}>
-              {LAB_TIPOS.map((t,i)=>(
-                <div key={i} className="tipo-btn qb" onClick={()=>navigate('/lab',{state:{tipo:t.id}})}
-                  style={{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',borderRadius:10,cursor:'pointer',border:'1px solid transparent',transition:'all .15s'}}>
-                  <div style={{width:30,height:30,borderRadius:8,background:`${t.color}12`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:`1px solid ${t.color}20`}}>
-                    <span style={{fontSize:11,fontWeight:800,color:t.color}}>{t.label.slice(0,3).toUpperCase()}</span>
-                  </div>
-                  <span style={{fontSize:12,color:'#0f172a',fontWeight:600,flex:1}}>{t.label}</span>
-                  <Icon name="arrow" size={11} color="#c7d2fe"/>
-                </div>
-              ))}
-              <div className="qb" onClick={()=>navigate('/lab')}
-                style={{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',borderRadius:10,cursor:'pointer',border:'1px solid transparent',transition:'all .15s'}}>
-                <div style={{width:30,height:30,borderRadius:8,background:'#f8f7ff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,border:'1px solid #ede9fe'}}>
-                  <span style={{fontSize:14}}>🎲</span>
-                </div>
-                <span style={{fontSize:12,color:'#94a3b8',fontWeight:600,flex:1}}>Aleatorio</span>
-                <Icon name="arrow" size={11} color="#c7d2fe"/>
-              </div>
-            </div>
-          </div>
 
           {/* Accesos rapidos */}
           <div className="s1 sb-card-sm" style={{padding:'16px 18px'}}>
             <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'1.5px',marginBottom:12}}>ACCESOS RÁPIDOS</div>
             {[
-              {label:'Training SOC',   desc:'Módulos · Cursos',  path:'/training',    color:'#7c3aed',icon:'book'},
-              {label:'Ranking Global', desc:'Tu posición',       path:'/ranking',     color:'#d97706',icon:'chart'},
-              {label:'Mi Certificado', desc:'QR verificable',    path:'/certificado', color:'#059669',icon:'award'},
+              {label:'Laboratorio SOC', desc:'Investigación · Arena', path:'/lab',         color:'#059669', icon:'flask'},
+              {label:'Training SOC',   desc:'Módulos · Cursos',      path:'/training',    color:'#7c3aed', icon:'book'},
+              {label:'Ranking Global', desc:'Tu posición',           path:'/ranking',     color:'#d97706', icon:'chart'},
+              {label:'Mi Certificado', desc:'QR verificable',        path:'/certificado', color:'#059669', icon:'award'},
             ].map((item,i)=>(
               <div key={i} className="qb" onClick={()=>navigate(item.path)}
                 style={{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',borderRadius:10,cursor:'pointer',marginBottom:5,border:'1px solid transparent',transition:'all .15s'}}>
@@ -283,80 +251,94 @@ export default function DashboardAnalista() {
         {/* COLUMNA DERECHA */}
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
 
-          {/* CTAs — 3 modos */}
-          <div className="s1" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-            {LAB_MODOS.map((m,i)=>(
-              <button key={i} className="pb" onClick={()=>navigate('/lab',{state:{modo:m.id}})}
-                style={{padding:'13px 8px',borderRadius:14,background:m.bg,border:'none',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5,boxShadow:'0 4px 18px rgba(0,0,0,0.18)',transition:'all .2s'}}>
-                <span style={{fontSize:20}}>{m.icon}</span>
-                <span>{m.label}</span>
-                <span style={{fontSize:10,fontWeight:400,opacity:.7}}>{m.desc.split('·')[0].trim()}</span>
-              </button>
-            ))}
+          {/* CTA único */}
+          <div className="s1">
+            <button className="pb" onClick={()=>navigate('/lab')}
+              style={{width:'100%',padding:'16px',borderRadius:14,background:'linear-gradient(135deg,#059669,#047857)',border:'none',color:'#fff',fontSize:15,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,boxShadow:'0 6px 24px rgba(5,150,105,0.3)',transition:'all .2s'}}>
+              <Icon name="flask" size={17} color="#fff"/> Entrar al Laboratorio SOC
+            </button>
           </div>
 
-          {/* Carrusel modos lab */}
+          {/* Lab showcase — 2 tabs */}
           <div className="s1 sb-card" style={{overflow:'hidden'}}>
             <div style={{display:'flex',borderBottom:'1px solid #e8eaf0'}}>
-              {LAB_MODOS.map((m,i)=>(
-                <button key={i} onClick={()=>setModoIdx(i)}
-                  style={{flex:1,padding:'13px 8px',background:'none',border:'none',cursor:'pointer',fontSize:12,fontWeight:600,color:modoIdx===i?m.color:'#94a3b8',borderBottom:modoIdx===i?`2.5px solid ${m.color}`:'2.5px solid transparent',transition:'all .2s'}}>
-                  {m.icon} {m.label}
+              {[
+                {id:'investigacion', label:'Investigación', color:'#059669'},
+                {id:'arena',         label:'Arena',         color:ACC},
+              ].map(t=>(
+                <button key={t.id} onClick={()=>setModoTab(t.id)}
+                  style={{flex:1,padding:'13px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:modoTab===t.id?t.color:'#94a3b8',borderBottom:modoTab===t.id?`2.5px solid ${t.color}`:'2.5px solid transparent',transition:'all .2s'}}>
+                  {t.label}
                 </button>
               ))}
             </div>
-            <div style={{padding:'24px 28px',background:modoActual.bg,display:'grid',gridTemplateColumns:'1fr auto',gap:24,alignItems:'center'}}>
-              <div>
-                <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 11px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:12}}>
-                  <div style={{width:5,height:5,borderRadius:'50%',background:modoActual.accent,animation:'pulse 2s infinite'}}/>
-                  <span style={{fontSize:10,color:modoActual.accent,fontWeight:700,letterSpacing:'2px'}}>MODO {modoActual.label.toUpperCase()}</span>
+
+            {modoTab==='investigacion' ? (
+              <div style={{padding:'28px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',display:'grid',gridTemplateColumns:'1fr auto',gap:24,alignItems:'center'}}>
+                <div>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 11px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:14}}>
+                    <div style={{width:5,height:5,borderRadius:'50%',background:'#6ee7b7',animation:'pulse 2s infinite'}}/>
+                    <span style={{fontSize:10,color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>MODO INVESTIGACIÓN</span>
+                  </div>
+                  <h3 style={{fontSize:20,fontWeight:900,color:'#fff',marginBottom:8,lineHeight:1.2}}>
+                    Investiga sin límite.<br/><span style={{color:'#6ee7b7'}}>Sin timer. La IA evalúa profundidad.</span>
+                  </h3>
+                  <p style={{fontSize:13,color:'rgba(255,255,255,0.55)',lineHeight:1.75,marginBottom:16}}>
+                    SIEM, Log Explorer, Terminal Win/Linux y Artefactos Forenses. 5 tipos de lab: Forense, Threat Hunt, IR, Malware y OSINT.
+                  </p>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
+                    {['Sin timer','Solo XP y skills','5 tipos de lab','Windows o Linux'].map((f,i)=>(
+                      <span key={i} style={{fontSize:11,padding:'4px 10px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f}</span>
+                    ))}
+                  </div>
+                  <button className="pb" onClick={()=>navigate('/lab',{state:{modo:'investigacion'}})}
+                    style={{padding:'11px 26px',borderRadius:100,background:'#fff',border:'none',color:'#047857',fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',transition:'all .2s'}}>
+                    Iniciar investigación →
+                  </button>
                 </div>
-                <h3 style={{fontSize:18,fontWeight:900,color:'#fff',marginBottom:8,lineHeight:1.2}}>
-                  {modoIdx===0&&<>Investiga sin límite.<br/><span style={{color:modoActual.accent}}>La IA evalúa profundidad.</span></>}
-                  {modoIdx===1&&<>Demuestra tu nivel.<br/><span style={{color:modoActual.accent}}>45 minutos. Copas x0.5.</span></>}
-                  {modoIdx===2&&<>20 minutos.<br/><span style={{color:modoActual.accent}}>Copas completas. Ranking.</span></>}
-                </h3>
-                <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,marginBottom:14}}>
-                  {modoIdx===0&&'Sin timer. SIEM, Log Explorer, Terminal y Artefactos. 5 tipos de lab disponibles.'}
-                  {modoIdx===1&&'Timer moderado para evaluar tu nivel real. Copas a mitad de ratio. XP completo.'}
-                  {modoIdx===2&&'El modo más exigente. Copas reales y posición en el ranking global. SO aleatorio.'}
-                </p>
-                <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
-                  {modoIdx===0&&['Sin timer','Solo XP','5 tipos','Win/Linux'].map((f,i)=><span key={i} style={{fontSize:10,padding:'3px 9px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.75)',fontWeight:500}}>{f}</span>)}
-                  {modoIdx===1&&['45 min','Copas x0.5','XP completo','Eval. estricta'].map((f,i)=><span key={i} style={{fontSize:10,padding:'3px 9px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.75)',fontWeight:500}}>{f}</span>)}
-                  {modoIdx===2&&['20 min','Copas ×1','Ranking','Win/Linux'].map((f,i)=><span key={i} style={{fontSize:10,padding:'3px 9px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.75)',fontWeight:500}}>{f}</span>)}
-                </div>
-                <button className="pb" onClick={()=>navigate('/lab',{state:{modo:modoActual.id}})}
-                  style={{padding:'10px 24px',borderRadius:100,background:'rgba(255,255,255,0.95)',border:'none',color:modoActual.color,fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',transition:'all .2s'}}>
-                  {modoIdx===0?'Iniciar investigación':modoIdx===1?'Iniciar certificación':'Entrar a la Arena'} →
-                </button>
-              </div>
-              <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
-                {modoIdx===0&&<>
-                  <rect x="10" y="20" width="150" height="105" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(110,231,183,0.15)" strokeWidth="1"/>
-                  <rect x="10" y="20" width="150" height="18" rx="8" fill="rgba(255,255,255,0.06)"/>
+                <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
+                  <rect x="10" y="20" width="150" height="105" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(110,231,183,0.2)" strokeWidth="1"/>
+                  <rect x="10" y="20" width="150" height="18" rx="8" fill="rgba(255,255,255,0.07)"/>
                   <circle cx="22" cy="29" r="4" fill="#FF5F57"/><circle cx="34" cy="29" r="4" fill="#FEBC2E"/><circle cx="46" cy="29" r="4" fill="#28C840"/>
                   <text x="20" y="54" fontFamily="monospace" fontSize="8" fill="#6ee7b7">$ grep mimikatz sysmon.log</text>
                   <text x="20" y="66" fontFamily="monospace" fontSize="8" fill="#f87171">mimikatz.exe PID:1337 ⚠</text>
-                  <text x="20" y="78" fontFamily="monospace" fontSize="8" fill="#60a5fa">$ volatility memdump</text>
+                  <text x="20" y="78" fontFamily="monospace" fontSize="8" fill="#60a5fa">$ volatility -f mem.raw</text>
                   <text x="20" y="90" fontFamily="monospace" fontSize="8" fill="#6ee7b7">$ _</text>
-                </>}
-                {modoIdx===1&&<>
-                  <circle cx="85" cy="70" r="42" fill="rgba(255,255,255,0.04)" stroke="rgba(252,211,77,0.3)" strokeWidth="2"/>
-                  <text x="85" y="78" textAnchor="middle" fontFamily="monospace" fontSize="22" fontWeight="900" fill="#fcd34d">45:00</text>
-                  <text x="85" y="94" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="rgba(252,211,77,0.5)">TIEMPO RESTANTE</text>
-                  <path d="M85 33 A37 37 0 0 1 122 70" stroke="#fcd34d" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                </>}
-                {modoIdx===2&&<>
+                </svg>
+              </div>
+            ) : (
+              <div style={{padding:'28px',background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#3730a3 100%)',display:'grid',gridTemplateColumns:'1fr auto',gap:24,alignItems:'center'}}>
+                <div>
+                  <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 11px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:14}}>
+                    <div style={{width:5,height:5,borderRadius:'50%',background:'#a5b4fc',animation:'pulse 2s infinite'}}/>
+                    <span style={{fontSize:10,color:'#a5b4fc',fontWeight:700,letterSpacing:'2px'}}>MODO ARENA · COMPETITIVO</span>
+                  </div>
+                  <h3 style={{fontSize:20,fontWeight:900,color:'#fff',marginBottom:8,lineHeight:1.2}}>
+                    20 minutos.<br/><span style={{color:'#a5b4fc'}}>Copas completas. Ranking global.</span>
+                  </h3>
+                  <p style={{fontSize:13,color:'rgba(255,255,255,0.55)',lineHeight:1.75,marginBottom:16}}>
+                    El modo más exigente. Timer activo, copas reales y posición en el ranking. Sistema operativo aleatorio en cada partida.
+                  </p>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
+                    {['Timer 20 min','Copas completas','Ranking global','Win/Linux aleatorio'].map((f,i)=>(
+                      <span key={i} style={{fontSize:11,padding:'4px 10px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f}</span>
+                    ))}
+                  </div>
+                  <button className="pb" onClick={()=>navigate('/lab',{state:{modo:'arena'}})}
+                    style={{padding:'11px 26px',borderRadius:100,background:'#fff',border:'none',color:ACC,fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',transition:'all .2s'}}>
+                    Entrar a la Arena →
+                  </button>
+                </div>
+                <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
                   <rect x="15" y="25" width="140" height="88" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(165,180,252,0.2)" strokeWidth="1"/>
                   <rect x="25" y="38" width="120" height="8" rx="4" fill="rgba(239,68,68,0.5)"/>
                   <rect x="25" y="51" width="85" height="6" rx="3" fill="rgba(249,115,22,0.4)"/>
                   <rect x="25" y="62" width="100" height="6" rx="3" fill="rgba(234,179,8,0.3)"/>
                   <circle cx="142" cy="40" r="18" fill="rgba(79,70,229,0.3)" stroke="rgba(165,180,252,0.4)" strokeWidth="1.5"/>
                   <text x="142" y="46" textAnchor="middle" fontFamily="system-ui" fontSize="11" fontWeight="700" fill="#a5b4fc">SOC</text>
-                </>}
-              </svg>
-            </div>
+                </svg>
+              </div>
+            )}
           </div>
 
           {/* Actividad + Ranking */}
@@ -366,9 +348,9 @@ export default function DashboardAnalista() {
               <div style={{overflowX:'auto',marginBottom:12}}><ActivityHeatmap historial={historial}/></div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:7}}>
                 {[
-                  {value:totalLabs,                                                                     label:'labs',      color:ACC},
-                  {value:streak,                                                                        label:'racha',     color:'#d97706'},
-                  {value:historial.filter(l=>l.resultado?.copas_ganadas>0).length,                     label:'con copas', color:'#059669'},
+                  {value:totalLabs,                                                             label:'labs',      color:ACC},
+                  {value:streak,                                                                label:'racha',     color:'#d97706'},
+                  {value:historial.filter(l=>(l.resultado?.copas_ganadas||0)>0).length,        label:'con copas', color:'#059669'},
                 ].map((s,i)=>(
                   <div key={i} style={{textAlign:'center',padding:'9px',borderRadius:9,background:'#f8f7ff',border:'1px solid #ede9fe'}}>
                     <div style={{fontSize:18,fontWeight:800,color:s.color}}>{s.value}</div>
@@ -421,19 +403,23 @@ export default function DashboardAnalista() {
               const copasGan = lab.resultado?.copas_ganadas||0;
               const pct      = Math.round(lab.resultado?.puntuacion_normalizada||0);
               const tipo     = LAB_TIPOS.find(t=>t.id===lab.tipo)||LAB_TIPOS[0];
-              const modo     = LAB_MODOS.find(m=>m.id===lab.modo)||LAB_MODOS[0];
+              const esModo   = lab.modo==='arena'?'Arena':'Investigación';
+              const modColor = lab.modo==='arena'?ACC:'#059669';
               return (
                 <div key={i} className="hr" style={{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',borderRadius:10,background:'#f8f7ff',border:'1px solid #ede9fe',marginBottom:7,transition:'all .15s'}}>
-                  <div style={{width:32,height:32,borderRadius:8,background:`${tipo.color}12`,border:`1px solid ${tipo.color}20`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:`${tipo.color}10`,border:`1px solid ${tipo.color}20`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     <span style={{fontSize:10,fontWeight:800,color:tipo.color}}>{tipo.label.slice(0,3).toUpperCase()}</span>
                   </div>
                   <div style={{flex:1,minWidth:0}}>
                     <p style={{fontSize:12,color:'#0f172a',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lab.escenario?.titulo||tipo.label}</p>
-                    <p style={{fontSize:10,color:'#94a3b8'}}>{modo.icon} {modo.label} · {pct}% · {lab.so==='Linux'?'🐧':'🪟'} {lab.so||'?'}</p>
+                    <p style={{fontSize:10,color:'#94a3b8'}}>
+                      <span style={{color:modColor,fontWeight:600}}>{esModo}</span>
+                      {' · '}{pct}%{' · '}{lab.so==='Linux'?'🐧':'🪟'} {lab.so||'?'}
+                    </p>
                   </div>
                   {copasGan>0
-                    ? <span style={{fontSize:12,fontWeight:800,color:'#d97706'}}>+{copasGan}</span>
-                    : <span style={{fontSize:11,color:'#94a3b8'}}>+XP</span>
+                    ? <span style={{fontSize:12,fontWeight:800,color:'#d97706',flexShrink:0}}>+{copasGan} pts</span>
+                    : <span style={{fontSize:11,color:'#94a3b8',flexShrink:0}}>+XP</span>
                   }
                 </div>
               );
