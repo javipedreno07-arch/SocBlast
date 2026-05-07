@@ -78,7 +78,6 @@ export default function DashboardAnalista() {
   const [historial,   setHistorial]   = useState([]);
   const [empleoTab,   setEmpleoTab]   = useState('ofertas');
   const [ranking,     setRanking]     = useState([]);
-  const [modoTab,     setModoTab]     = useState('investigacion');
 
   useEffect(() => { fetchUser(); }, []);
 
@@ -259,86 +258,38 @@ export default function DashboardAnalista() {
             </button>
           </div>
 
-          {/* Lab showcase — 2 tabs */}
+          {/* Lab panel */}
           <div className="s1 sb-card" style={{overflow:'hidden'}}>
-            <div style={{display:'flex',borderBottom:'1px solid #e8eaf0'}}>
-              {[
-                {id:'investigacion', label:'Investigación', color:'#059669'},
-                {id:'arena',         label:'Arena',         color:ACC},
-              ].map(t=>(
-                <button key={t.id} onClick={()=>setModoTab(t.id)}
-                  style={{flex:1,padding:'13px',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,color:modoTab===t.id?t.color:'#94a3b8',borderBottom:modoTab===t.id?`2.5px solid ${t.color}`:'2.5px solid transparent',transition:'all .2s'}}>
-                  {t.label}
+            <div style={{padding:'28px 32px',background:'linear-gradient(135deg,#0f172a 0%,#1a2744 50%,#1e3a8a 100%)',display:'grid',gridTemplateColumns:'1fr auto',gap:28,alignItems:'center'}}>
+              <div>
+                <p style={{fontSize:10,color:'#93c5fd',fontWeight:700,letterSpacing:'2.5px',marginBottom:14}}>LABORATORIO SOC</p>
+                <h3 style={{fontSize:20,fontWeight:800,color:'#fff',marginBottom:8,lineHeight:1.25,letterSpacing:'-0.3px'}}>
+                  Investiga amenazas reales.<br/><span style={{color:'#93c5fd'}}>La IA genera cada escenario.</span>
+                </h3>
+                <p style={{fontSize:13,color:'rgba(255,255,255,0.45)',lineHeight:1.75,marginBottom:18}}>
+                  SIEM, Log Explorer, Terminal Windows y Linux, Artefactos Forenses. Cinco especialidades disponibles.
+                </p>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:22}}>
+                  {['Forense Digital','Threat Hunting','Incident Response','Malware Analysis','OSINT'].map((f,i)=>(
+                    <span key={i} style={{fontSize:11,padding:'4px 11px',borderRadius:6,background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.65)',fontWeight:500,border:'1px solid rgba(255,255,255,0.08)'}}>{f}</span>
+                  ))}
+                </div>
+                <button className="pb" onClick={()=>navigate('/lab')}
+                  style={{padding:'11px 26px',borderRadius:100,background:'#fff',border:'none',color:'#1e3a8a',fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.2)',transition:'all .2s'}}>
+                  Entrar al Laboratorio →
                 </button>
-              ))}
+              </div>
+              <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
+                <rect x="10" y="20" width="150" height="105" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(147,197,253,0.15)" strokeWidth="1"/>
+                <rect x="10" y="20" width="150" height="18" rx="8" fill="rgba(255,255,255,0.05)"/>
+                <circle cx="22" cy="29" r="4" fill="#FF5F57"/><circle cx="34" cy="29" r="4" fill="#FEBC2E"/><circle cx="46" cy="29" r="4" fill="#28C840"/>
+                <text x="20" y="54" fontFamily="monospace" fontSize="8" fill="#93c5fd">$ index=windows EventID=4688</text>
+                <text x="20" y="66" fontFamily="monospace" fontSize="8" fill="#f87171">mimikatz.exe PID:1337 ⚠</text>
+                <text x="20" y="78" fontFamily="monospace" fontSize="8" fill="#60a5fa">$ volatility -f mem.raw</text>
+                <text x="20" y="90" fontFamily="monospace" fontSize="8" fill="#4ade80">IOC confirmed — C2 detected</text>
+                <text x="20" y="102" fontFamily="monospace" fontSize="8" fill="#93c5fd">$ _</text>
+              </svg>
             </div>
-
-            {modoTab==='investigacion' ? (
-              <div style={{padding:'28px',background:'linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%)',display:'grid',gridTemplateColumns:'1fr auto',gap:24,alignItems:'center'}}>
-                <div>
-                  <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 11px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:14}}>
-                    <div style={{width:5,height:5,borderRadius:'50%',background:'#6ee7b7',animation:'pulse 2s infinite'}}/>
-                    <span style={{fontSize:10,color:'#6ee7b7',fontWeight:700,letterSpacing:'2px'}}>MODO INVESTIGACIÓN</span>
-                  </div>
-                  <h3 style={{fontSize:20,fontWeight:900,color:'#fff',marginBottom:8,lineHeight:1.2}}>
-                    Investiga sin límite.<br/><span style={{color:'#6ee7b7'}}>Sin timer. La IA evalúa profundidad.</span>
-                  </h3>
-                  <p style={{fontSize:13,color:'rgba(255,255,255,0.55)',lineHeight:1.75,marginBottom:16}}>
-                    SIEM, Log Explorer, Terminal Win/Linux y Artefactos Forenses. 5 tipos de lab: Forense, Threat Hunt, IR, Malware y OSINT.
-                  </p>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
-                    {['Sin timer','Solo XP y skills','5 tipos de lab','Windows o Linux'].map((f,i)=>(
-                      <span key={i} style={{fontSize:11,padding:'4px 10px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f}</span>
-                    ))}
-                  </div>
-                  <button className="pb" onClick={()=>navigate('/lab',{state:{modo:'investigacion'}})}
-                    style={{padding:'11px 26px',borderRadius:100,background:'#fff',border:'none',color:'#047857',fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',transition:'all .2s'}}>
-                    Iniciar investigación →
-                  </button>
-                </div>
-                <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
-                  <rect x="10" y="20" width="150" height="105" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(110,231,183,0.2)" strokeWidth="1"/>
-                  <rect x="10" y="20" width="150" height="18" rx="8" fill="rgba(255,255,255,0.07)"/>
-                  <circle cx="22" cy="29" r="4" fill="#FF5F57"/><circle cx="34" cy="29" r="4" fill="#FEBC2E"/><circle cx="46" cy="29" r="4" fill="#28C840"/>
-                  <text x="20" y="54" fontFamily="monospace" fontSize="8" fill="#6ee7b7">$ grep mimikatz sysmon.log</text>
-                  <text x="20" y="66" fontFamily="monospace" fontSize="8" fill="#f87171">mimikatz.exe PID:1337 ⚠</text>
-                  <text x="20" y="78" fontFamily="monospace" fontSize="8" fill="#60a5fa">$ volatility -f mem.raw</text>
-                  <text x="20" y="90" fontFamily="monospace" fontSize="8" fill="#6ee7b7">$ _</text>
-                </svg>
-              </div>
-            ) : (
-              <div style={{padding:'28px',background:'linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#3730a3 100%)',display:'grid',gridTemplateColumns:'1fr auto',gap:24,alignItems:'center'}}>
-                <div>
-                  <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'3px 11px',borderRadius:100,background:'rgba(255,255,255,0.1)',marginBottom:14}}>
-                    <div style={{width:5,height:5,borderRadius:'50%',background:'#a5b4fc',animation:'pulse 2s infinite'}}/>
-                    <span style={{fontSize:10,color:'#a5b4fc',fontWeight:700,letterSpacing:'2px'}}>MODO ARENA · COMPETITIVO</span>
-                  </div>
-                  <h3 style={{fontSize:20,fontWeight:900,color:'#fff',marginBottom:8,lineHeight:1.2}}>
-                    20 minutos.<br/><span style={{color:'#a5b4fc'}}>Copas completas. Ranking global.</span>
-                  </h3>
-                  <p style={{fontSize:13,color:'rgba(255,255,255,0.55)',lineHeight:1.75,marginBottom:16}}>
-                    El modo más exigente. Timer activo, copas reales y posición en el ranking. Sistema operativo aleatorio en cada partida.
-                  </p>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}}>
-                    {['Timer 20 min','Copas completas','Ranking global','Win/Linux aleatorio'].map((f,i)=>(
-                      <span key={i} style={{fontSize:11,padding:'4px 10px',borderRadius:6,background:'rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.8)',fontWeight:500}}>{f}</span>
-                    ))}
-                  </div>
-                  <button className="pb" onClick={()=>navigate('/lab',{state:{modo:'arena'}})}
-                    style={{padding:'11px 26px',borderRadius:100,background:'#fff',border:'none',color:ACC,fontSize:13,fontWeight:800,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',transition:'all .2s'}}>
-                    Entrar a la Arena →
-                  </button>
-                </div>
-                <svg width="110" height="110" viewBox="0 0 170 170" fill="none">
-                  <rect x="15" y="25" width="140" height="88" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(165,180,252,0.2)" strokeWidth="1"/>
-                  <rect x="25" y="38" width="120" height="8" rx="4" fill="rgba(239,68,68,0.5)"/>
-                  <rect x="25" y="51" width="85" height="6" rx="3" fill="rgba(249,115,22,0.4)"/>
-                  <rect x="25" y="62" width="100" height="6" rx="3" fill="rgba(234,179,8,0.3)"/>
-                  <circle cx="142" cy="40" r="18" fill="rgba(79,70,229,0.3)" stroke="rgba(165,180,252,0.4)" strokeWidth="1.5"/>
-                  <text x="142" y="46" textAnchor="middle" fontFamily="system-ui" fontSize="11" fontWeight="700" fill="#a5b4fc">SOC</text>
-                </svg>
-              </div>
-            )}
           </div>
 
           {/* Actividad + Ranking */}

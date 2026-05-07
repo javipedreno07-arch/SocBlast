@@ -209,15 +209,10 @@ export function SBNav({user, avatarConfig, foto, activePage='', extra=null}) {
           );
         })}
         <div style={{width:1,height:26,background:'#e8eaf0',margin:'0 6px'}}/>
-        <button onClick={()=>navigate('/sesion')} style={{padding:'7px 13px',borderRadius:9,background:'none',border:'none',color:ACC,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}
-          onMouseEnter={e=>{e.currentTarget.style.background=`${ACC}0d`;}}
-          onMouseLeave={e=>{e.currentTarget.style.background='none';}}>
-          <Icon name="bolt" size={15} color={ACC}/>Sesiones
-        </button>
-        <button onClick={()=>navigate('/lab')} style={{padding:'7px 13px',borderRadius:9,background:'none',border:'none',color:'#059669',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}
-          onMouseEnter={e=>{e.currentTarget.style.background='rgba(5,150,105,0.06)';}}
-          onMouseLeave={e=>{e.currentTarget.style.background='none';}}>
-          <Icon name="flask" size={15} color="#059669"/>Labs
+        <button onClick={()=>navigate('/lab')} style={{padding:'7px 13px',borderRadius:9,background:'rgba(5,150,105,0.06)',border:'1px solid rgba(5,150,105,0.15)',color:'#059669',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}
+          onMouseEnter={e=>{e.currentTarget.style.background='rgba(5,150,105,0.12)';}}
+          onMouseLeave={e=>{e.currentTarget.style.background='rgba(5,150,105,0.06)';}}>
+          <Icon name="flask" size={15} color="#059669"/>Laboratorio
         </button>
       </div>
 
